@@ -2,11 +2,16 @@ const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
 const mainConfig = {
+  mode: "production",
   target: "electron-main",
-  entry: "./app/main.js",
+  entry: { main: "./app/main.js", vendor: ["firebase"] },
   output: {
     path: __dirname + "/webpack-pack/build",
-    filename: "main.js"
+    filename: "[name].js"
+  },
+  node: {
+    __dirname: false,
+    __filename: false
   },
   module: {
     rules: [
@@ -28,18 +33,15 @@ const mainConfig = {
           beautify: false
         }
       }
-    }),
-    new HtmlWebpackPlugin({
-      title: "Photon"
     })
   ],
-
   resolve: {
     extensions: [".js", ".json", ".jsx"]
   }
 };
 
 const appConfig = {
+  mode: "production",
   target: "electron-renderer",
   entry: "./app/app.js",
   output: {
@@ -59,27 +61,18 @@ const appConfig = {
       },
       {
         test: /\.css$/,
-        loader: ["style-loader", "css-loader"]
+        use: ["style-loader", "css-loader"]
       },
       {
-        test: /\.(png|jpg|gif|svg)$/,
-        loader: "file-loader",
-        query: {
-          name: "[name].[ext]?[hash]"
-        }
+        test: /\.(jpe?g|png|gif)$/,
+        use: [{ loader: "file-loader?name=img/[name]__[hash:base64:5].[ext]" }]
       },
       {
-        test: /npm\.js$/,
-        loader: "string-replace-loader",
-        include: path.resolve("node_modules/firebaseui/dist"),
-        options: {
-          search: "require('firebase/app');",
-          replace: "require('firebase/app').default;"
-        }
+        test: /\.(eot|svg|ttf|woff|woff2)$/,
+        use: [{ loader: "file-loader?name=files/[name]__[hash:base64:5].[ext]" }]
       }
     ]
   },
-
   plugins: [
     new UglifyJsPlugin({
       uglifyOptions: {
@@ -90,10 +83,11 @@ const appConfig = {
       }
     }),
     new HtmlWebpackPlugin({
-      title: "Photon"
+      title: "Photon",
+      template: "./app/index.html",
+      inject: false
     })
   ],
-
   resolve: {
     extensions: [".js", ".json", ".jsx"]
   }

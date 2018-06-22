@@ -1,4 +1,11 @@
-import * as firebase from "firebase";
+// import * as firebase from "firebase";
+// import firebase from "@firebase/app";
+
+var firebase = require("firebase/app").default;
+require("firebase/auth").default;
+require("firebase/database").default;
+require("firebase/firestore").default;
+global.XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 const prodConfig = {
   apiKey: "AIzaSyBIhzR3KT792-UJBRNgd2wmM9exbZsZh3I",

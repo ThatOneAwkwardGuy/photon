@@ -1,14 +1,10 @@
-// @flow
 import React, { Component } from "react";
-import { Container, Row, Col } from "reactstrap";
-import ReactSVG from "react-svg";
+import { Row, Col } from "reactstrap";
+import Logo from "../img/logo.svg";
+import Minimize from "../img/minimise.svg";
+import Close from "../img/close.svg";
 import { remote } from "electron";
-
-type Props = {};
-
-export default class Topbar extends Component<Props> {
-  props: Props;
-
+export default class Topbar extends Component {
   minimiseWindow() {
     remote.BrowserWindow.getFocusedWindow().minimize();
   }
@@ -27,17 +23,17 @@ export default class Topbar extends Component<Props> {
     return (
       <Row className="topbar">
         <Col xs="2" className="topBarLogoCol text-center">
-          <ReactSVG path="img/logo.svg" className="logo" />
+          <img className="logo" src={Logo} />
         </Col>
         <Col xs="8" className="topbarMiddle" />
         <Col xs="1" className="text-right topbarOptionsCol">
           <div className="windowButton" onClick={this.minimiseWindow}>
-            <ReactSVG path="img/minimise.svg" />
+            <img src={Minimize} />
           </div>
         </Col>
         <Col xs="1" className="text-left topbarOptionsCol">
           <div className="windowButton" onClick={this.closeWindow}>
-            <ReactSVG path="img/close.svg" />
+            <img src={Close} />
           </div>
         </Col>
       </Row>

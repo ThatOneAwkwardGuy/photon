@@ -1,8 +1,7 @@
-// @flow
 import React, { Component } from "react";
-import { Container, Row, Col } from "reactstrap";
-import ReactSVG from "react-svg";
-import { auth } from "../api/firebase/";
+import { Row, Col } from "reactstrap";
+import NotSignedIn from "../img/notsignedin.svg";
+import SignedIn from "../img/signedin.svg";
 
 export default class Footer extends Component {
   constructor(props) {
@@ -12,17 +11,7 @@ export default class Footer extends Component {
     return (
       <Row className="footer">
         <Col xs="2" className="text-center footerLeftSection">
-          {this.props.type === "homepage" ? (
-            <ReactSVG
-              className="signedinicon text-right"
-              path="img/signedin.svg"
-            />
-          ) : (
-            <ReactSVG
-              className="signedinicon text-right"
-              path="img/notsignedin.svg"
-            />
-          )}
+          {this.props.type === "homepage" ? <img className="logo" src={SignedIn} /> : <img className="logo" src={NotSignedIn} />}
         </Col>
         <Col xs="8" className="text-center footerCenterSection">
           Copyright © 2018 Photon - All Rights Reserved

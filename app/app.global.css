@@ -420,6 +420,7 @@ canvas {
 
 .windowButton {
   width: 20px;
+  height: 20px;
   align-self: flex-end;
 }
 
