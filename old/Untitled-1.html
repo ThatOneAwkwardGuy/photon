@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="no-js mac chrome desktop page--no-banner page--logo-main page--show page--show card-fields">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, height=device-height, minimum-scale=1.0, user-scalable=0">
+    <meta name="referrer" content="origin">
+
+    <title> Payment method - Bodega - Checkout</title>
+
+    <meta data-browser="chrome" data-browser-major="66" />
+    <meta data-body-font-family="Helvetica Neue" data-body-font-type="system" />
+
+    <meta id="shopify-digital-wallet" name="shopify-digital-wallet" content="/499112/digital_wallets/dialog">
+
+    <meta name="shopify-checkout-api-token" content="dbd316d5c797eb8e3caede9dd08f92ef">
+
+    <meta name="shopify-checkout-authorization-token" content="da8fcdbec30581a80a2967686abf810e" />
+
+    <meta id="google-autocomplete-sandbox-url" name="google-autocomplete-sandbox-url" content="https://checkout.shopify.com/499112/sandbox/google_autocomplete?locale=en"
+    />
+
+
+
+
+
+    <!--[if lt IE 9]>
+<link rel="stylesheet" media="all" href="//cdn.shopify.com/app/services/499112/assets/93548740/checkout_stylesheet/v2-ltr-edge-45e675732c7ae381183b7565a6dc05c1-3240142235776778559/oldie" />
+<![endif]-->
+
+    <!--[if gte IE 9]><!-->
+    <link rel="stylesheet" media="all" href="//cdn.shopify.com/app/services/499112/assets/93548740/checkout_stylesheet/v2-ltr-edge-45e675732c7ae381183b7565a6dc05c1-3240142235776778559"
+    />
+
+    <!--<![endif]-->
+
+
+
+
+
+
+
+    <script type="text/javascript">
+        (function () {
+            window.ShopifyExperiments = {};
+            window.ShopifyExperiments.rememberMe = true;
+            window.ShopifyExperiments.googleAutocomplete = true;
+            window.ShopifyExperiments.autofocus = true;
+        })();
+    </script>
+
+    <script src="//cdn.shopify.com/s/assets/checkout-a6f3bc13354a205b369e49fa52746fe97317dc97a2e988ec68bf3cc9bf1aa673.js"></script>
+
+    <script src="https://checkout.shopifycs.com/dist/card_fields.js"></script>
+
+    <script>window.ShopifyPaypalV4VisibilityTracking = true;</script>
+
+    <meta id="amazon-payments-metadata" data-amazon-payments="true" data-amazon-payments-seller-id="A3AKEQ3M5IPBIP" data-amazon-payments-callback-url="https://shop.bdgastore.com/499112/amazon_payments/callback"
+        data-amazon-payments-sandbox-mode="false" data-amazon-payments-client-id="amzn1.application-oa2-client.c65336eec8c64ff78119e3ace359235d"
+        data-amazon-payments-region="US" data-amazon-payments-language="en-US">
+    <script src="https://static-na.payments-amazon.com/OffAmazonPayments/us/js/Widgets.js" class="amazon-payments-widget-library"
+        defer="defer"></script>
+    <script>
+        //<![CDATA[
+        window.amazonReady = Checkout.$.Deferred();
+        window.amazonPaymentsButtonHandler.assign('checkout');
+
+        window.onAmazonPaymentsReady = function () {
+            AmazonPaymentsPayButtonReady();
+        }
+
+//]]>
+    </script>
+    <script>
+        //<![CDATA[
+        window.onAmazonLoginReady = function () {
+            amazon.Login.setSandboxMode(false);
+            amazon.Login.setClientId("amzn1.application-oa2-client.c65336eec8c64ff78119e3ace359235d");
+            amazon.Login.setRegion("US");
+            amazon.Login.setUseCookie(true);
+            amazonReady.resolve();
+        }
+
+//]]>
+    </script>
+
+    <script src="//cdn.shopify.com/app/services/499112/javascripts/countries/93548740/en/countries-ca7589995e20165f1faa7f204950cea1611eea64-1488555071.js"></script>
+
+    <script type="text/javascript">
+        if (window.opener) {
+            window.opener.postMessage(JSON.stringify({ "current_checkout_page": "\/checkout\/payment" }), "*");
+        }
+
+        if (typeof Shopify == 'undefined') { Shopify = {}; }
+        Shopify.Checkout = {};
+        Shopify.Checkout.geolocatedAddress = { "lat": 40.83260000000001, "lng": -74.1307 };
+        Shopify.Checkout.locale = "en";
+        Shopify.Checkout.token = "605a805a2765f0406a6e6a6c4847e3f0";
+        Shopify.Checkout.requiresShipping = true;
+        Shopify.Checkout.page = "show";
+        Shopify.Checkout.step = "payment_method";
+        Shopify.Checkout.apiHost = "bdga.myshopify.com";
+
+        if (typeof ShopifyPay == 'undefined') { ShopifyPay = {}; }
+        ShopifyPay.apiHost = "pay.shopify.com";
+        ShopifyPay.apiToken = "aTUwNzM0QlZGSERKYUhjNGhPMDZTMnIwYmxpaFpXak5LTnhqLzRTTUFwd0x1MzFmWmVwTmwzQVMrTGtDK3lQTC0tREtZREZHbWswNXgycWx3S3REb21GQT09--85cca82f8fc95085f3afe17c8085e21f8f15c2de";
+
+        Shopify.Checkout.AddressFormat = { "N_p_c_sc_a": [["company"], ["last_name", "first_name"], ["zip"], ["country"], ["province", "city"], ["address1", "address2"], ["phone"]], "N_p_c_c_a": [["company"], ["last_name", "first_name"], ["zip"], ["country"], ["city"], ["address1", "address2"], ["phone"]], "n_a_c_csp": [["first_name", "last_name"], ["company"], ["address1", "address2"], ["city"], ["country", "province", "zip"], ["phone"]], "n_a_a_c_csp": [["first_name", "last_name"], ["company"], ["address1"], ["address2"], ["city"], ["country", "province", "zip"], ["phone"]], "n_a_c_cs": [["first_name", "last_name"], ["company"], ["address1", "address2"], ["city"], ["country", "province"], ["phone"]], "n_a_c_cp": [["first_name", "last_name"], ["company"], ["address1", "address2"], ["city"], ["country", "zip"], ["phone"]], "n_a_c_c": [["first_name", "last_name"], ["company"], ["address1", "address2"], ["city"], ["country"], ["phone"]] };
+
+        var thankYouStep = false;
+        var rememberMeCookie = false;
+        var rememberMeEnabled = true;
+
+        if (thankYouStep) {
+            Shopify.Checkout.OrderStatus = OrderStatusPageApi.prototype;
+        }
+
+        if (rememberMeCookie && rememberMeEnabled) {
+            Shopify.Checkout.rememberMeCookieIsHere = true;
+        }
+    </script>
+
+    <script type="text/javascript">
+        Shopify.clientAttributesCollectionEventName =
+            "client_attributes_checkout";
+        var DF_CHECKOUT_TOKEN = "605a805a2765f0406a6e6a6c4847e3f0";
+    </script>
+
+
+
+
+
+    <script id="__st">var __st = { "a": 499112, "offset": -14400, "reqid": "c525376d-09c5-4b75-a6e1-9467a02b35dd", "pageurl": "shop.bdgastore.com\/499112\/checkouts\/605a805a2765f0406a6e6a6c4847e3f0?step=payment_method", "u": "49d7e9372d32", "t": "checkout", "offsite": 1 };</script>
+
+
+
+
+
+
+    <meta id="in-context-paypal-metadata" data-shop-id="499112" data-environment="production" data-locale="en_US" data-paypal-v4="true">
+
+
+
+
+</head>
+
+<body>
+    <div class="banner" data-header>
+        <div class="wrap">
+
+            <a class="logo logo--left" href="https://shop.bdgastore.com">
+                <img alt="Bodega " class="logo__image logo__image--medium" src="//cdn.shopify.com/s/files/1/0049/9112/files/Untitled-3-01.jpg?3240142235776778559"
+                />
+            </a>
+            <h1 class="visually-hidden">
+                Payment method
+            </h1>
+
+
+        </div>
+    </div>
+
+    <button class="order-summary-toggle order-summary-toggle--show shown-if-js" aria-expanded="false" aria-controls="order-summary"
+        data-drawer-toggle="[data-order-summary]">
+        <span class="wrap">
+            <span class="order-summary-toggle__inner">
+                <span class="order-summary-toggle__icon-wrapper">
+                    <svg width="20" height="19" xmlns="http://www.w3.org/2000/svg" class="order-summary-toggle__icon">
+                        <path d="M17.178 13.088H5.453c-.454 0-.91-.364-.91-.818L3.727 1.818H0V0h4.544c.455 0 .91.364.91.818l.09 1.272h13.45c.274 0 .547.09.73.364.18.182.27.454.18.727l-1.817 9.18c-.09.455-.455.728-.91.728zM6.27 11.27h10.09l1.454-7.362H5.634l.637 7.362zm.092 7.715c1.004 0 1.818-.813 1.818-1.817s-.814-1.818-1.818-1.818-1.818.814-1.818 1.818.814 1.817 1.818 1.817zm9.18 0c1.004 0 1.817-.813 1.817-1.817s-.814-1.818-1.818-1.818-1.818.814-1.818 1.818.814 1.817 1.818 1.817z"
+                        />
+                    </svg>
+                </span>
+                <span class="order-summary-toggle__text order-summary-toggle__text--show">
+                    <span>Show order summary</span>
+                    <svg width="11" height="6" xmlns="http://www.w3.org/2000/svg" class="order-summary-toggle__dropdown" fill="#000">
+                        <path d="M.504 1.813l4.358 3.845.496.438.496-.438 4.642-4.096L9.504.438 4.862 4.534h.992L1.496.69.504 1.812z"
+                        />
+                    </svg>
+                </span>
+                <span class="order-summary-toggle__text order-summary-toggle__text--hide">
+                    <span>Hide order summary</span>
+                    <svg width="11" height="7" xmlns="http://www.w3.org/2000/svg" class="order-summary-toggle__dropdown" fill="#000">
+                        <path d="M6.138.876L5.642.438l-.496.438L.504 4.972l.992 1.124L6.138 2l-.496.436 3.862 3.408.992-1.122L6.138.876z"
+                        />
+                    </svg>
+                </span>
+                <span class="order-summary-toggle__total-recap total-recap" data-order-summary-section="toggle-total-recap">
+                    <span class="total-recap__final-price" data-checkout-payment-due-target="2400">$24.00</span>
+                </span>
+            </span>
+        </span>
+    </button>
+
+
+
+
+    <div class="content" data-content>
+        <div class="wrap">
+            <div class="main" role="main">
+                <div class="main__header">
+
+                    <a class="logo logo--left" href="https://shop.bdgastore.com">
+                        <img alt="Bodega " class="logo__image logo__image--medium" src="//cdn.shopify.com/s/files/1/0049/9112/files/Untitled-3-01.jpg?3240142235776778559"
+                        />
+                    </a>
+                    <h1 class="visually-hidden">
+                        Payment method
+                    </h1>
+
+
+                    <ul class="breadcrumb ">
+                        <li class="breadcrumb__item breadcrumb__item--completed">
+                            <a class="breadcrumb__link" href="https://shop.bdgastore.com/cart">Cart</a>
+                            <svg class="icon-svg icon-svg--size-10 breadcrumb__chevron-icon" aria-hidden="true" focusable="false">
+                                <use xlink:href="#chevron-right" /> </svg>
+                        </li>
+
+                        <li class="breadcrumb__item breadcrumb__item--blank">
+                            <a class="breadcrumb__link" href="/499112/checkouts/605a805a2765f0406a6e6a6c4847e3f0?step=contact_information">Customer information</a>
+                            <svg class="icon-svg icon-svg--size-10 breadcrumb__chevron-icon" aria-hidden="true" focusable="false">
+                                <use xlink:href="#chevron-right" /> </svg>
+                        </li>
+                        <li class="breadcrumb__item breadcrumb__item--blank">
+                            <span class="breadcrumb__text">Shipping method</span>
+                            <svg class="icon-svg icon-svg--size-10 breadcrumb__chevron-icon" aria-hidden="true" focusable="false">
+                                <use xlink:href="#chevron-right" /> </svg>
+                        </li>
+                        <li class="breadcrumb__item breadcrumb__item--current">
+                            <span class="breadcrumb__text" aria-current="step">Payment method</span>
+                        </li>
+                    </ul>
+
+
+
+                    <div data-alternative-payments>
+                    </div>
+
+
+
+                </div>
+                <div class="main__content">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    <div class="step" data-step="payment_method">
+                        <noscript>
+                            <meta http-equiv="refresh" content="1;" />
+                        </noscript>
+                        <div class="content-box blank-slate" data-poll-refresh="[data-step=payment_method], [data-order-summary-section=payment-lines], [data-order-summary-section=toggle-total-recap]"
+                            data-poll-target="/499112/checkouts/605a805a2765f0406a6e6a6c4847e3f0?step=payment_method">
+                            <svg class="icon-svg icon-svg--color-accent icon-svg--size-32 icon-svg--spinner blank-slate__icon" aria-hidden="true" focusable="false">
+                                <use xlink:href="#spinner-small" /> </svg>
+                            <p>
+                                <span class="blank-slate__title emphasis">Calculating taxes</span>
+                                If your taxes don't calculate within the next few seconds,
+                                <a href='/499112/checkouts/605a805a2765f0406a6e6a6c4847e3f0'>refresh&nbsp;the&nbsp;page</a>.
+                            </p>
+                        </div>
+
+
+                    </div>
+
+
+                    <span class="visually-hidden" id="forwarding-external-new-window-message">
+                        Opens external website in a new window.
+                    </span>
+
+                    <span class="visually-hidden" id="forwarding-new-window-message">
+                        Opens in a new window.
+                    </span>
+
+                    <span class="visually-hidden" id="forwarding-external-message">
+                        Opens external website.
+                    </span>
+
+                    <span class="visually-hidden" id="checkout-context-step-one">
+                        Customer information - Bodega - Checkout
+                    </span>
+
+
+
+
+                </div>
+                <div class="main__footer">
+                    <div role="contentinfo" aria-label="Footer">
+                        <ul class="policy-list">
+                            <li class="policy-list__item">
+                                <a aria-haspopup="dialog" data-modal="policy-108242" data-close-text="Close" href="/499112/policies/108242.html">Refund policy</a>
+                            </li>
+                            <li class="policy-list__item">
+                                <a aria-haspopup="dialog" data-modal="policy-108252" data-close-text="Close" href="/499112/policies/108252.html">Privacy policy</a>
+                            </li>
+                            <li class="policy-list__item">
+                                <a aria-haspopup="dialog" data-modal="policy-108262" data-close-text="Close" href="/499112/policies/108262.html">Terms of service</a>
+                            </li>
+                        </ul>
+
+
+                    </div>
+
+
+                </div>
+            </div>
+            <div class="sidebar" role="complementary">
+                <div class="sidebar__header">
+
+                    <a class="logo logo--left" href="https://shop.bdgastore.com">
+                        <img alt="Bodega " class="logo__image logo__image--medium" src="//cdn.shopify.com/s/files/1/0049/9112/files/Untitled-3-01.jpg?3240142235776778559"
+                        />
+                    </a>
+                    <h1 class="visually-hidden">
+                        Payment method
+                    </h1>
+
+
+                </div>
+                <div class="sidebar__content">
+                    <div id="order-summary" class="order-summary order-summary--is-collapsed" data-order-summary>
+                        <h2 class="visually-hidden-if-js">Order summary</h2>
+
+                        <div class="order-summary__sections">
+
+                            <div class="order-summary__section order-summary__section--product-list">
+                                <div class="order-summary__section__content">
+                                    <table class="product-table">
+                                        <caption class="visually-hidden">Shopping cart</caption>
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">
+                                                    <span class="visually-hidden">Product image</span>
+                                                </th>
+                                                <th scope="col">
+                                                    <span class="visually-hidden">Description</span>
+                                                </th>
+                                                <th scope="col">
+                                                    <span class="visually-hidden">Quantity</span>
+                                                </th>
+                                                <th scope="col">
+                                                    <span class="visually-hidden">Price</span>
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody data-order-summary-section="line-items">
+                                            <tr class="product " data-product-id="72354889736" data-variant-id="1089770684424" data-product-type="T-Shirts" data-customer-ready-visible>
+                                                <td class="product__image">
+                                                    <div class="product-thumbnail">
+                                                        <div class="product-thumbnail__wrapper">
+                                                            <img alt="Pleasures DEAD CREW T SHIRT Black" class="product-thumbnail__image" src="//cdn.shopify.com/s/files/1/0049/9112/products/Pleasures_DEAD_CREW_T_SHIRT_BLACK_2_small.jpg?3240142235776778559"
+                                                            />
+                                                        </div>
+                                                        <span class="product-thumbnail__quantity" aria-hidden="true">1</span>
+                                                    </div>
+
+                                                </td>
+                                                <td class="product__description">
+                                                    <span class="product__description__name order-summary__emphasis">DEAD CREW T SHIRT</span>
+                                                    <span class="product__description__variant order-summary__small-text">BLACK / S</span>
+
+                                                </td>
+                                                <td class="product__quantity visually-hidden">
+                                                    1
+                                                </td>
+                                                <td class="product__price">
+                                                    <span class="order-summary__emphasis">$24.00</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+
+                                    <div class="order-summary__scroll-indicator" aria-hidden="true" tabindex="-1">
+                                        Scroll for more items
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="12" viewBox="0 0 10 12">
+                                            <path d="M9.817 7.624l-4.375 4.2c-.245.235-.64.235-.884 0l-4.375-4.2c-.244-.234-.244-.614 0-.848.245-.235.64-.235.884 0L4.375 9.95V.6c0-.332.28-.6.625-.6s.625.268.625.6v9.35l3.308-3.174c.122-.117.282-.176.442-.176.16 0 .32.06.442.176.244.234.244.614 0 .848"
+                                            />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="order-summary__section order-summary__section--discount shown-if-js" data-reduction-form="update">
+                                <h3 class="visually-hidden">Gift card or discount code</h3>
+
+                                <form class="edit_checkout" action="/499112/checkouts/605a805a2765f0406a6e6a6c4847e3f0" accept-charset="UTF-8" method="post">
+                                    <input name="utf8" type="hidden" value="&#x2713;" />
+                                    <input type="hidden" name="_method" value="patch" />
+                                    <input type="hidden" name="authenticity_token" value="zE9AiT1DM1LVUqfdZ4eHYzIH9QILxoqO1y2+xLaB/Cc67N8R+8aZH37FPErLl1CPas+0U7pOncS4YFPYUtniMQ=="
+                                    />
+                                    <input type="hidden" name="step" value="payment_method" />
+
+                                    <div class="fieldset">
+                                        <div class="field ">
+                                            <label class="field__label" for="checkout_reduction_code">Gift card or discount code</label>
+                                            <div class="field__input-btn-wrapper">
+                                                <div class="field__input-wrapper">
+                                                    <input placeholder="Gift card or discount code" class="field__input" data-discount-field="true" autocomplete="off" aria-required="true"
+                                                        size="30" type="text" name="checkout[reduction_code]" id="checkout_reduction_code"
+                                                    />
+                                                </div>
+
+                                                <button name="button" type="submit" class="field__input-btn btn btn--disabled" aria-busy="false">
+                                                    <span class="btn__content visually-hidden-on-mobile" aria-hidden="true">
+                                                        Apply
+                                                    </span>
+                                                    <span class="visually-hidden">
+                                                        Apply Discount Code
+                                                    </span>
+                                                    <svg class="icon-svg icon-svg--size-16 btn__icon shown-on-mobile" aria-hidden="true" focusable="false">
+                                                        <use xlink:href="#arrow" /> </svg>
+                                                    <svg class="icon-svg icon-svg--size-18 btn__spinner icon-svg--spinner-button" aria-hidden="true" focusable="false">
+                                                        <use xlink:href="#spinner-button" /> </svg>
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </form>
+                                <form class="edit_checkout" action="/499112/checkouts/605a805a2765f0406a6e6a6c4847e3f0" accept-charset="UTF-8" method="post">
+                                    <input name="utf8" type="hidden" value="&#x2713;" />
+                                    <input type="hidden" name="_method" value="patch" />
+                                    <input type="hidden" name="authenticity_token" value="DxGZ5U1GHQKi1UNQY/BRFHpM7qLgWYK5VA5Xla3RRtr5sgZ9i8O3TwlC2MfP4Ib4IoSv81HRlfM7Q7qJSYlYzA=="
+                                    />
+                                    <input type="hidden" name="step" value="payment_method" />
+
+                                </form>
+                            </div>
+
+                            <div class="order-summary__section order-summary__section--total-lines" data-order-summary-section="payment-lines">
+                                <table class="total-line-table">
+                                    <caption class="visually-hidden">Cost summary</caption>
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">
+                                                <span class="visually-hidden">Description</span>
+                                            </th>
+                                            <th scope="col">
+                                                <span class="visually-hidden">Price</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="total-line-table__tbody">
+                                        <tr class="total-line total-line--subtotal">
+                                            <th class="total-line__name" scope="row">Subtotal</th>
+                                            <td class="total-line__price">
+                                                <span class="order-summary__emphasis" data-checkout-subtotal-price-target="2400">
+                                                    $24.00
+                                                </span>
+                                            </td>
+                                        </tr>
+
+
+                                        <tr class="total-line total-line--shipping">
+                                            <th class="total-line__name" scope="row">Shipping</th>
+                                            <td class="total-line__price">
+                                                <span class="order-summary__emphasis" data-checkout-total-shipping-target="0">
+                                                    <span aria-hidden="true">—</span>
+                                                    <span class="visually-hidden">Not yet available</span>
+                                                </span>
+                                            </td>
+                                        </tr>
+
+                                        <tr class="total-line total-line--taxes hidden" data-checkout-taxes>
+                                            <th class="total-line__name" scope="row">Taxes</th>
+                                            <td class="total-line__price">
+                                                <span class="order-summary__emphasis" data-checkout-total-taxes-target="0">$0.00</span>
+                                            </td>
+                                        </tr>
+
+
+
+                                    </tbody>
+                                    <tfoot class="total-line-table__footer">
+                                        <tr class="total-line">
+                                            <th class="total-line__name payment-due-label" scope="row">
+                                                <span class="payment-due-label__total">Total</span>
+                                            </th>
+                                            <td class="total-line__price payment-due">
+                                                <span class="payment-due__currency">USD</span>
+                                                <span class="payment-due__price" data-checkout-payment-due-target="2400">
+                                                    $24.00
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+
+                                <div class="visually-hidden" aria-live="polite" aria-atomic="true" role="status">
+                                    Updated total price:
+                                    <span data-checkout-payment-due-target="2400">
+                                        $24.00
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div id="partial-icon-symbols" data-tg-refresh="partial-icon-symbols" data-tg-refresh-always="true" style="display: none;">
+                        <svg xmlns="http://www.w3.org/2000/svg">
+                            <symbol id="spinner-small">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                    <path d="M32 16c0 8.837-7.163 16-16 16S0 24.837 0 16 7.163 0 16 0v2C8.268 2 2 8.268 2 16s6.268 14 14 14 14-6.268 14-14h2z"
+                                    />
+                                </svg>
+                            </symbol>
+                            <symbol id="chevron-right">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">
+                                    <path d="M2 1l1-1 4 4 1 1-1 1-4 4-1-1 4-4" />
+                                </svg>
+                            </symbol>
+                            <symbol id="arrow">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+                                    <path d="M16 8.1l-8.1 8.1-1.1-1.1L13 8.9H0V7.3h13L6.8 1.1 7.9 0 16 8.1z" />
+                                </svg>
+                            </symbol>
+                            <symbol id="spinner-button">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M20 10c0 5.523-4.477 10-10 10S0 15.523 0 10 4.477 0 10 0v2c-4.418 0-8 3.582-8 8s3.582 8 8 8 8-3.582 8-8h2z"
+                                    />
+                                </svg>
+                            </symbol>
+                            <symbol id="close">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                    <path d="M17.1 4.3l-1.4-1.4L10 8.6 4.3 2.9 2.9 4.3 8.6 10l-5.7 5.7 1.4 1.4 5.7-5.7 5.7 5.7 1.4-1.4-5.7-5.7z"
+                                    />
+                                </svg>
+                            </symbol>
+                        </svg>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.ShopifyAnalytics = window.ShopifyAnalytics || {};
+        window.ShopifyAnalytics.meta = window.ShopifyAnalytics.meta || {};
+        window.ShopifyAnalytics.meta.currency = 'USD';
+        var meta = { "page": { "path": "\/checkout\/payment", "search": "", "url": "https:\/\/shop.bdgastore.com\/499112\/checkouts\/605a805a2765f0406a6e6a6c4847e3f0?step=payment_method" }, "checkout": { "payment_due": 2400 } };
+        for (var attr in meta) {
+            window.ShopifyAnalytics.meta[attr] = meta[attr];
+        }
+    </script>
+    <script>window.ShopifyAnalytics.merchantGoogleAnalytics = function () {
+            ga('require', 'linkid');
+        };
+    </script>
+    <script class="analytics">(window.gaDevIds = window.gaDevIds || []).push('BwiEti');
+
+
+        (function () {
+            var customDocumentWrite = function (content) {
+                var jquery = null;
+
+                if (window.jQuery) {
+                    jquery = window.jQuery;
+                } else if (window.Checkout && window.Checkout.$) {
+                    jquery = window.Checkout.$;
+                }
+
+                if (jquery) {
+                    jquery('body').append(content);
+                }
+            };
+
+            var trekkie = window.ShopifyAnalytics.lib = window.trekkie = window.trekkie || [];
+            if (trekkie.integrations) {
+                return;
+            }
+            trekkie.methods = [
+                'identify',
+                'page',
+                'ready',
+                'track',
+                'trackForm',
+                'trackLink'
+            ];
+            trekkie.factory = function (method) {
+                return function () {
+                    var args = Array.prototype.slice.call(arguments);
+                    args.unshift(method);
+                    trekkie.push(args);
+                    return trekkie;
+                };
+            };
+            for (var i = 0; i < trekkie.methods.length; i++) {
+                var key = trekkie.methods[i];
+                trekkie[key] = trekkie.factory(key);
+            }
+            trekkie.load = function (config) {
+                trekkie.config = config;
+                var script = document.createElement('script');
+                script.type = 'text/javascript';
+                script.onerror = function (e) {
+                    (new Image()).src = '//v.shopify.com/internal_errors/track?error=trekkie_load';
+                };
+                script.async = true;
+                script.src = 'https://cdn.shopify.com/s/javascripts/tricorder/trekkie.storefront.min.js?v=2017.09.05.1';
+                var first = document.getElementsByTagName('script')[0];
+                first.parentNode.insertBefore(script, first);
+            };
+            trekkie.load(
+                { "Trekkie": { "appName": "checkout", "development": false, "defaultAttributes": { "shopId": 499112, "isMerchantRequest": null, "themeId": 93548740, "themeCityHash": 10106694230089586351, "checkoutToken": "605a805a2765f0406a6e6a6c4847e3f0" } }, "Performance": { "navigationTimingApiMeasurementsEnabled": true, "navigationTimingApiMeasurementsSampleRate": 1.0 }, "Google Analytics": { "trackingId": "UA-19674211-1", "domain": "auto", "siteSpeedSampleRate": "10", "enhancedEcommerce": true, "doubleClick": true, "includeSearch": true }, "Facebook Pixel": { "pixelIds": ["288861404863414"], "agent": "plshopify1.2" }, "Clickstream": {}, "Session Attribution": {} }
+            );
+
+            var loaded = false;
+            trekkie.ready(function () {
+                if (loaded) return;
+                loaded = true;
+
+                window.ShopifyAnalytics.lib = window.trekkie;
+
+                ga('require', 'linker');
+                function addListener(element, type, callback) {
+                    if (element.addEventListener) {
+                        element.addEventListener(type, callback);
+                    }
+                    else if (element.attachEvent) {
+                        element.attachEvent('on' + type, callback);
+                    }
+                }
+                function decorate(event) {
+                    event = event || window.event;
+                    var target = event.target || event.srcElement;
+                    if (target && (target.getAttribute('action') || target.getAttribute('href'))) {
+                        ga(function (tracker) {
+                            var linkerParam = tracker.get('linkerParam');
+                            document.cookie = '_shopify_ga=' + linkerParam + '; ' + 'path=/';
+                        });
+                    }
+                }
+                addListener(window, 'load', function () {
+                    for (var i = 0; i < document.forms.length; i++) {
+                        var action = document.forms[i].getAttribute('action');
+                        if (action && action.indexOf('/cart') >= 0) {
+                            addListener(document.forms[i], 'submit', decorate);
+                        }
+                    }
+                    for (var i = 0; i < document.links.length; i++) {
+                        var href = document.links[i].getAttribute('href');
+                        if (href && href.indexOf('/checkout') >= 0) {
+                            addListener(document.links[i], 'click', decorate);
+                        }
+                    }
+                });
+
+
+                var originalDocumentWrite = document.write;
+                document.write = customDocumentWrite;
+                try { window.ShopifyAnalytics.merchantGoogleAnalytics.call(this); } catch (error) { };
+                document.write = originalDocumentWrite;
+
+
+                window.ShopifyAnalytics.lib.page(
+                    "Checkout - Payment",
+                    { "path": "\/checkout\/payment", "search": "", "url": "https:\/\/shop.bdgastore.com\/499112\/checkouts\/605a805a2765f0406a6e6a6c4847e3f0?step=payment_method" }
+                );
+
+
+                window.ShopifyAnalytics.lib.track(
+                    "Started Order",
+                    { "step": 1, "products": [{ "variantId": 1089770684424, "productId": 72354889736, "category": "T-Shirts", "sku": "210000169268", "name": "DEAD CREW T SHIRT - BLACK \/ S", "price": "24.00", "quantity": 1, "brand": "Pleasures", "variant": "BLACK \/ S" }], "currency": "USD", "revenue": "24.00" }
+                );
+
+            });
+
+
+            var eventsListenerScript = document.createElement('script');
+            eventsListenerScript.async = true;
+            eventsListenerScript.src = "//cdn.shopify.com/s/assets/shop_events_listener-f2c5800305098f0ebebdfa7d980c9abf56514c46d5305e97a7c476f7c9116163.js";
+            document.getElementsByTagName('head')[0].appendChild(eventsListenerScript);
+
+        })();
+    </script>
+</body>
+
+</html>

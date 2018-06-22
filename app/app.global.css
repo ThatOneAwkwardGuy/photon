@@ -1,0 +1,527 @@
+/*
+ * @NOTE: Prepend a `~` to css file paths that are in your node_modules
+ *        See https://github.com/webpack-contrib/sass-loader#imports
+ */
+
+@import "../node_modules/font-awesome/css/font-awesome.css";
+@import "../node_modules/bootstrap/dist/css/bootstrap.css";
+
+html,
+body,
+#app,
+#app > div,
+.rootContainer,
+.container-fluid,
+row .activeContainerInner.col,
+.activeContainerOuter,
+.routeContainer,
+.rootContainer > div,
+.tableContainer.activeContainerInner {
+  height: 100% !important;
+}
+
+html {
+  background-color: #1a1e2f;
+}
+
+.activeContainerOuter {
+  overflow: scroll;
+}
+
+.rootContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+body {
+  background-color: #1a1e2f;
+  font-family: "Avenir";
+  width: 100%;
+  color: white;
+}
+
+.topbar {
+  background-color: #1a1e2f;
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+  flex: 1;
+}
+
+.topbarMiddle {
+  background-color: #1a1e2f;
+}
+
+.loginTopBar {
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+  flex: 1;
+  z-index: 999;
+}
+
+.logo {
+  margin-top: 20px;
+  width: 100px;
+  -webkit-app-region: drag;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.active {
+  width: 100%;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  flex: 1;
+}
+
+.sidebar {
+  background-color: #1a1e2f;
+  user-select: none;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
+  flex-direction: column;
+  display: flex;
+}
+
+.rightSidebar {
+  background-color: #1a1e2f;
+  user-select: none;
+  flex-direction: column;
+  display: flex;
+  flex-grow: 1;
+}
+
+.sidebar button {
+  font-weight: 700;
+  text-align: center;
+}
+.list-group {
+  margin-top: 20px;
+}
+
+.list-group-item-action.list-group-item {
+  background-color: inherit;
+  color: #9b9ea9;
+  outline: none;
+  border-radius: 0;
+  padding: 10px 40px 10px 40px !important;
+}
+
+.list-group-item-action.list-group-item:hover {
+  /* background-color: #404351; */
+  transition: color 0.5s;
+  color: white;
+  /* color: #03a9f4; */
+}
+
+.active.list-group-item-action.list-group-item {
+  /* background-color: #1a1e2f; */
+  transition: border-left 0.5s;
+  border-left: solid 5px #03a9f4 !important;
+  color: white;
+  outline: none;
+}
+
+.btn.btn-secondary {
+  background-color: #03a9f4;
+}
+
+.activeContainerInner {
+  padding: 20px 0px 20px 0px;
+  background-color: #1a1e2f;
+
+  /* box-shadow: inset 10px 0px 9px -7px rgba(0, 0, 0, 0.7);} */
+}
+
+.tableContainer {
+  padding-top: 0px !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebarIcon {
+  float: left;
+}
+
+label {
+  color: white;
+  font-weight: 500;
+}
+
+.activeContainerOuter > div,
+.list-group {
+  width: 100%;
+}
+
+input[type="text"],
+input[type="password"],
+input,
+textarea,
+select {
+  border-radius: 0px !important;
+  border: none !important;
+  border-bottom: solid 1px #03a9f4 !important;
+  transition: border 0.5s;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #1a1e2f !important;
+  color: white !important;
+  font-weight: 700;
+}
+
+input[type="text"]:focus,
+select:focus {
+  transition: border 0.5s;
+  border: none !important;
+  outline: none !important;
+  border-color: inherit !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-right: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: solid 5px #03a9f4 !important;
+  transition: border-left 0.5s;
+}
+
+*:focus {
+  outline: none !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+}
+
+table {
+  color: white;
+  font-weight: 700;
+}
+
+thead th {
+  background-color: #1a1e2f;
+  border: none;
+}
+
+table thead th {
+  border: none !important;
+}
+
+.primaryButton {
+  background-color: #1a1e2f;
+  color: white;
+  font-weight: 700;
+  border: none !important;
+}
+
+.primaryButton:hover {
+  background-color: #11a9bd;
+}
+
+button {
+  color: white;
+  font-weight: 700 !important;
+  border: none !important;
+}
+
+.taskButton.btn.btn-secondary {
+  background-color: #1a1e2f !important;
+}
+
+.taskButton:hover {
+  box-shadow: none !important;
+  color: #03a9f4;
+}
+
+.primaryButton:hover,
+.btn.btn-secondary:hover {
+  background-color: #03a9f4;
+  box-shadow: 0 5px 15px rgba(3, 169, 244, 1);
+}
+
+.green {
+  color: #4caf50;
+}
+
+.btn.btn-danger {
+  background-color: #f44336;
+}
+
+.btn.btn-danger:hover {
+  box-shadow: 0 5px 15px rgba(244, 67, 54, 1);
+}
+
+.red {
+  color: #f44336;
+}
+
+.yellow {
+  color: #ffeb3b;
+}
+
+button.btn.btn-secondary {
+  background-color: none !important;
+}
+
+td,
+tr,
+table {
+  background-color: #1a1e2f !important;
+}
+
+td {
+  border: none !important;
+}
+
+/* tr:not(:first-child) {
+  border-top: solid 1px white;
+  border-bottom: solid 1px white;
+} */
+
+.homeContainer,
+.loginContainer {
+  flex: 1;
+  height: calc(100% - 141px);
+}
+
+.loginContainer {
+  justify-content: center;
+  display: flex;
+  flex-direction: column;
+}
+
+svg {
+  cursor: default;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  display: inline-block;
+}
+
+.footer svg {
+  height: 20px;
+}
+
+.versionNum {
+  display: flex;
+  align-items: flex-end;
+}
+
+.loginFooter .footerLeftSection {
+  background-color: transparent;
+  border-right: none !important;
+}
+
+.footer {
+  height: 70px;
+}
+
+.footerLeftSection {
+  background-color: #1a1e2f;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.footerLeftSection div {
+  display: inline-block !important;
+}
+
+.footerRightSection {
+  background-color: #1a1e2f;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.footerCenterSection {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.topSideBarSection {
+  flex: 1;
+}
+
+.sideBarBottom {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+}
+
+.signedinicon {
+  height: 10px;
+  text-align: right;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.alert.alert-danger {
+  border-radius: 0px !important;
+  border: none;
+  background-color: #f44336;
+  color: white;
+  font-family: "Avenir";
+  font-weight: 500;
+}
+
+.tableContainer .table-responsive {
+  overflow: scroll;
+  flex: 1;
+}
+
+.fade-appear,
+.fade-exit {
+  opacity: 0.01 !important;
+}
+
+.fade-appear.fade-appear-active,
+.fade-exit-done {
+  opacity: 1 !important;
+  transition: opacity 300ms ease-in !important;
+}
+
+canvas {
+  position: absolute;
+}
+
+.statusIcon {
+  height: 100%;
+  color: #fed58c;
+  background-color: initial;
+  fill: #fed58c;
+}
+
+.modal-content {
+  border-radius: 0px !important;
+  background-color: #1a1e2f !important;
+}
+
+.loginTopBar .topBarLogoCol,
+.loginTopBar .topbar {
+  background-color: transparent;
+  border-right: none !important;
+}
+
+.topbarOptionsCol {
+  background-color: #1a1e2f;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+
+.windowButton {
+  width: 20px;
+  align-self: flex-end;
+}
+
+.taskTableButtonsContainer {
+  margin-top: 20px;
+}
+
+.captchaTopbar {
+  height: 30px;
+  -webkit-app-region: drag;
+}
+
+.captchaFooter {
+  height: 50px;
+}
+
+.modal-footer {
+  border-top: none;
+}
+
+.card {
+  background-color: transparent;
+  border: none;
+  border-radius: 0px;
+  text-align: center;
+  font-size: 0.7rem;
+}
+
+.tint {
+  position: relative;
+  border-radius: 0px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.tint .card-body {
+  cursor: pointer !important;
+}
+
+/* .tint::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(99, 168, 238, 0.2);
+  transition: all 0.3s linear;
+} */
+
+.releaseCardImg {
+  border-radius: 0px;
+  border-left: solid 5px #03a9f4;
+}
+
+.releaseCard {
+  border-radius: 0px;
+  -webkit-animation: fadein 0.5s;
+  margin-bottom: 10px;
+}
+
+.card-body {
+  border-left: solid 5px #03a9f4;
+}
+
+.card-body:hover {
+  box-shadow: 0 5px 15px rgba(3, 169, 244, 1);
+}
+
+.releaseCard .card-body {
+  background-color: white;
+  color: #03a9f4;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.releaseStoresList .list-group-item {
+  border-radius: 0;
+  color: #03a9f4;
+  border-left: solid 5px #03a9f4;
+  cursor: pointer !important;
+}
+
+.releaseStoresList {
+  margin-top: 0px;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+.updateAlert {
+  position: absolute;
+  z-index: 99;
+  right: 0;
+  max-width: 300px;
+}
