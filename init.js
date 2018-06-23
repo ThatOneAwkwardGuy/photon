@@ -1,1 +1,1 @@
-require('./build/main');
+require("./webpack-pack/main.js");

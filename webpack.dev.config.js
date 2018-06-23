@@ -1,13 +1,17 @@
-const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
+// const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const path = require("path");
+const webpack = require("webpack");
+var LiveReloadPlugin = require("webpack-livereload-plugin");
+
 const mainConfig = {
-  mode: "production",
+  mode: "development",
   target: "electron-main",
   entry: { main: "./app/main.js", vendor: ["firebase"] },
   output: {
-    path: __dirname + "/webpack-pack",
-    filename: "[name].js"
+    path: path.resolve(__dirname, "webpack-pack") + "/",
+    filename: "[name].js",
+    publicPath: path.resolve(__dirname, "webpack-pack") + "/"
   },
   node: {
     __dirname: false,
@@ -19,45 +23,43 @@ const mainConfig = {
         test: /\.jsx?$/,
         loader: "babel-loader",
         options: {
-          presets: "minify"
+          presets: ["es2015", "stage-0", "react"],
+          plugins: ["transform-decorators-legacy", "transform-runtime"]
         },
-        exclude: /node_modules/
+        exclude: /node_modules(?!\/webpack-dev-server)/
       }
     ]
   },
-  plugins: [
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        output: {
-          comments: false,
-          beautify: false
-        }
-      }
-    })
-  ],
+  plugins: [],
   resolve: {
     extensions: [".js", ".json", ".jsx"]
   }
 };
 
 const appConfig = {
-  mode: "production",
+  mode: "development",
   target: "electron-renderer",
   entry: "./app/app.js",
   output: {
-    path: __dirname + "/webpack-pack",
-    filename: "app.js"
+    path: path.resolve(__dirname, "webpack-pack/") + "/",
+    filename: "app.js",
+    publicPath: path.resolve(__dirname, "webpack-pack/") + "/"
   },
-
+  devServer: {
+    // contentBase: path.resolve(__dirname, "./"),
+    // publicPath: path.resolve(__dirname, "webpack-pack/")
+    hot: true
+  },
   module: {
     rules: [
       {
         test: /\.jsx?$/,
         loader: "babel-loader",
         options: {
-          presets: "minify"
+          presets: ["es2015", "stage-0", "react"],
+          plugins: ["transform-decorators-legacy", "transform-runtime"]
         },
-        exclude: /node_modules/
+        exclude: /node_modules(?!\/webpack-dev-server)/
       },
       {
         test: /\.css$/,
@@ -74,19 +76,12 @@ const appConfig = {
     ]
   },
   plugins: [
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        output: {
-          comments: false,
-          beautify: false
-        }
-      }
-    }),
     new HtmlWebpackPlugin({
       title: "Photon",
-      template: "./app/index.html",
-      inject: false
-    })
+      template: "./app/index.html"
+      //   inject: false
+    }),
+    new LiveReloadPlugin()
   ],
   resolve: {
     extensions: [".js", ".json", ".jsx"]

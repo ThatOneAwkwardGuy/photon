@@ -2,7 +2,7 @@
   "name": "Photon",
   "version": "0.0.0",
   "description": "Photon AIO Bot",
-  "main": "./webpack-pack/build/main.js",
+  "main": "./webpack-pack/main.js",
   "author": {
     "name": "ThatOneAwkwardGuy",
     "email": "support@photonaio.app"
@@ -16,11 +16,10 @@
       "category": "com.photon.bot"
     },
     "win": {},
-    "files": "webpack-pack"
+    "files": "webpack-pack/"
   },
   "dependencies": {
     "babel-preset-minify": "^0.5.0-alpha.a24dd066",
-    "babel-runtime": "^6.22.0",
     "bootstrap": "^4.1.1",
     "cheerio": "^1.0.0-rc.2",
     "electron-updater": "^2.21.10",
@@ -73,8 +72,11 @@
     "babel-preset-es2015": "^6.1.18",
     "babel-preset-react": "^6.22.0",
     "babel-preset-stage-0": "^6.1.18",
+    "babel-register": "^6.26.0",
+    "babel-runtime": "^6.26.0",
     "browser-sync": "^2.23.6",
     "chai": "^4.1.0",
+    "cross-env": "^5.2.0",
     "css-loader": "^0.28.11",
     "electron": "2.0.2",
     "electron-builder": "^20.15.3",
@@ -83,6 +85,7 @@
     "eslint": "^4.3.0",
     "eslint-plugin-react": "^7.1.0",
     "file-loader": "^1.1.11",
+    "html-webpack-harddisk-plugin": "^0.2.0",
     "html-webpack-plugin": "^3.2.0",
     "image-webpack-loader": "^4.3.1",
     "mini-css-extract-plugin": "^0.4.0",
@@ -96,7 +99,9 @@
     "uglifyjs-webpack-plugin": "^1.2.6",
     "url-loader": "^1.0.1",
     "webpack": "^4.12.0",
-    "webpack-cli": "^3.0.8"
+    "webpack-cli": "^3.0.8",
+    "webpack-dev-server": "^3.1.4",
+    "webpack-livereload-plugin": "^2.1.1"
   },
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -104,8 +109,11 @@
     "test": "electron-mocha --renderer -R spec --require babel-core/register test/**/*.spec.js",
     "lint": "eslint --no-ignore scripts app test *.js",
     "pack": "run-s private:clean private:compile private:build:all",
-    "webpack:pack": "webpack --mode development --config webpack.build.config.js",
-    "webpack:build": "electron-builder -mw",
+    "webpack:dev": "run-p webpack:dev:server webpack:dev:start",
+    "webpack:dev:server": "webpack --watch --config webpack.dev.config.js",
+    "webpack:dev:start": "cross-env BABEL_ENV=electron NODE_ENV=development electron -r babel-register webpack-pack/main.js",
+    "webpack:prod:pack": "NODE_ENV=production webpack --mode production --config webpack.build.config.js",
+    "webpack:prod:build": "NODE_ENV=production electron-builder -mw",
     "dist": "GH_TOKEN=912c34e85a9d67783b0edd1982f6e5d1bc6a124e electron-builder -mw --x64 -p always",
     "pack:mac": "run-s private:clean private:compile private:build:mac",
     "pack:win": "run-s private:clean private:compile private:build:win",

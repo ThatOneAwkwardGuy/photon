@@ -9,6 +9,7 @@ import "../node_modules/font-awesome/css/font-awesome.css";
 import "../node_modules/bootstrap/dist/css/bootstrap.css";
 import "./fonts/stylesheet.css";
 import "./app.global.css";
+
 const syncHistoryWithStore = (store, history) => {
   const { routing } = store.getState();
   if (routing && routing.location) {

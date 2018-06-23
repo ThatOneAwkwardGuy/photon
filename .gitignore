@@ -6,3 +6,5 @@ build/
 dist/
 
 electron-builder\.yml
+
+webpack-pack/
