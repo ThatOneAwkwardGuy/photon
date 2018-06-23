@@ -1,14 +1,14 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { Provider } from "react-redux";
-import { ConnectedRouter } from "react-router-redux";
-import { createMemoryHistory } from "history";
-import routes from "./routes";
-import configureStore from "./store";
-import "../node_modules/font-awesome/css/font-awesome.css";
-import "../node_modules/bootstrap/dist/css/bootstrap.css";
-import "./fonts/stylesheet.css";
-import "./app.global.css";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import { ConnectedRouter } from 'react-router-redux';
+import { createMemoryHistory } from 'history';
+import routes from './routes';
+import configureStore from './store';
+import '../node_modules/font-awesome/css/font-awesome.css';
+import '../node_modules/bootstrap/dist/css/bootstrap.css';
+import './fonts/stylesheet.css';
+import './app.global.css';
 
 const syncHistoryWithStore = (store, history) => {
   const { routing } = store.getState();
@@ -22,7 +22,7 @@ const routerHistory = createMemoryHistory();
 const store = configureStore(initialState, routerHistory);
 syncHistoryWithStore(store, routerHistory);
 
-const rootElement = document.querySelector(document.currentScript.getAttribute("data-container"));
+const rootElement = document.querySelector(document.currentScript.getAttribute('data-container'));
 
 ReactDOM.render(
   <Provider store={store}>

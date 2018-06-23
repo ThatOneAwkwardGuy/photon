@@ -1,21 +1,21 @@
-import React, { Component } from "react";
-import { Alert, Container, Row, Col } from "reactstrap";
-import Sidebar from "../components/Sidebar";
-import Active from "./Active";
-import Topbar from "../components/Topbar";
-import Footer from "../components/Footer";
-import { auth } from "../api/firebase/";
-import { webview, remote, ipcRenderer } from "electron";
-import { ALERT_RENDERER_OF_QUIT, ALERT_UPDATE_AVAILABLE, CHECK_FOR_UPDATE, BEGIN_UPDATE } from "../utils/constants";
-import { setUserToCurrentlyActive, setUserToCurrentlyInactive } from "../api/firebase/firestore";
+import React, { Component } from 'react';
+import { Alert, Container, Row, Col } from 'reactstrap';
+import Sidebar from '../components/Sidebar';
+import Active from './Active';
+import Topbar from '../components/Topbar';
+import Footer from '../components/Footer';
+import { auth } from '../api/firebase/';
+import { webview, remote, ipcRenderer } from 'electron';
+import { ALERT_RENDERER_OF_QUIT, ALERT_UPDATE_AVAILABLE, CHECK_FOR_UPDATE, BEGIN_UPDATE } from '../utils/constants';
+import { setUserToCurrentlyActive, setUserToCurrentlyInactive } from '../api/firebase/firestore';
 
-const electron = require("electron");
+const electron = require('electron');
 class HomePage extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      activeWindow: "Home",
-      updateVersion: "",
+      activeWindow: 'Home',
+      updateVersion: '',
       updateAvailable: false,
       updateBegun: false
     };
@@ -46,6 +46,13 @@ class HomePage extends Component {
         }
       });
     });
+    window.onbeforeunload = e => {
+      auth.authorise.onAuthStateChanged(user => {
+        if (user) {
+          setUserToCurrentlyInactive(user.uid);
+        }
+      });
+    };
     // ipcRenderer.on(ALERT_UPDATE_AVAILABLE, (event, arg) => {
     //   console.log(arg);
     //   this.setState({
@@ -55,14 +62,6 @@ class HomePage extends Component {
     // });
 
     // ipcRenderer.send(CHECK_FOR_UPDATE, true);
-
-    window.onbeforeunload = e => {
-      auth.authorise.onAuthStateChanged(user => {
-        if (user) {
-          setUserToCurrentlyInactive(user.uid);
-        }
-      });
-    };
   }
 
   async switchActiveComponent(windowName) {
@@ -73,7 +72,7 @@ class HomePage extends Component {
 
   checkAccount() {
     if (auth.authorise.currentUser === null) {
-      this.props.history.push("/");
+      this.props.history.push('/');
     }
   }
 

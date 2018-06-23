@@ -1,12 +1,12 @@
-import path from "path";
-import url from "url";
-import { app, crashReporter, BrowserWindow, Menu, dialog } from "electron";
-import { auth, database } from "./api/firebase/";
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_RENDERER_OF_QUIT, ALERT_UPDATE_AVAILABLE, CHECK_FOR_UPDATE, BEGIN_UPDATE } from "./utils/constants";
-import { autoUpdater } from "electron-updater";
-const ipcMain = require("electron").ipcMain;
+import path from 'path';
+import url from 'url';
+import { app, crashReporter, BrowserWindow, Menu, dialog } from 'electron';
+import { auth, database } from './api/firebase/';
+import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_RENDERER_OF_QUIT, ALERT_UPDATE_AVAILABLE, CHECK_FOR_UPDATE, BEGIN_UPDATE } from './utils/constants';
+import { autoUpdater } from 'electron-updater';
+const ipcMain = require('electron').ipcMain;
 
-const isDevelopment = process.env.NODE_ENV === "development";
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 let mainWindow = null;
 let captchaWindow = null;
@@ -25,17 +25,17 @@ let initialiseCaptchaWindow = () => {
   });
   captchaWindow.loadURL(
     url.format({
-      pathname: path.join(__dirname, "index.html"),
-      protocol: "file:",
+      pathname: path.join(__dirname, 'index.html'),
+      protocol: 'file:',
       slashes: true,
-      hash: "captcha"
+      hash: 'captcha'
     })
   );
 };
 
 const installExtensions = async () => {
-  const installer = require("electron-devtools-installer");
-  const extensions = ["REACT_DEVELOPER_TOOLS", "REDUX_DEVTOOLS"];
+  const installer = require('electron-devtools-installer');
+  const extensions = ['REACT_DEVELOPER_TOOLS', 'REDUX_DEVTOOLS'];
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
   for (const name of extensions) {
     try {
@@ -47,21 +47,21 @@ const installExtensions = async () => {
 };
 
 crashReporter.start({
-  productName: "YourName",
-  companyName: "YourCompany",
-  submitURL: "https://your-domain.com/url-to-submit",
+  productName: 'YourName',
+  companyName: 'YourCompany',
+  submitURL: 'https://your-domain.com/url-to-submit',
   uploadToServer: false
 });
 
-app.on("window-all-closed", () => {
+app.on('window-all-closed', () => {
   // On OS X it is common for applications and their menu bar
   // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== "darwin") {
+  if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on("ready", async () => {
+app.on('ready', async () => {
   if (isDevelopment) {
     await installExtensions();
   }
@@ -88,8 +88,8 @@ app.on("ready", async () => {
 
   mainWindow.loadURL(
     url.format({
-      pathname: path.join(__dirname, "index.html"),
-      protocol: "file:",
+      pathname: path.join(__dirname, 'index.html'),
+      protocol: 'file:',
       slashes: true
     })
   );
@@ -113,38 +113,38 @@ app.on("ready", async () => {
     }
   });
 
-  autoUpdater.on("update-downloaded", info => {
+  autoUpdater.on('update-downloaded', info => {
     mainWindow.send(ALERT_UPDATE_AVAILABLE, info);
   });
 
   // show window once on first load
-  mainWindow.webContents.once("did-finish-load", () => {
+  mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.show();
   });
 
-  mainWindow.webContents.on("did-finish-load", () => {
+  mainWindow.webContents.on('did-finish-load', () => {
     // Handle window logic properly on macOS:
     // 1. App should not terminate if window has been closed
     // 2. Click on icon in dock should re-open the window
     // 3. ⌘+Q should close the window and quit the app
-    if (process.platform === "darwin") {
-      mainWindow.on("close", function(e) {
+    if (process.platform === 'darwin') {
+      mainWindow.on('close', function(e) {
         if (!forceQuit) {
           e.preventDefault();
           mainWindow.hide();
         }
       });
 
-      app.on("activate", () => {
+      app.on('activate', () => {
         mainWindow.show();
       });
 
-      app.on("before-quit", () => {
+      app.on('before-quit', () => {
         mainWindow.send(ALERT_RENDERER_OF_QUIT, true);
         forceQuit = true;
       });
     } else {
-      mainWindow.on("closed", () => {
+      mainWindow.on('closed', () => {
         mainWindow = null;
         captchaWindow = null;
       });
@@ -156,10 +156,10 @@ app.on("ready", async () => {
     mainWindow.webContents.openDevTools();
 
     // add inspect element on right click menu
-    mainWindow.webContents.on("context-menu", (e, props) => {
+    mainWindow.webContents.on('context-menu', (e, props) => {
       Menu.buildFromTemplate([
         {
-          label: "Inspect element",
+          label: 'Inspect element',
           click() {
             mainWindow.inspectElement(props.x, props.y);
           }

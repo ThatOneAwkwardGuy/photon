@@ -1,7 +1,6 @@
 // @flow
 import React, { Component } from "react";
-import { Container, Row, Col, Button } from "reactstrap";
-import ReactSVG from "react-svg";
+import { Row, Col, Button } from "reactstrap";
 import { auth } from "../api/firebase/";
 
 export default class CaptchaFooter extends Component {

@@ -1,9 +1,9 @@
 // @flow
 import React, { Component } from "react";
-import { Container, Row, Col } from "reactstrap";
-import ReactSVG from "react-svg";
+import { Row, Col } from "reactstrap";
 import { remote } from "electron";
-
+import Minimize from "../img/minimise.svg";
+import Close from "../img/close.svg";
 export default class CaptchaTopbar extends Component {
   minimiseWindow() {
     remote.BrowserWindow.getFocusedWindow().minimize();
@@ -24,12 +24,12 @@ export default class CaptchaTopbar extends Component {
       <Row className="captchaTopbar">
         <Col xs="11" className="text-right topbarOptionsCol">
           <div className="windowButton" onClick={this.minimiseWindow}>
-            <ReactSVG path="img/minimise.svg" />
+            <img src={Minimize} />
           </div>
         </Col>
         <Col xs="1" className="text-left topbarOptionsCol">
           <div className="windowButton" onClick={this.closeWindow}>
-            <ReactSVG path="img/close.svg" />
+            <img src={Close} />
           </div>
         </Col>
       </Row>

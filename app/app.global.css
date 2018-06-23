@@ -3,8 +3,8 @@
  *        See https://github.com/webpack-contrib/sass-loader#imports
  */
 
-@import "../node_modules/font-awesome/css/font-awesome.css";
-@import "../node_modules/bootstrap/dist/css/bootstrap.css";
+@import '../node_modules/font-awesome/css/font-awesome.css';
+@import '../node_modules/bootstrap/dist/css/bootstrap.css';
 
 html,
 body,
@@ -35,7 +35,7 @@ html {
 
 body {
   background-color: #1a1e2f;
-  font-family: "Avenir";
+  font-family: 'Avenir';
   width: 100%;
   color: white;
 }
@@ -154,8 +154,8 @@ label {
   width: 100%;
 }
 
-input[type="text"],
-input[type="password"],
+input[type='text'],
+input[type='password'],
 input,
 textarea,
 select {
@@ -170,7 +170,7 @@ select {
   font-weight: 700;
 }
 
-input[type="text"]:focus,
+input[type='text']:focus,
 select:focus {
   transition: border 0.5s;
   border: none !important;
@@ -180,8 +180,8 @@ select:focus {
   box-shadow: none !important;
 }
 
-input[type="text"]:focus,
-input[type="password"]:focus {
+input[type='text']:focus,
+input[type='password']:focus {
   border-right: none !important;
   border-top: none !important;
   border-bottom: none !important;
@@ -368,7 +368,7 @@ svg {
   border: none;
   background-color: #f44336;
   color: white;
-  font-family: "Avenir";
+  font-family: 'Avenir';
   font-weight: 500;
 }
 
@@ -488,7 +488,7 @@ canvas {
 }
 
 .card-body:hover {
-  box-shadow: 0 5px 15px rgba(3, 169, 244, 1);
+  /* box-shadow: 0 5px 15px rgba(3, 169, 244, 1); */
 }
 
 .releaseCard .card-body {
