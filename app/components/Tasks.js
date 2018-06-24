@@ -1,12 +1,11 @@
-import React, { Component } from "react";
-import { Button, Modal, ModalHeader, ModalBody, ModalFooter, Table, Container, Row, Col, Form, FormGroup, Label, Input } from "reactstrap";
-import { CSSTransition } from "react-transition-group";
-import Task from "../utils/Task";
-import FontAwesome from "react-fontawesome";
-import ReactSVG from "react-svg";
-import stores from "../store/shops";
-import Sizes from "../store/sizes";
-const _ = require("lodash");
+import React, { Component } from 'react';
+import { Button, Modal, ModalBody, ModalFooter, Table, Container, Row, Col, Form, FormGroup, Label, Input } from 'reactstrap';
+import { CSSTransition } from 'react-transition-group';
+import Task from '../utils/Task';
+import FontAwesome from 'react-fontawesome';
+import stores from '../store/shops';
+import Sizes from '../store/sizes';
+const _ = require('lodash');
 const Shops = _.keys(stores);
 
 export default class Tasks extends Component {
@@ -24,17 +23,17 @@ export default class Tasks extends Component {
       modalFormData: {
         task: {
           store: Shops[0],
-          mode: "url",
-          modeInput: "",
-          keywords: "",
-          proxy: "",
+          mode: 'url',
+          modeInput: '',
+          keywords: '',
+          proxy: '',
           size: Sizes[0],
-          quantity: "1",
-          profile: "",
-          tasks: "1",
-          color: ""
+          quantity: '1',
+          profile: '',
+          tasks: '1',
+          color: ''
         },
-        profileID: ""
+        profileID: ''
       }
     };
   }
@@ -135,7 +134,7 @@ export default class Tasks extends Component {
       <td>{index}</td>
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
-      <td>{task.options.task.modeInput === "" ? task.options.task.keywords : task.options.task.modeInput}</td>
+      <td>{task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput}</td>
       <td>{task.status}</td>
       <td>
         <Button
@@ -252,11 +251,11 @@ export default class Tasks extends Component {
                   </Input>
                 </Col>
               </FormGroup>
-              {this.state.modalFormData.task.mode !== "keywords" ? (
+              {this.state.modalFormData.task.mode !== 'keywords' ? (
                 <FormGroup row>
                   <Col xs="12">
                     <Label for="modeInput">
-                      {this.state.modalFormData.task.mode === "url" ? "url" : this.state.modalFormData.task.mode === "keywords" ? "keywords" : this.state.modalFormData.task.mode === "variant" ? "variant" : this.state.modalFormData.task.mode === "homepage" ? "homepage url" : ""}
+                      {this.state.modalFormData.task.mode === 'url' ? 'url' : this.state.modalFormData.task.mode === 'keywords' ? 'keywords' : this.state.modalFormData.task.mode === 'variant' ? 'variant' : this.state.modalFormData.task.mode === 'homepage' ? 'homepage url' : ''}
                     </Label>
                     <Input
                       type="text"
@@ -271,9 +270,9 @@ export default class Tasks extends Component {
                   </Col>
                 </FormGroup>
               ) : (
-                ""
+                ''
               )}
-              {this.state.modalFormData.task.mode === "homepage" || this.state.modalFormData.task.mode === "keywords" ? (
+              {this.state.modalFormData.task.mode === 'homepage' || this.state.modalFormData.task.mode === 'keywords' ? (
                 <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                   <FormGroup row>
                     <Col xs="12">
@@ -292,7 +291,7 @@ export default class Tasks extends Component {
                   </FormGroup>
                 </CSSTransition>
               ) : (
-                ""
+                ''
               )}
               <FormGroup row>
                 <Col xs="12">
@@ -310,7 +309,7 @@ export default class Tasks extends Component {
                 </Col>
               </FormGroup>
               <FormGroup row>
-                {this.state.modalFormData.task.mode !== "variant" ? (
+                {this.state.modalFormData.task.mode !== 'variant' ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                     <Col xs="3">
                       <Label for="size">size</Label>
@@ -328,9 +327,9 @@ export default class Tasks extends Component {
                     </Col>
                   </CSSTransition>
                 ) : (
-                  ""
+                  ''
                 )}
-                {this.state.modalFormData.task.store === "Supreme" ? (
+                {this.state.modalFormData.task.store === 'Supreme' ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                     <Col xs="3">
                       <Label for="category">category</Label>
@@ -359,7 +358,7 @@ export default class Tasks extends Component {
                     </Col>
                   </CSSTransition>
                 ) : (
-                  ""
+                  ''
                 )}
                 <Col xs="3">
                   <Label for="quantity">quantity</Label>
@@ -399,7 +398,7 @@ export default class Tasks extends Component {
                     {this.profileNames.map(this.returnProfileName)}
                   </Input>
                 </Col>
-                {this.state.modalFormData.task.store === "Supreme" ? (
+                {this.state.modalFormData.task.store === 'Supreme' ? (
                   <Col xs="3">
                     <Label for="profile">color</Label>
                     <Input
@@ -413,7 +412,7 @@ export default class Tasks extends Component {
                     />
                   </Col>
                 ) : (
-                  ""
+                  ''
                 )}
               </FormGroup>
             </Form>

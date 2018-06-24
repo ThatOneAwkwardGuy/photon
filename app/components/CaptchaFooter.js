@@ -1,13 +1,12 @@
-// @flow
-import React, { Component } from "react";
-import { Row, Col, Button } from "reactstrap";
-import { auth } from "../api/firebase/";
+import React, { Component } from 'react';
+import { Row, Col, Button } from 'reactstrap';
+import { auth } from '../api/firebase/';
 
 export default class CaptchaFooter extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      userEmail: "Not Available"
+      userEmail: 'Not Available'
     };
   }
 

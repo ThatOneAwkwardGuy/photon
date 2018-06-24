@@ -1,11 +1,9 @@
-// @flow
-import React, { Component } from "react";
-import { Row, Col, Button, Form, FormGroup, Label, Input } from "reactstrap";
-import { omit } from "lodash";
-import Countries from "../store/countries";
-import { CSSTransition } from "react-transition-group";
-
-const _ = require("lodash");
+import React, { Component } from 'react';
+import { Row, Col, Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import { omit } from 'lodash';
+import Countries from '../store/countries';
+import { CSSTransition } from 'react-transition-group';
+const _ = require('lodash');
 
 export default class Profiles extends Component {
   constructor(props) {
@@ -25,28 +23,28 @@ export default class Profiles extends Component {
     this.regions = [];
     this.state = {
       formdata: {
-        profileID: "",
-        deliveryCountry: "",
-        deliveryAddress: "",
-        deliveryCity: "",
-        deliveryFirstName: "",
-        deliveryLastName: "",
-        deliveryProvince: "",
-        deliveryZip: "",
-        billingZip: "",
-        billingCountry: "",
-        billingAddress: "",
-        billingCity: "",
-        billingFirstName: "",
-        billingLastName: "",
-        billingProvince: "",
-        phoneNumber: "",
-        paymentEmail: "",
-        paymentCardholdersName: "",
-        paymentCardnumber: "",
-        paymentCardExpiryMonth: "",
-        paymentCardExpiryYear: "",
-        paymentCVV: ""
+        profileID: '',
+        deliveryCountry: '',
+        deliveryAddress: '',
+        deliveryCity: '',
+        deliveryFirstName: '',
+        deliveryLastName: '',
+        deliveryProvince: '',
+        deliveryZip: '',
+        billingZip: '',
+        billingCountry: '',
+        billingAddress: '',
+        billingCity: '',
+        billingFirstName: '',
+        billingLastName: '',
+        billingProvince: '',
+        phoneNumber: '',
+        paymentEmail: '',
+        paymentCardholdersName: '',
+        paymentCardnumber: '',
+        paymentCardExpiryMonth: '',
+        paymentCardExpiryYear: '',
+        paymentCVV: ''
       },
       regionArrayShipping: [],
       regionArrayBilling: [],
@@ -127,7 +125,7 @@ export default class Profiles extends Component {
       this.setState(prevState => ({
         formdata: {
           ...prevState.formdata,
-          deliveryProvince: ""
+          deliveryProvince: ''
         }
       }));
     }
@@ -148,7 +146,7 @@ export default class Profiles extends Component {
       this.setState(prevState => ({
         formdata: {
           ...prevState.formdata,
-          billingProvince: ""
+          billingProvince: ''
         }
       }));
     }
@@ -159,28 +157,28 @@ export default class Profiles extends Component {
       {
         ...this.state,
         formdata: {
-          profileID: "",
-          deliveryCountry: "",
-          deliveryAddress: "",
-          deliveryCity: "",
-          deliveryFirstName: "",
-          deliveryLastName: "",
-          deliveryProvince: "",
-          deliveryZip: "",
-          billingZip: "",
-          billingCountry: "",
-          billingAddress: "",
-          billingCity: "",
-          billingFirstName: "",
-          billingLastName: "",
-          billingProvince: "",
-          phoneNumber: "",
-          paymentEmail: "",
-          paymentCardholdersName: "",
-          paymentCardnumber: "",
-          paymentCardExpiryMonth: "",
-          paymentCardExpiryYear: "",
-          paymentCVV: ""
+          profileID: '',
+          deliveryCountry: '',
+          deliveryAddress: '',
+          deliveryCity: '',
+          deliveryFirstName: '',
+          deliveryLastName: '',
+          deliveryProvince: '',
+          deliveryZip: '',
+          billingZip: '',
+          billingCountry: '',
+          billingAddress: '',
+          billingCity: '',
+          billingFirstName: '',
+          billingLastName: '',
+          billingProvince: '',
+          phoneNumber: '',
+          paymentEmail: '',
+          paymentCardholdersName: '',
+          paymentCardnumber: '',
+          paymentCardExpiryMonth: '',
+          paymentCardExpiryYear: '',
+          paymentCVV: ''
         },
         regionArrayShipping: [],
         regionArrayBilling: [],

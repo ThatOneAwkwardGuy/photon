@@ -9,7 +9,8 @@ export default class Home extends Component {
     super(props);
     this.state = {
       launchDetails: [],
-      launchArray: []
+      launchArray: [],
+      gettingLaunchDetails: false
     };
   }
 
@@ -19,13 +20,17 @@ export default class Home extends Component {
 
   getLaunchDetails = async () => {
     if (this.state.launchDetails.length === 0) {
+      this.setState({
+        gettingLaunchDetails: true
+      });
       const launchDetailsRef = await firestore.returnHypedReleasesWithinNextWeek();
       this.setState({
         ...this.state,
         launchDetails: launchDetailsRef.docs,
         launchArray: Array.apply(null, Array(launchDetailsRef.docs.length)).map(function() {
           return false;
-        })
+        }),
+        gettingLaunchDetails: false
       });
     }
   };
@@ -74,6 +79,8 @@ export default class Home extends Component {
                           </Card>
                         );
                       })
+                    ) : this.state.gettingLaunchDetails ? (
+                      ''
                     ) : (
                       <CardBody>There currently doesnt seem to be any upcoming releases, you can use the discord to find out about other releases.</CardBody>
                     )}

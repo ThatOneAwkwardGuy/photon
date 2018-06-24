@@ -1,25 +1,26 @@
-import React, { Component } from "react";
-import { Alert, Container, Row, Col, Button, Form, FormGroup, Label, Input } from "reactstrap";
-import Topbar from "../components/Topbar";
-import Footer from "../components/Footer";
-import { auth, database } from "../api/firebase/";
-import { checkIfUserIsCurrentlyActive } from "../api/firebase/firestore";
-import Particles from "react-particles-js";
-import { setUserToCurrentlyInactive } from "../api/firebase/firestore";
+import React, { Component } from 'react';
+import { Alert, Container, Row, Col, Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import Topbar from '../components/Topbar';
+import Footer from '../components/Footer';
+import { auth } from '../api/firebase/';
+import Particles from 'react-particles-js';
+import { setUserToCurrentlyInactive, setUserMachineIDOnFirstLoad, checkIfUserMachineIDMatches } from '../api/firebase/firestore';
+import { BounceLoader } from 'react-spinners';
 
 class Login extends Component {
   constructor(props) {
     super(props);
-    if (location.hash === "#captcha") {
-      this.props.history.push("/captcha");
+    if (location.hash === '#captcha') {
+      this.props.history.push('/captcha');
     } else {
       this.checkLoggedIn();
     }
     this.state = {
-      loginEmail: "",
-      loginPassword: "",
+      loginEmail: '',
+      loginPassword: '',
       formError: false,
-      loginError: false
+      loginError: false,
+      currentlyLoggingIn: false
     };
     this.handleLogin = this.handleLogin.bind(this);
     this.handleChange = this.handleChange.bind(this);
@@ -47,12 +48,17 @@ class Login extends Component {
 
   checkLoggedIn = async () => {
     await auth.authorise.onAuthStateChanged(async user => {
-      const activeStatus = await checkIfUserIsCurrentlyActive(user.uid);
-      if (user && !activeStatus) {
-        this.props.history.push("/bot");
+      this.setState({
+        currentlyLoggingIn: true
+      });
+      await setUserMachineIDOnFirstLoad(user.uid);
+      const machineIDStatus = await checkIfUserMachineIDMatches(user.uid);
+      if (user && machineIDStatus) {
+        this.props.history.push('/bot');
       } else {
         this.setState({
-          loginError: true
+          loginError: true,
+          currentlyLoggingIn: false
         });
       }
     });
@@ -60,11 +66,15 @@ class Login extends Component {
 
   handleLogin = async () => {
     try {
+      this.setState({
+        currentlyLoggingIn: true
+      });
       await auth.doSignInWithEmailAndPassword(this.state.loginEmail, this.state.loginPassword);
-      this.props.history.push("/bot");
+      await checkLoggedIn();
     } catch (e) {
       this.setState({
-        formError: true
+        formError: true,
+        currentlyLoggingIn: false
       });
     }
   };
@@ -83,13 +93,13 @@ class Login extends Component {
                 }
               },
               color: {
-                value: "#ffffff"
+                value: '#ffffff'
               },
               shape: {
-                type: "edge",
+                type: 'edge',
                 stroke: {
                   width: 0,
-                  color: "#000000"
+                  color: '#000000'
                 }
               },
               opacity: {
@@ -118,19 +128,19 @@ class Login extends Component {
               move: {
                 enable: true,
                 speed: 30,
-                direction: "top",
+                direction: 'top',
                 random: true,
                 straight: true,
-                out_mode: "out",
+                out_mode: 'out',
                 bounce: false
               }
             },
             interactivity: {
-              detect_on: "canvas",
+              detect_on: 'canvas',
               events: {
                 onhover: {
                   enable: true,
-                  mode: "bubble"
+                  mode: 'bubble'
                 },
                 onclick: {
                   enable: false
@@ -220,6 +230,9 @@ class Login extends Component {
                       </Col>
                     </FormGroup>
                   </Form>
+                </Col>
+                <Col xm="8">
+                  <BounceLoader color={'#03a9f4'} loading={this.state.currentlyLoggingIn} />
                 </Col>
               </Row>
             </Container>

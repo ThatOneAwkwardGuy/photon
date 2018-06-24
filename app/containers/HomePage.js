@@ -5,11 +5,9 @@ import Active from './Active';
 import Topbar from '../components/Topbar';
 import Footer from '../components/Footer';
 import { auth } from '../api/firebase/';
-import { webview, remote, ipcRenderer } from 'electron';
-import { ALERT_RENDERER_OF_QUIT, ALERT_UPDATE_AVAILABLE, CHECK_FOR_UPDATE, BEGIN_UPDATE } from '../utils/constants';
-import { setUserToCurrentlyActive, setUserToCurrentlyInactive } from '../api/firebase/firestore';
+import { ipcRenderer } from 'electron';
+import { BEGIN_UPDATE } from '../utils/constants';
 
-const electron = require('electron');
 class HomePage extends Component {
   constructor(props) {
     super(props);
@@ -17,50 +15,11 @@ class HomePage extends Component {
       activeWindow: 'Home',
       updateVersion: '',
       updateAvailable: false,
-      updateBegun: false
+      updateBegun: false,
+      fastModeModalVisible: false
     };
     this.switchActiveComponent = this.switchActiveComponent.bind(this);
     this.checkAccount = this.checkAccount.bind(this);
-    this.win = new electron.remote.BrowserWindow({
-      show: false,
-      modal: true,
-      minWidth: 400,
-      minHeight: 600,
-      width: 400,
-      height: 600,
-      resizable: false,
-      frame: false,
-      webPreferences: {
-        devTools: true
-      }
-    });
-    auth.authorise.onAuthStateChanged(user => {
-      if (user) {
-        setUserToCurrentlyActive(user.uid);
-      }
-    });
-    ipcRenderer.on(ALERT_RENDERER_OF_QUIT, (event, arg) => {
-      auth.authorise.onAuthStateChanged(user => {
-        if (user) {
-          setUserToCurrentlyInactive(user.uid);
-        }
-      });
-    });
-    window.onbeforeunload = e => {
-      auth.authorise.onAuthStateChanged(user => {
-        if (user) {
-          setUserToCurrentlyInactive(user.uid);
-        }
-      });
-    };
-    // ipcRenderer.on(ALERT_UPDATE_AVAILABLE, (event, arg) => {
-    //   console.log(arg);
-    //   this.setState({
-    //     updateVersion: arg.version,
-    //     updateAvailable: true
-    //   });
-    // });
-
     // ipcRenderer.send(CHECK_FOR_UPDATE, true);
   }
 
@@ -69,6 +28,18 @@ class HomePage extends Component {
       activeWindow: windowName
     });
   }
+
+  openFastModeModal = () => {
+    this.setState({
+      fastModeModalVisible: true
+    });
+  };
+
+  toggleFastModeModal = () => {
+    this.setState({
+      fastModeModalVisible: !this.state.fastModeModalVisible
+    });
+  };
 
   checkAccount() {
     if (auth.authorise.currentUser === null) {
@@ -102,8 +73,8 @@ class HomePage extends Component {
           <Alert className="updateAlert" color="danger" isOpen={this.state.updateBegun}>
             Please wait while we install the update.
           </Alert>
-          <Sidebar activeWindow={this.state.activeWindow} switchActiveComponent={this.switchActiveComponent} checkAccount={this.checkAccount} history={this.props.history} openCaptchaWindow={this.openCaptchaWindow} win={this.win} />
-          <Active activeWindow={this.state.activeWindow} getCaptchaWindow={this.getCaptchaWindowContents} win={this.win} />
+          <Sidebar activeWindow={this.state.activeWindow} switchActiveComponent={this.switchActiveComponent} checkAccount={this.checkAccount} history={this.props.history} openCaptchaWindow={this.openCaptchaWindow} toggleFastModeModal={this.toggleFastModeModal} />
+          <Active activeWindow={this.state.activeWindow} getCaptchaWindow={this.getCaptchaWindowContents} fastModeModalVisible={this.state.fastModeModalVisible} toggleFastModeModal={this.toggleFastModeModal} />
         </Row>
         <Footer type="homepage" />
       </Container>

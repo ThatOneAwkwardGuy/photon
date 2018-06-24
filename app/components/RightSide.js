@@ -1,16 +1,6 @@
-import React, { Component } from "react";
-import {
-  ListGroup,
-  ListGroupItem,
-  Container,
-  Row,
-  Col,
-  Card,
-  CardImg,
-  CardBody,
-  CardTitle
-} from "reactstrap";
-import { auth, firestore } from "../api/firebase";
+import React, { Component } from 'react';
+import { Col, Card, CardImg, CardBody } from 'reactstrap';
+import { firestore } from '../api/firebase';
 export default class RightSide extends Component {
   constructor(props) {
     super(props);

@@ -1,8 +1,7 @@
 import path from 'path';
 import url from 'url';
-import { app, crashReporter, BrowserWindow, Menu, dialog } from 'electron';
-import { auth, database } from './api/firebase/';
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_RENDERER_OF_QUIT, ALERT_UPDATE_AVAILABLE, CHECK_FOR_UPDATE, BEGIN_UPDATE } from './utils/constants';
+import { app, crashReporter, BrowserWindow, Menu } from 'electron';
+import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_UPDATE_AVAILABLE } from './utils/constants';
 import { autoUpdater } from 'electron-updater';
 const ipcMain = require('electron').ipcMain;
 
@@ -140,7 +139,7 @@ app.on('ready', async () => {
       });
 
       app.on('before-quit', () => {
-        mainWindow.send(ALERT_RENDERER_OF_QUIT, true);
+        // mainWindow.send(ALERT_RENDERER_OF_QUIT, true);
         forceQuit = true;
       });
     } else {
