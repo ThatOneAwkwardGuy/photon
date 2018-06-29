@@ -8,9 +8,10 @@ import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAP
 class Captcha extends Component {
   constructor(props) {
     super(props);
-    this.active = false;
     this.ranOnce = false;
     this.checkoutCookies = [];
+    this.currentCaptchaID = '';
+    this.active = false;
   }
 
   goToGoogleLogin = () => {
@@ -41,11 +42,26 @@ class Captcha extends Component {
     return formattedCookieArray;
   };
 
-  returnCheckoutCookie = arg => {
-    console.log(arg);
-    console.log(this.checkoutCookies);
-    ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
-    const webview = document.querySelector('webview');
+  awaitCaptchaURL = webview => {
+    ipcRenderer.on(RECEIVE_SUPREME_CHECKOUT_COOKIE, (event, arg) => {
+      // console.log(arg);
+      // if (this.checkoutCookies.length <= 0) {
+      //   this.loadCheckoutWindow(arg, webview);
+      // } else {
+      //   this.checkoutCookies.push(arg);
+      //   console.log(this.checkoutCookies);
+      // }
+      if (!this.active) {
+        this.loadCheckoutWindow(arg, webview);
+      } else {
+        this.checkoutCookies.push(arg);
+      }
+    });
+  };
+
+  loadCheckoutWindow = (arg, webview) => {
+    this.active = true;
+    this.currentCaptchaID = arg.id;
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(arg.cookies);
     const windowProxy = arg.proxy !== undefined ? `http://${arg.proxy.user}:${arg.proxy.pass}@${arg.proxy.ip}:${arg.proxy.port}` : '';
@@ -64,45 +80,39 @@ class Captcha extends Component {
     } else {
       webview.loadURL('http://supremenewyork.com/checkout');
     }
-
-    // webview.addEventListener('ipc-message', function(e) {
-    //   if (e.channel === 'html-content') {
-    //     console.log(e);
-    //   }
-    // });
     webview.executeJavaScript(`document.querySelector('html').style.visibility = "hidden";document.querySelector('.g-recaptcha').style.visibility = "visible"`);
-    webview.addEventListener('did-finish-load', e => {
-      if (!this.ranOnce) {
-        const captchaToken = webview.executeJavaScript(`document.querySelector("iframe").src`, result => {
-          console.log('ran once');
-          ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: result, id: arg.id });
-          this.checkoutCookies.shift();
-          this.active = false;
-          this.ranOnce = true;
-          if (this.checkoutCookies.length >= 1) {
-            this.active = true;
-            this.ranOnce = false;
-            this.returnCheckoutCookie(this.checkoutCookies[0]);
-          }
-        });
-      } else {
-        this.ranOnce = false;
-      }
-    });
+    this.checkoutCookies.shift();
   };
 
-  eventListenerCheckoutCookie = () => {
-    ipcRenderer.on(RECEIVE_SUPREME_CHECKOUT_COOKIE, (event, arg) => {
-      this.checkoutCookies.push(arg);
-      if (!this.active) {
-        this.active = true;
-        this.returnCheckoutCookie(this.checkoutCookies[0]);
-      }
+  awaitCheckoutLoad = webview => {
+    webview.addEventListener('did-finish-load', e => {
+      webview.executeJavaScript(`window.location.pathname`, pathname => {
+        console.log(pathname);
+        if (pathname.includes('/checkout')) {
+          webview.executeJavaScript(`document.querySelector("iframe").src`, result => {
+            console.log('sending');
+            ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: result, id: this.currentCaptchaID });
+            this.active = false;
+            console.log(this.checkoutCookies.length);
+            if (this.checkoutCookies.length > 0) {
+              this.loadCheckoutWindow(this.checkoutCookies[0], webview);
+            }
+          });
+        } else if (pathname.includes('/shop')) {
+          ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: 'Failed', id: this.currentCaptchaID });
+        }
+        if (this.checkoutCookies.length > 0) {
+          console.log(this.checkoutCookies);
+          this.loadCheckoutWindow(this.checkoutCookies[0], webview);
+        }
+      });
     });
   };
 
   componentDidMount() {
-    this.eventListenerCheckoutCookie();
+    const webview = document.querySelector('webview');
+    this.awaitCaptchaURL(webview);
+    this.awaitCheckoutLoad(webview);
   }
 
   render() {

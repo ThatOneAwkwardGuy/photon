@@ -45,7 +45,7 @@ export default class Supreme {
 
   recieveCaptchaTokenURL = tokenID => {
     ipcRenderer.on(RECEIVE_SUPREME_CAPTCHA_URL, async (event, args) => {
-      if (args.id === tokenID && !this.runOnce) {
+      if (args.id === tokenID && !this.runOnce && args.captchaURL !== 'Failed') {
         this.runOnce = true;
         const captchaBodyResponse = await this.rp({
           method: 'GET',
@@ -53,13 +53,12 @@ export default class Supreme {
         });
         const captchaBody = cheerio.load(captchaBodyResponse);
         const captchaToken = captchaBody('#recaptcha-token').attr('value');
-        console.log(this.keywords);
-        console.log(captchaToken);
         this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms Before Checkout`);
         await this.sleep(parseInt(this.settings.checkoutTime));
         const checkoutResponse = await this.checkoutWithCapctcha(captchaToken);
-        console.log(checkoutResponse);
-        if (checkoutResponse.body.includes('Unfortunately, we cannot process your payment')) {
+        if (args.captchaURL === 'Failed') {
+          this.handleChangeStatus('Item Likely Out Of Stock');
+        } else if (checkoutResponse.body.includes('Unfortunately, we cannot process your payment')) {
           this.handleChangeStatus('Payment Error');
         } else {
           this.handleChangeStatus('Check Your Email');
@@ -107,12 +106,12 @@ export default class Supreme {
         method: 'POST',
         form: payload,
         uri: 'https://www.supremenewyork.com/checkout.js',
-        gzip: true,
         json: true,
         resolveWithFullResponse: true,
         followAllRedirects: true
       });
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
+      console.log(response);
       return response;
     } catch (e) {
       console.error(e);
@@ -215,7 +214,6 @@ export default class Supreme {
 
   checkout = async () => {
     const tokenID = uuidv4();
-    console.log(tokenID);
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
     this.recieveCaptchaTokenURL(tokenID);
     const [productID, styleID, sizeID] = await this.getProduct();

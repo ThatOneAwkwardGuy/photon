@@ -1,7 +1,7 @@
 import path from 'path';
 import url from 'url';
 import { app, crashReporter, BrowserWindow, Menu } from 'electron';
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_UPDATE_AVAILABLE } from './utils/constants';
+import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RESET_CAPTCHA_WINDOW, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_UPDATE_AVAILABLE, RESET_CAPTCHA_TOKENS_ARRAY, RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY } from './utils/constants';
 import { autoUpdater } from 'electron-updater';
 const ipcMain = require('electron').ipcMain;
 
@@ -99,6 +99,10 @@ app.on('ready', async () => {
     captchaWindow.send(RECEIVE_SUPREME_CHECKOUT_COOKIE, arg);
   });
 
+  ipcMain.on(RESET_CAPTCHA_WINDOW, (event, arg) => {
+    initialiseCaptchaWindow();
+  });
+
   ipcMain.on(SEND_SUPREME_CAPTCHA_URL, (event, arg) => {
     mainWindow.send(RECEIVE_SUPREME_CAPTCHA_URL, arg);
   });
@@ -110,6 +114,10 @@ app.on('ready', async () => {
     } else {
       captchaWindow.show();
     }
+  });
+
+  ipcMain.on(RESET_CAPTCHA_TOKENS_ARRAY, (event, arg) => {
+    captchaWindow.send(RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
   });
 
   autoUpdater.on('update-downloaded', info => {

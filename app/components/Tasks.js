@@ -5,6 +5,8 @@ import Task from '../utils/Task';
 import FontAwesome from 'react-fontawesome';
 import stores from '../store/shops';
 import Sizes from '../store/sizes';
+import { ipcRenderer } from 'electron';
+import { RESET_CAPTCHA_TOKENS_ARRAY, RESET_CAPTCHA_WINDOW } from '../utils/constants';
 var fs = require('fs');
 const _ = require('lodash');
 const Shops = _.keys(stores);
@@ -117,6 +119,7 @@ export default class Tasks extends Component {
     // this.state.taskClasses.forEach(element => {
     //   element.run();
     // });
+    ipcRenderer.send(RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
     for (const task of this.state.taskClasses) {
       task.run();
     }
@@ -199,6 +202,7 @@ export default class Tasks extends Component {
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
       <td>{task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput}</td>
+      <td>{task.options.task.size}</td>
       <td>{task.status}</td>
       <td>
         <Button
@@ -254,6 +258,7 @@ export default class Tasks extends Component {
                   <th>store</th>
                   <th>profile</th>
                   <th>product</th>
+                  <th>size</th>
                   <th>status</th>
                   <th>actions</th>
                 </tr>
@@ -265,6 +270,7 @@ export default class Tasks extends Component {
                 <Col xs="2">
                   <Button
                     onClick={() => {
+                      ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
                       this.startAllTasks();
                     }}
                   >
