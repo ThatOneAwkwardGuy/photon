@@ -1,27 +1,27 @@
-import stores from "../store/shops";
-import Shopify from "./Shopify";
-import DSM from "./DSM";
-import Supreme from "./Supreme";
-import { processKeywords, getSitemapJSON, getSitemapXML, checkSitemapJSONForKeywords, checkSitemapXMLForKeywords, convertProductNameIntoArray } from "./helpers.js";
-const rp = require("request-promise");
-const cheerio = require("cheerio");
-const _ = require("lodash");
-const convert = require("xml-js");
+import stores from '../store/shops';
+import Shopify from './Shopify';
+import DSM from './DSM';
+import Supreme from './Supreme';
+import { processKeywords, getSitemapJSON, getSitemapXML, checkSitemapJSONForKeywords, checkSitemapXMLForKeywords, convertProductNameIntoArray } from './helpers.js';
+const rp = require('request-promise');
+const cheerio = require('cheerio');
+const _ = require('lodash');
+const convert = require('xml-js');
 
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
     this.forceUpdate = forceUpdateFunction;
     this.options = options;
-    this.status = "Not Started";
+    this.status = 'Not Started';
     this.active = false;
     this.keywords = processKeywords(this.options.task.keywords);
     this.settings = settings;
     this.proxy = checkoutProxy;
     this.monitorProxy = monitorProxies[Math.floor(Math.random() * monitorProxies.length)];
-    this.monitoringTimeout = "";
+    this.monitoringTimeout = '';
     this.active = false;
     this.monitoring = false;
-    this.supremeInstance = "";
+    this.supremeInstance = '';
   }
 
   handleChangeStatus = status => {
@@ -31,40 +31,40 @@ export default class Task {
 
   stop = () => {
     switch (this.options.task.store) {
-      case "Supreme":
+      case 'Supreme':
         this.supremeInstance.stop();
       default:
         clearTimeout(this.monitoringTimeout);
         this.active = false;
-        this.handleChangeStatus("Stopped");
+        this.handleChangeStatus('Stopped');
     }
   };
 
   run = () => {
     if (!this.monitoring) {
-      this.handleChangeStatus("Started");
+      this.handleChangeStatus('Started');
     }
     this.active = true;
     switch (this.options.task.store) {
-      case "Supreme":
+      case 'Supreme':
         this.Supreme();
         break;
       default:
         switch (this.options.task.mode) {
-          case "url":
+          case 'url':
             this.urlMode();
             break;
-          case "keywords":
+          case 'keywords':
             this.keywordsMode();
             break;
-          case "variant":
+          case 'variant':
             this.variantMode();
             break;
-          case "homepage":
+          case 'homepage':
             this.homepageMode();
             break;
           default:
-            this.handleChangeStatus("Stopped");
+            this.handleChangeStatus('Stopped');
             this.active = false;
             break;
         }
@@ -87,7 +87,7 @@ export default class Task {
       const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
-      this.handleChangeStatus("Size Is Unavailable");
+      this.handleChangeStatus('Size Is Unavailable');
     }
   };
 
@@ -107,7 +107,7 @@ export default class Task {
   };
 
   homepageMode = async () => {
-    const pageURL = this.options.task.modeInput === "" ? stores[this.options.task.store] : this.options.task.modeInput;
+    const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
     const content = await this.getVariantsFromHomepage(pageURL);
     const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(content.variantIDs, content.propertiesHash);
   };
@@ -116,7 +116,7 @@ export default class Task {
     const variantsArray = variants;
     const found = [];
     variantsArray.forEach(variant => {
-      if ((_.get(variant, "option1") && _.get(variant, "option1").includes(size)) || (_.get(variant, "option2") && _.get(variant, "option2").includes(size)) || (_.get(variant, "public_title") && _.get(variant, "public_title").includes(size))) {
+      if ((_.get(variant, 'option1') && _.get(variant, 'option1').includes(size)) || (_.get(variant, 'option2') && _.get(variant, 'option2').includes(size)) || (_.get(variant, 'public_title') && _.get(variant, 'public_title').includes(size))) {
         found.push(variant.id);
       }
     });
@@ -126,11 +126,11 @@ export default class Task {
   getVariantsFromLinkJSON = async link => {
     try {
       const response = await rp({
-        method: "GET",
+        method: 'GET',
         uri: `${link}.json`,
         json: true,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36"
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
         }
       });
       return response.product.variants;
@@ -143,28 +143,28 @@ export default class Task {
   getVariantsFromLinkHTML = async link => {
     try {
       const response = await rp({
-        method: "GET",
+        method: 'GET',
         uri: link,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36"
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
         }
       });
       const page = cheerio.load(response);
       let element;
       let propertiesHash;
-      const variantsObj = page("script").map((i, element) => {
-        const scriptText = _.get(element, "children[0].data");
-        if (scriptText !== undefined && scriptText.includes("var meta =")) {
+      const variantsObj = page('script').map((i, element) => {
+        const scriptText = _.get(element, 'children[0].data');
+        if (scriptText !== undefined && scriptText.includes('var meta =')) {
           const JSONRegex = /\{.*\:\{.*\:.*\}\}/.exec(scriptText)[0];
           const VariantIds = JSON.parse(JSONRegex).product.variants;
           return VariantIds;
         }
       });
-      if (link.includes("doverstreetmarket")) {
+      if (link.includes('doverstreetmarket')) {
         try {
           const response = await rp({
-            method: "GET",
-            uri: "https://cdn.shopify.com/s/files/1/1940/4611/t/1/assets/custom.js"
+            method: 'GET',
+            uri: 'https://cdn.shopify.com/s/files/1/1940/4611/t/1/assets/custom.js'
           });
           propertiesHash = response.slice(response.indexOf(`<input type="hidden" value="`) + `<input type="hidden" value="`.length, response.indexOf(`" name="properties[_hash]"`));
         } catch (e) {
@@ -174,11 +174,11 @@ export default class Task {
       return { variantIDs: variantsObj, propertiesHash: propertiesHash };
     } catch (e) {
       if (this.active) {
-        if (e.statusCode == "403") {
+        if (e.statusCode == '403') {
           this.changeMonitorProxy();
         }
         this.monitoring = true;
-        this.handleChangeStatus("Monitoring");
+        this.handleChangeStatus('Monitoring');
         this.monitoringTimeout = setTimeout(this.run, this.settings.monitorTime);
       } else {
         clearTimeout(this.monitoringTimeout);
@@ -189,10 +189,10 @@ export default class Task {
   getVariantsFromKeywords = async siteUrl => {
     try {
       const siteMap = await getSitemapJSON(siteUrl);
-      if (siteMap[0] === "JSON") {
+      if (siteMap[0] === 'JSON') {
         const matchedProductJSON = checkSitemapJSONForKeywords(siteMap[1], this.keywords);
         return matchedProductJSON.variants;
-      } else if (siteMap[0] === "XML") {
+      } else if (siteMap[0] === 'XML') {
         const matchedProductXML = checkSitemapXMLForKeywords(siteMap[1], this.keywords);
         const productVariant = await this.getVariantsFromLinkJSON(matchedProductXML.loc._text);
         return productVariant;
@@ -200,7 +200,7 @@ export default class Task {
     } catch (e) {
       if (this.active) {
         this.monitoring = true;
-        this.handleChangeStatus("Monitoring");
+        this.handleChangeStatus('Monitoring');
         this.monitoringTimeout = setTimeout(this.run, this.settings.monitorTime);
       } else {
         clearTimeout(this.monitoringTimeout);
@@ -212,14 +212,14 @@ export default class Task {
   getVariantsFromHomepage = async siteUrl => {
     try {
       const response = await rp({
-        method: "GET",
+        method: 'GET',
         url: siteUrl,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36"
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
         }
       });
       const page = cheerio.load(response);
-      const pageURLs = page("a").map((i, element) => {
+      const pageURLs = page('a').map((i, element) => {
         const textArray = convertProductNameIntoArray(page(element).text());
         if (textArray.length > 0 && _.difference(this.keywords.positiveKeywords, textArray).length === 0 && _.difference(this.keywords.negativeKeywords, textArray).length === this.keywords.negativeKeywords.length) {
           return `${siteUrl}${element.attribs.href}`;
@@ -230,7 +230,7 @@ export default class Task {
     } catch (e) {
       if (this.active) {
         this.monitoring = true;
-        this.handleChangeStatus("Monitoring");
+        this.handleChangeStatus('Monitoring');
         this.monitoringTimeout = setTimeout(this.run, this.settings.monitorTime);
       } else {
         clearTimeout(this.monitoringTimeout);

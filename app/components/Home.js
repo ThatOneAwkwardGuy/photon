@@ -67,13 +67,17 @@ export default class Home extends Component {
                                 <CardImg top width="100%" src={data.image} className="releaseCardImg" alt="Card image cap" />
                               </figure>
                               <CardBody>{data.name}</CardBody>
-                              <CardBody>{moment.unix(data.releaseDate.seconds).format('LLLL')}</CardBody>
+                              <CardBody>{moment.unix(data.releaseDate.seconds).format('dddd, MMMM Do YYYY')}</CardBody>
                             </Collapse>
                             <Collapse isOpen={this.state.launchArray[index]}>
                               <ListGroup className="releaseStoresList">
-                                {data.taskData.map((store, index) => {
-                                  return <ListGroupItem key={`store-${index}`}>{store.store}</ListGroupItem>;
-                                })}
+                                {data.taskData !== undefined && Object.keys(data.taskData).keys().length > 0 ? (
+                                  data.taskData.map((store, index) => {
+                                    return <ListGroupItem key={`store-${index}`}>{store.store}</ListGroupItem>;
+                                  })
+                                ) : (
+                                  <ListGroupItem key={`store-${index}`}>No stores currently available</ListGroupItem>
+                                )}
                               </ListGroup>
                             </Collapse>
                           </Card>

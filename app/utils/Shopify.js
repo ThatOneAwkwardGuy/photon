@@ -1,6 +1,6 @@
-import stores from "../store/shops";
-const request = require("request-promise");
-const cheerio = require("cheerio");
+import stores from '../store/shops';
+const request = require('request-promise');
+const cheerio = require('cheerio');
 
 export default class Shopify {
   constructor(options, handleChangeStatus, proxy) {
@@ -10,11 +10,11 @@ export default class Shopify {
     this.cookieJar = request.jar();
     this.rp = request.defaults({
       headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.117 Safari/537.36",
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.117 Safari/537.36',
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === "" ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : ""
+      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : this.options.task.proxy
     });
   }
 
@@ -29,7 +29,7 @@ export default class Shopify {
       quantity: amount
     };
     const response = await this.rp({
-      method: "POST",
+      method: 'POST',
       uri: `${stores[this.options.task.store]}/cart/add.js`,
       form: payload
     });
@@ -46,8 +46,8 @@ export default class Shopify {
       }
     };
     const response = await this.rp({
-      method: "POST",
-      uri: "https://elb.deposit.shopifycs.com/sessions",
+      method: 'POST',
+      uri: 'https://elb.deposit.shopifycs.com/sessions',
       body: payload,
       json: true
     });
@@ -56,7 +56,7 @@ export default class Shopify {
 
   getCheckoutBody = async checkoutURL => {
     const response = await this.rp({
-      method: "GET",
+      method: 'GET',
       uri: `${checkoutURL}?step=payment_method`
     });
     return response;
@@ -65,7 +65,7 @@ export default class Shopify {
   getCheckoutUrl = async () => {
     try {
       const response = await this.rp({
-        method: "GET",
+        method: 'GET',
         uri: `${stores[this.options.task.store]}/checkout.js`,
         resolveWithFullResponse: true,
         followAllRedirects: true
@@ -78,31 +78,31 @@ export default class Shopify {
 
   sendCustomerInfo = async (checkoutURL, authToken) => {
     const payload = {
-      utf8: "✓",
-      _method: "patch",
+      utf8: '✓',
+      _method: 'patch',
       authenticity_token: authToken,
-      previous_step: "contact_information",
-      step: "shipping_method",
-      "checkout[email]": this.options.profile.paymentEmail,
-      "checkout[buyer_accepts_marketing]": "0",
-      "checkout[shipping_address][first_name]": this.options.profile.deliveryFirstName,
-      "checkout[shipping_address][last_name]": this.options.profile.deliveryLastName,
-      "checkout[shipping_address][company]": "",
-      "checkout[shipping_address][address1]": this.options.profile.deliveryAddress,
-      "checkout[shipping_address][address2]": "",
-      "checkout[shipping_address][city]": this.options.profile.deliveryCity,
-      "checkout[shipping_address][country]": this.options.profile.deliveryCountry,
-      "checkout[shipping_address][province]": this.options.profile.deliveryCountry,
-      "checkout[shipping_address][zip]": this.options.profile.deliveryZip,
-      "checkout[shipping_address][phone]": this.options.profile.phoneNumber,
-      "checkout[remember_me]": "0",
-      "checkout[client_details][browser_width]": "1710",
-      "checkout[client_details][browser_height]": "1289",
-      "checkout[client_details][javascript_enabled]": "1",
-      button: ""
+      previous_step: 'contact_information',
+      step: 'shipping_method',
+      'checkout[email]': this.options.profile.paymentEmail,
+      'checkout[buyer_accepts_marketing]': '0',
+      'checkout[shipping_address][first_name]': this.options.profile.deliveryFirstName,
+      'checkout[shipping_address][last_name]': this.options.profile.deliveryLastName,
+      'checkout[shipping_address][company]': '',
+      'checkout[shipping_address][address1]': this.options.profile.deliveryAddress,
+      'checkout[shipping_address][address2]': '',
+      'checkout[shipping_address][city]': this.options.profile.deliveryCity,
+      'checkout[shipping_address][country]': this.options.profile.deliveryCountry,
+      'checkout[shipping_address][province]': this.options.profile.deliveryCountry,
+      'checkout[shipping_address][zip]': this.options.profile.deliveryZip,
+      'checkout[shipping_address][phone]': this.options.profile.phoneNumber,
+      'checkout[remember_me]': '0',
+      'checkout[client_details][browser_width]': '1710',
+      'checkout[client_details][browser_height]': '1289',
+      'checkout[client_details][javascript_enabled]': '1',
+      button: ''
     };
     const response = await this.rp({
-      method: "POST",
+      method: 'POST',
       uri: checkoutURL,
       followAllRedirects: true,
       resolveWithFullResponse: true,
@@ -116,12 +116,12 @@ export default class Shopify {
 
   returnPaymentID = paymentBody => {
     const $ = cheerio.load(paymentBody);
-    return $("div.section.section--payment-method input").attr("value");
+    return $('div.section.section--payment-method input').attr('value');
   };
 
   returnAuthToken = paymentBody => {
     const $ = cheerio.load(paymentBody);
-    return $('input[name="authenticity_token"]').attr("value");
+    return $('input[name="authenticity_token"]').attr('value');
   };
 
   getShippingToken = async () => {
@@ -134,12 +134,12 @@ export default class Shopify {
     };
 
     const response = await this.rp({
-      method: "POST",
+      method: 'POST',
       json: true,
       uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
       body: payload
     });
-    const shipOpt = response.shipping_rates[0].name.replace(/ /g, "%20");
+    const shipOpt = response.shipping_rates[0].name.replace(/ /g, '%20');
     const shipPrc = response.shipping_rates[0].price;
     const shippingOption = `shopify-${shipOpt}-${shipPrc}`;
     return shippingOption;
@@ -147,19 +147,19 @@ export default class Shopify {
 
   sendShippingMethod = async (shippingToken, checkoutURL) => {
     const payload = {
-      utf8: "✓",
-      _method: "patch",
-      authenticity_token: "",
-      previous_step: "shipping_method",
-      step: "payment_method",
-      "checkout[shipping_rate][id]": shippingToken,
-      button: "",
-      "checkout[client_details][browser_width]": "1710",
-      "checkout[client_details][browser_height]": "1289",
-      "checkout[client_details][javascript_enabled]": "1"
+      utf8: '✓',
+      _method: 'patch',
+      authenticity_token: '',
+      previous_step: 'shipping_method',
+      step: 'payment_method',
+      'checkout[shipping_rate][id]': shippingToken,
+      button: '',
+      'checkout[client_details][browser_width]': '1710',
+      'checkout[client_details][browser_height]': '1289',
+      'checkout[client_details][javascript_enabled]': '1'
     };
     const response = await this.rp({
-      method: "POST",
+      method: 'POST',
       uri: checkoutURL,
       resolveWithFullResponse: true,
       followAllRedirects: true,
@@ -172,34 +172,34 @@ export default class Shopify {
 
   sendCheckoutInfo = async (paymentToken, shippingToken, paymentID, authToken, checkoutURL) => {
     const payload = {
-      utf8: "✓",
-      _method: "patch",
+      utf8: '✓',
+      _method: 'patch',
       authenticity_token: authToken,
-      previous_step: "payment_method",
-      step: "",
+      previous_step: 'payment_method',
+      step: '',
       s: paymentToken,
-      "checkout[payment_gateway]": paymentID,
-      "checkout[credit_card][vault]": "false",
-      "checkout[different_billing_address]": "true",
-      "checkout[billing_address][first_name]": this.options.profile.billingFirstName,
-      "checkout[billing_address][last_name]": this.options.profile.billingLastName,
-      "checkout[billing_address][address1]": this.options.profile.billingAddress,
-      "checkout[billing_address][address2]": "",
-      "checkout[billing_address][city]": this.options.profile.billingCity,
-      "checkout[billing_address][country]": this.options.profile.billingCountry,
-      "checkout[billing_address][province]": this.options.profile.billingProvince,
-      "checkout[billing_address][zip]": this.options.profile.billingZip,
-      "checkout[billing_address][phone]": this.options.profile.phoneNumber,
-      "checkout[shipping_rate][id]": shippingToken,
-      complete: "1",
-      "checkout[client_details][browser_width]": (Math.floor(Math.random() * 2000) + 1000).toString(),
-      "checkout[client_details][browser_height]": (Math.floor(Math.random() * 2000) + 1000).toString(),
-      "checkout[client_details][javascript_enabled]": "1",
-      "checkout[total_price]": "4300",
-      button: ""
+      'checkout[payment_gateway]': paymentID,
+      'checkout[credit_card][vault]': 'false',
+      'checkout[different_billing_address]': 'true',
+      'checkout[billing_address][first_name]': this.options.profile.billingFirstName,
+      'checkout[billing_address][last_name]': this.options.profile.billingLastName,
+      'checkout[billing_address][address1]': this.options.profile.billingAddress,
+      'checkout[billing_address][address2]': '',
+      'checkout[billing_address][city]': this.options.profile.billingCity,
+      'checkout[billing_address][country]': this.options.profile.billingCountry,
+      'checkout[billing_address][province]': this.options.profile.billingProvince,
+      'checkout[billing_address][zip]': this.options.profile.billingZip,
+      'checkout[billing_address][phone]': this.options.profile.phoneNumber,
+      'checkout[shipping_rate][id]': shippingToken,
+      complete: '1',
+      'checkout[client_details][browser_width]': (Math.floor(Math.random() * 2000) + 1000).toString(),
+      'checkout[client_details][browser_height]': (Math.floor(Math.random() * 2000) + 1000).toString(),
+      'checkout[client_details][javascript_enabled]': '1',
+      'checkout[total_price]': '4300',
+      button: ''
     };
     const response = await this.rp({
-      method: "POST",
+      method: 'POST',
       uri: checkoutURL,
       form: payload,
       resolveWithFullResponse: true,
@@ -221,12 +221,13 @@ export default class Shopify {
       const authToken = this.returnAuthToken(checkoutBody);
       await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
       await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL);
+      this.handleChangeStatus('Check Email');
       console.log(Date.now() - start);
     } catch (e) {
-      if (e.options.uri.includes("stock_problems")) {
-        this.handleChangeStatus("Item Out Of Stock");
+      if (e.options.uri.includes('stock_problems')) {
+        this.handleChangeStatus('Item Out Of Stock');
       } else {
-        this.handleChangeStatus("Error");
+        this.handleChangeStatus('Error');
         console.log(e);
       }
     }

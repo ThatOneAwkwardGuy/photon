@@ -1,9 +1,9 @@
-import React, { Component } from "react";
-import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from "reactstrap";
-import { CSSTransition } from "react-transition-group";
-import stores from "../store/shops";
-import Sizes from "../store/sizes";
-const _ = require("lodash");
+import React, { Component } from 'react';
+import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import { CSSTransition } from 'react-transition-group';
+import stores from '../store/shops';
+import Sizes from '../store/sizes';
+const _ = require('lodash');
 const Shops = _.keys(stores);
 
 class AddTask extends Component {
@@ -16,16 +16,16 @@ class AddTask extends Component {
     this.state = {
       formdata: {
         store: Shops[0],
-        mode: "url",
-        modeInput: "",
-        keywords: "",
-        proxy: "",
+        mode: 'url',
+        modeInput: '',
+        keywords: '',
+        proxy: '',
         size: Sizes[0],
-        quantity: "1",
+        quantity: '1',
         profile: this.profileNames[0],
-        tasks: "1",
-        color: "",
-        category: ""
+        tasks: '1',
+        color: '',
+        category: 'Accessories'
       }
     };
   }
@@ -36,11 +36,11 @@ class AddTask extends Component {
         [e.target.name]: e.target.value
       })
     });
-    if (e.target.value === "Supreme") {
+    if (e.target.value === 'Supreme') {
       this.setState({
         formdata: Object.assign({}, this.state.formdata, {
           [e.target.name]: e.target.value,
-          mode: "keywords"
+          mode: 'keywords'
         })
       });
     }
@@ -94,8 +94,8 @@ class AddTask extends Component {
                       </Input>
                     </Col>
                   </FormGroup>
-                  {this.state.formdata.store === "Supreme" ? (
-                    ""
+                  {this.state.formdata.store === 'Supreme' ? (
+                    ''
                   ) : (
                     <FormGroup row>
                       <Col xs="3">
@@ -118,10 +118,10 @@ class AddTask extends Component {
                     </FormGroup>
                   )}
 
-                  {this.state.formdata.mode !== "keywords" ? (
+                  {this.state.formdata.mode !== 'keywords' ? (
                     <FormGroup row>
                       <Col xs="12">
-                        <Label for="modeInput">{this.state.formdata.mode === "url" ? "url" : this.state.formdata.mode === "keywords" ? "keywords" : this.state.formdata.mode === "variant" ? "variant" : this.state.formdata.mode === "homepage" ? "homepage url" : ""}</Label>
+                        <Label for="modeInput">{this.state.formdata.mode === 'url' ? 'url' : this.state.formdata.mode === 'keywords' ? 'keywords' : this.state.formdata.mode === 'variant' ? 'variant' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}</Label>
                         <Input
                           type="text"
                           name="modeInput"
@@ -135,9 +135,9 @@ class AddTask extends Component {
                       </Col>
                     </FormGroup>
                   ) : (
-                    ""
+                    ''
                   )}
-                  {this.state.formdata.mode === "homepage" || this.state.formdata.mode === "keywords" ? (
+                  {this.state.formdata.mode === 'homepage' || this.state.formdata.mode === 'keywords' ? (
                     <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                       <FormGroup row>
                         <Col xs="12">
@@ -156,7 +156,7 @@ class AddTask extends Component {
                       </FormGroup>
                     </CSSTransition>
                   ) : (
-                    ""
+                    ''
                   )}
                   <FormGroup row>
                     <Col xs="12">
@@ -174,7 +174,7 @@ class AddTask extends Component {
                     </Col>
                   </FormGroup>
                   <FormGroup row>
-                    {this.state.formdata.mode !== "variant" ? (
+                    {this.state.formdata.mode !== 'variant' ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="size">size</Label>
@@ -192,9 +192,9 @@ class AddTask extends Component {
                         </Col>
                       </CSSTransition>
                     ) : (
-                      ""
+                      ''
                     )}
-                    {this.state.formdata.store === "Supreme" ? (
+                    {this.state.formdata.store === 'Supreme' ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="category">category</Label>
@@ -217,13 +217,14 @@ class AddTask extends Component {
                             <option>Shorts</option>
                             <option>Skate</option>
                             <option>Sweatshirts</option>
+                            <option>T-Shirts</option>
                             <option>Tops/Sweaters</option>
                             <option>new</option>
                           </Input>
                         </Col>
                       </CSSTransition>
                     ) : (
-                      ""
+                      ''
                     )}
                     <Col xs="3">
                       <Label for="quantity">quantity</Label>
@@ -263,7 +264,7 @@ class AddTask extends Component {
                         {this.profileNames.map(this.returnProfileName)}
                       </Input>
                     </Col>
-                    {this.state.formdata.store === "Supreme" ? (
+                    {this.state.formdata.store === 'Supreme' ? (
                       <Col xs="3">
                         <Label for="profile">color</Label>
                         <Input
@@ -277,7 +278,7 @@ class AddTask extends Component {
                         />
                       </Col>
                     ) : (
-                      ""
+                      ''
                     )}
                     <Col xs="3">
                       <Label for="tasks">tasks</Label>
@@ -311,14 +312,14 @@ class AddTask extends Component {
                           this.setState({
                             formdata: {
                               store: Shops[0],
-                              mode: "url",
-                              modeInput: "",
-                              keywords: "",
-                              proxy: "",
+                              mode: 'url',
+                              modeInput: '',
+                              keywords: '',
+                              proxy: '',
                               size: Sizes[0],
-                              quantity: "1",
+                              quantity: '1',
                               profile: this.profileNames[0],
-                              tasks: "1"
+                              tasks: '1'
                             }
                           });
                         }}

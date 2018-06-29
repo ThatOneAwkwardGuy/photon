@@ -5,21 +5,23 @@ import Task from '../utils/Task';
 import FontAwesome from 'react-fontawesome';
 import stores from '../store/shops';
 import Sizes from '../store/sizes';
+var fs = require('fs');
 const _ = require('lodash');
 const Shops = _.keys(stores);
+const { dialog } = require('electron').remote;
 
 export default class Tasks extends Component {
   constructor(props) {
     super(props);
-    this.forceUpdateHandler = this.forceUpdateHandler.bind(this);
-    this.startAllTasks = this.startAllTasks.bind(this);
-    this.returnTasks = this.returnTasks.bind(this);
     this.profileNames = _.keys(this.props.profiles);
     this.taskClasses = [];
     this.taskProxy = this.returnRandomProxy();
     this.state = {
       taskClasses: [],
       taskEditModal: false,
+      taskExportSuccess: false,
+      taskExportFailure: false,
+      taskImportFailure: false,
       modalFormData: {
         task: {
           store: Shops[0],
@@ -38,17 +40,17 @@ export default class Tasks extends Component {
     };
   }
 
-  componentDidMount() {
+  componentDidMount = () => {
     this.initialize(this.props.tasks);
-  }
+  };
 
-  componentWillReceiveProps(nextProps) {
+  componentWillReceiveProps = nextProps => {
     this.initialize(nextProps.tasks);
-  }
+  };
 
-  forceUpdateHandler() {
+  forceUpdateHandler = () => {
     this.forceUpdate();
-  }
+  };
 
   returnRandomProxy = () => {
     const proxies = this.props.proxies;
@@ -58,9 +60,9 @@ export default class Tasks extends Component {
 
   returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
 
-  handleSaveUpdatedTask(task, id) {
+  handleSaveUpdatedTask = (task, id) => {
     this.props.onUpdateTask({ task, id });
-  }
+  };
 
   initialize = tasksArray => {
     const taskClassesInitialize = [];
@@ -74,16 +76,16 @@ export default class Tasks extends Component {
     this.forceUpdate();
   };
 
-  handleChange(e) {
+  handleChange = e => {
     this.setState({
       modalFormData: {
         ...this.state.modalFormData,
         task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value }
       }
     });
-  }
+  };
 
-  handleProfileChange(e) {
+  handleProfileChange = e => {
     this.setState({
       ...this.state,
       modalFormData: {
@@ -91,7 +93,7 @@ export default class Tasks extends Component {
         profileID: e.target.value
       }
     });
-  }
+  };
 
   editTask = (index, task) => {
     this.setState({
@@ -111,11 +113,73 @@ export default class Tasks extends Component {
     });
   };
 
-  startAllTasks() {
+  startAllTasks = () => {
+    // this.state.taskClasses.forEach(element => {
+    //   element.run();
+    // });
+    for (const task of this.state.taskClasses) {
+      task.run();
+    }
+  };
+
+  stopAllTasks = () => {
     this.state.taskClasses.forEach(element => {
-      element.run();
+      element.stop();
     });
-  }
+  };
+
+  exportTasks = () => {
+    const tasksArray = this.props.tasks;
+    const JSONTask = JSON.stringify({ tasks: tasksArray });
+    dialog.showSaveDialog(
+      {
+        title: 'photon_tasks',
+        defaultPath: '~/photon_tasks.json',
+        filters: [{ name: 'Photon Files', extensions: ['json'] }]
+      },
+      fileName => {
+        if (fileName === undefined) {
+          return;
+        }
+        fs.writeFile(fileName, JSONTask, err => {
+          if (err) {
+            this.setState({
+              taskExportFailure: true
+            });
+            return;
+          }
+          this.setState({
+            taskExportSuccess: true
+          });
+        });
+      }
+    );
+  };
+
+  importTasks = () => {
+    dialog.showOpenDialog(
+      {
+        filters: [{ name: 'Photon Files', extensions: ['json'] }]
+      },
+      fileNames => {
+        if (fileNames === undefined) {
+          return;
+        }
+        fs.readFile(fileNames[0], 'utf-8', (err, data) => {
+          if (err) {
+            this.setState({
+              taskImportFailure: true
+            });
+            return;
+          }
+          const tasksArray = JSON.parse(data).tasks;
+          tasksArray.forEach(element => {
+            this.props.onAddTask(element);
+          });
+        });
+      }
+    );
+  };
 
   returnSizeOptions = object => {
     let tree = [];
@@ -139,6 +203,7 @@ export default class Tasks extends Component {
       <td>
         <Button
           onClick={() => {
+            console.log(task);
             task.run();
           }}
           className="taskButton"
@@ -206,8 +271,32 @@ export default class Tasks extends Component {
                     start all
                   </Button>
                 </Col>
-                <Col xs="1">
-                  <Button>stop all</Button>
+                <Col xs="2">
+                  <Button
+                    onClick={() => {
+                      this.stopAllTasks();
+                    }}
+                  >
+                    stop all
+                  </Button>
+                </Col>
+                <Col xs="2">
+                  <Button
+                    onClick={() => {
+                      this.exportTasks();
+                    }}
+                  >
+                    export tasks
+                  </Button>
+                </Col>
+                <Col xs="2">
+                  <Button
+                    onClick={() => {
+                      this.importTasks();
+                    }}
+                  >
+                    import tasks
+                  </Button>
                 </Col>
               </Row>
             </Container>

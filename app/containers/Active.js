@@ -25,7 +25,7 @@ class Active extends Component {
       case 'AddTask':
         return <AddTask profiles={this.props.profiles} onAddTask={this.props.onAddTask} />;
       case 'Tasks':
-        return <Tasks onRemoveTask={this.props.onRemoveTask} onUpdateTask={this.props.onUpdateTask} tasks={this.props.tasks} profiles={this.props.profiles} getCaptchaWindow={this.props.getCaptchaWindow} settings={this.props.settings} proxies={this.props.proxies} />;
+        return <Tasks onAddTask={this.props.onAddTask} onRemoveTask={this.props.onRemoveTask} onUpdateTask={this.props.onUpdateTask} tasks={this.props.tasks} profiles={this.props.profiles} getCaptchaWindow={this.props.getCaptchaWindow} settings={this.props.settings} proxies={this.props.proxies} />;
       case 'Proxies':
         return <Proxies onAddProxies={this.props.onAddProxies} proxies={this.props.proxies} />;
       case 'Profiles':

@@ -15,11 +15,11 @@ let initialiseCaptchaWindow = () => {
   captchaWindow = new BrowserWindow({
     modal: true,
     show: false,
-    minWidth: 400,
-    minHeight: 600,
+    minWidth: 200,
+    minHeight: 300,
     width: 400,
     height: 600,
-    resizable: false,
+    resizable: true,
     frame: false
   });
   captchaWindow.loadURL(

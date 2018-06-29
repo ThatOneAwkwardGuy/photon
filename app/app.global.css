@@ -1,8 +1,3 @@
-/*
- * @NOTE: Prepend a `~` to css file paths that are in your node_modules
- *        See https://github.com/webpack-contrib/sass-loader#imports
- */
-
 @import '../node_modules/font-awesome/css/font-awesome.css';
 @import '../node_modules/bootstrap/dist/css/bootstrap.css';
 
@@ -109,14 +104,11 @@ body {
 }
 
 .list-group-item-action.list-group-item:hover {
-  /* background-color: #404351; */
   transition: color 0.5s;
   color: white;
-  /* color: #03a9f4; */
 }
 
 .active.list-group-item-action.list-group-item {
-  /* background-color: #1a1e2f; */
   transition: border-left 0.5s;
   border-left: solid 5px #03a9f4 !important;
   color: white;
@@ -130,8 +122,6 @@ body {
 .activeContainerInner {
   padding: 20px 0px 20px 0px;
   background-color: #1a1e2f;
-
-  /* box-shadow: inset 10px 0px 9px -7px rgba(0, 0, 0, 0.7);} */
 }
 
 .tableContainer {
@@ -275,15 +265,10 @@ td {
   border: none !important;
 }
 
-/* tr:not(:first-child) {
-  border-top: solid 1px white;
-  border-bottom: solid 1px white;
-} */
-
 .homeContainer,
 .loginContainer {
   flex: 1;
-  height: calc(100% - 141px);
+  height: calc(100% - 124px);
 }
 
 .loginContainer {
@@ -316,7 +301,12 @@ svg {
 }
 
 .footer {
-  height: 70px;
+  height: 40px;
+  margin-top: 20px;
+}
+
+.footerStatus {
+  width: 100px;
 }
 
 .footerLeftSection {
@@ -419,9 +409,10 @@ canvas {
 }
 
 .windowButton {
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: 32px;
   align-self: flex-end;
+  display: block;
 }
 
 .taskTableButtonsContainer {
@@ -525,4 +516,8 @@ canvas {
   z-index: 99;
   right: 0;
   max-width: 300px;
+}
+
+.collapse.show {
+  height: 100%;
 }

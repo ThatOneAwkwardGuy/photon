@@ -4,22 +4,13 @@ import { omit } from 'lodash';
 import Countries from '../store/countries';
 import { CSSTransition } from 'react-transition-group';
 const _ = require('lodash');
+var fs = require('fs');
+const { dialog } = require('electron').remote;
 
 export default class Profiles extends Component {
   constructor(props) {
     super(props);
-    this.handleChangeShippingOrBilling = this.handleChangeShippingOrBilling.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
     this.countryNames = _.keys(Countries);
-    this.profileNames = _.keys(this.props.profiles);
-    this.returnCountry = this.returnCountry.bind(this);
-    this.setRegionArrayShipping = this.setRegionArrayShipping.bind(this);
-    this.setRegionArrayBilling = this.setRegionArrayBilling.bind(this);
-    this.toggleSameDeliveryBilling = this.toggleSameDeliveryBilling.bind(this);
-    this.returnProfileName = this.returnProfileName.bind(this);
-    this.loadProfile = this.loadProfile.bind(this);
-    this.deleteProfile = this.deleteProfile.bind(this);
-    this.handleProfileChange = this.handleProfileChange.bind(this);
     this.regions = [];
     this.state = {
       formdata: {
@@ -48,49 +39,43 @@ export default class Profiles extends Component {
       },
       regionArrayShipping: [],
       regionArrayBilling: [],
-      profileIDLoad: this.profileNames[0]
+      profileNames: _.keys(this.props.profiles),
+      profileIDLoad: _.keys(this.props.profiles)[0]
     };
   }
 
-  handleChangeShippingOrBilling(e) {
+  handleChangeShippingOrBilling = e => {
     this.setState({
       formdata: Object.assign({}, this.state.formdata, {
         [e.target.name]: e.target.value
       })
     });
-  }
+  };
 
-  handleProfileChange(e) {
+  handleProfileChange = e => {
     this.setState({
       profileIDLoad: e.target.value
     });
-  }
+  };
 
   returnCountry = (name, index) => <option key={`country-${index}`}>{name}</option>;
 
   returnProfileName = (name, index) => <option key={`profile-${index}`}>{name}</option>;
 
-  loadProfile() {
+  loadProfile = () => {
     this.setState({
-      ...this.state,
       formdata: this.props.profiles[this.state.profileIDLoad]
     });
-  }
+  };
 
-  deleteProfile() {
+  deleteProfile = () => {
     this.props.onRemoveProfile(this.state.profileIDLoad);
-    this.setState(
-      {
-        ...this.state,
-        profiles: omit(this.state.profiles, this.state.profileIDLoad)
-      },
-      () => {
-        this.updateProfilesList();
-      }
-    );
-  }
+    this.setState({
+      profiles: omit(this.state.profiles, this.state.profileIDLoad)
+    });
+  };
 
-  setDeliveryToBilling() {
+  setDeliveryToBilling = () => {
     this.setState({
       formdata: Object.assign({}, this.state.formdata, {
         billingCountry: this.state.formdata.deliveryCountry,
@@ -102,13 +87,13 @@ export default class Profiles extends Component {
         billingZip: this.state.formdata.deliveryZip
       })
     });
-  }
+  };
 
-  toggleSameDeliveryBilling() {
+  toggleSameDeliveryBilling = () => {
     this.setState({
       sameDeliveryBilling: !this.state.sameDeliveryBilling
     });
-  }
+  };
 
   setRegionArrayShipping = countryName => {
     this.setState({
@@ -152,50 +137,95 @@ export default class Profiles extends Component {
     }
   };
 
-  updateProfilesList = () => {
-    this.setState(
-      {
-        ...this.state,
-        formdata: {
-          profileID: '',
-          deliveryCountry: '',
-          deliveryAddress: '',
-          deliveryCity: '',
-          deliveryFirstName: '',
-          deliveryLastName: '',
-          deliveryProvince: '',
-          deliveryZip: '',
-          billingZip: '',
-          billingCountry: '',
-          billingAddress: '',
-          billingCity: '',
-          billingFirstName: '',
-          billingLastName: '',
-          billingProvince: '',
-          phoneNumber: '',
-          paymentEmail: '',
-          paymentCardholdersName: '',
-          paymentCardnumber: '',
-          paymentCardExpiryMonth: '',
-          paymentCardExpiryYear: '',
-          paymentCVV: ''
-        },
-        regionArrayShipping: [],
-        regionArrayBilling: [],
-        profileIDLoad: this.profileNames[0]
+  componentWillReceiveProps(nextProps) {
+    this.setState({
+      formdata: {
+        profileID: '',
+        deliveryCountry: '',
+        deliveryAddress: '',
+        deliveryCity: '',
+        deliveryFirstName: '',
+        deliveryLastName: '',
+        deliveryProvince: '',
+        deliveryZip: '',
+        billingZip: '',
+        billingCountry: '',
+        billingAddress: '',
+        billingCity: '',
+        billingFirstName: '',
+        billingLastName: '',
+        billingProvince: '',
+        phoneNumber: '',
+        paymentEmail: '',
+        paymentCardholdersName: '',
+        paymentCardnumber: '',
+        paymentCardExpiryMonth: '',
+        paymentCardExpiryYear: '',
+        paymentCVV: ''
       },
-      () => {
-        this.profileNames = _.keys(this.props.profiles);
-        this.forceUpdate();
+      regionArrayShipping: [],
+      regionArrayBilling: [],
+      profileNames: _.keys(nextProps.profiles),
+      profileIDLoad: _.keys(nextProps.profiles)[0]
+    });
+  }
+
+  handleSubmit = () => {
+    const profile = this.state.formdata;
+    this.props.onAddProfile(profile);
+  };
+
+  exportProfiles = () => {
+    const JSONTask = JSON.stringify(this.props.profiles);
+    dialog.showSaveDialog(
+      {
+        title: 'photon_profiles',
+        defaultPath: '~/photon_profiles.json',
+        filters: [{ name: 'Photon Files', extensions: ['json'] }]
+      },
+      fileName => {
+        if (fileName === undefined) {
+          return;
+        }
+        fs.writeFile(fileName, JSONTask, err => {
+          if (err) {
+            this.setState({
+              profileExportFailure: true
+            });
+            return;
+          }
+          this.setState({
+            profileExportSuccess: true
+          });
+        });
       }
     );
   };
 
-  handleSubmit() {
-    const profile = this.state.formdata;
-    this.props.onAddProfile(profile);
-    this.updateProfilesList();
-  }
+  importProfiles = () => {
+    dialog.showOpenDialog(
+      {
+        filters: [{ name: 'Photon Files', extensions: ['json'] }]
+      },
+      fileNames => {
+        if (fileNames === undefined) {
+          return;
+        }
+        fs.readFile(fileNames[0], 'utf-8', (err, data) => {
+          if (err) {
+            this.setState({
+              profileImportFailure: true
+            });
+            return;
+          }
+          const profileOBJ = JSON.parse(data);
+          for (const profile in profileOBJ) {
+            this.props.onAddProfile(profileOBJ[profile]);
+          }
+        });
+      }
+    );
+  };
 
   render() {
     return (
@@ -244,7 +274,7 @@ export default class Profiles extends Component {
                         this.handleProfileChange(event);
                       }}
                     >
-                      {this.profileNames.map(this.returnProfileName)}
+                      {this.state.profileNames.map(this.returnProfileName)}
                     </Input>
                   </Col>
                   <Col xs="2">
@@ -265,6 +295,28 @@ export default class Profiles extends Component {
                       color="danger"
                     >
                       delete
+                    </Button>
+                  </Col>
+                </FormGroup>
+                <FormGroup row>
+                  <Col xs="6">
+                    <Button
+                      onClick={() => {
+                        this.importProfiles();
+                      }}
+                      className="primaryButton"
+                    >
+                      import profiles
+                    </Button>
+                  </Col>
+                  <Col xs="6">
+                    <Button
+                      onClick={() => {
+                        this.exportProfiles();
+                      }}
+                      className="primaryButton"
+                    >
+                      export profiles
                     </Button>
                   </Col>
                 </FormGroup>
@@ -369,7 +421,13 @@ export default class Profiles extends Component {
                         this.handleChangeShippingOrBilling(event);
                       }}
                     >
-                      {this.state.regionArrayShipping !== null && this.state.regionArrayShipping !== [] ? this.state.regionArrayShipping.map(this.returnCountry) : null}
+                      {this.state.regionArrayShipping !== null && this.state.regionArrayShipping !== [] ? (
+                        this.state.formdata.deliveryProvince !== null && this.state.formdata.deliveryProvince !== '' ? (
+                          <option key="country-load">{this.state.formdata.deliveryProvince}</option>
+                        ) : (
+                          this.state.regionArrayShipping.map(this.returnCountry)
+                        )
+                      ) : null}
                     </Input>
                   </Col>
                   <Col xs="4">

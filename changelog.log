@@ -1,0 +1,7 @@
+1.0.1
+-Fixed bug where when loading a profile, the region text would not show.
+-Added T-shirt category for Supreme
+-Attempted fix of minimize and close buttons on Windows
+
+1.0.2
+-Fixed lack of T-shirt category for Supreme in edit modal

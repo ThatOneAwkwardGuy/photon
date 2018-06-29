@@ -6,6 +6,7 @@ var LiveReloadPlugin = require('webpack-livereload-plugin');
 
 const mainConfig = {
   mode: 'development',
+  devtool: 'source-map',
   target: 'electron-main',
   entry: { main: './app/main.js', vendor: ['firebase'] },
   output: {
@@ -38,6 +39,7 @@ const mainConfig = {
 
 const appConfig = {
   mode: 'development',
+  devtool: 'source-map',
   target: 'electron-renderer',
   entry: './app/app.js',
   output: {
