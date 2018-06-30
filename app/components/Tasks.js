@@ -7,7 +7,9 @@ import stores from '../store/shops';
 import Sizes from '../store/sizes';
 import { ipcRenderer } from 'electron';
 import { RESET_CAPTCHA_TOKENS_ARRAY, RESET_CAPTCHA_WINDOW } from '../utils/constants';
+import Datetime from 'react-datetime';
 var fs = require('fs');
+var moment = require('moment');
 const _ = require('lodash');
 const Shops = _.keys(stores);
 const { dialog } = require('electron').remote;
@@ -35,7 +37,8 @@ export default class Tasks extends Component {
           quantity: '1',
           profile: '',
           tasks: '1',
-          color: ''
+          color: '',
+          scheduledTime: ''
         },
         profileID: ''
       }
@@ -87,6 +90,15 @@ export default class Tasks extends Component {
     });
   };
 
+  setScheduledTime = date => {
+    this.setState({
+      modalFormData: {
+        ...this.state.modalFormData,
+        task: { ...this.state.modalFormData.task, scheduledTime: date }
+      }
+    });
+  };
+
   handleProfileChange = e => {
     this.setState({
       ...this.state,
@@ -119,7 +131,7 @@ export default class Tasks extends Component {
     // this.state.taskClasses.forEach(element => {
     //   element.run();
     // });
-    ipcRenderer.send(RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
+    // ipcRenderer.send(RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
     for (const task of this.state.taskClasses) {
       task.run();
     }
@@ -202,12 +214,12 @@ export default class Tasks extends Component {
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
       <td>{task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput}</td>
+      <td>{task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined ? 'manual' : moment.unix(task.options.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}</td>
       <td>{task.options.task.size}</td>
       <td>{task.status}</td>
       <td>
         <Button
           onClick={() => {
-            console.log(task);
             task.run();
           }}
           className="taskButton"
@@ -258,6 +270,7 @@ export default class Tasks extends Component {
                   <th>store</th>
                   <th>profile</th>
                   <th>product</th>
+                  <th>timing</th>
                   <th>size</th>
                   <th>status</th>
                   <th>actions</th>
@@ -476,6 +489,22 @@ export default class Tasks extends Component {
                     <option>8</option>
                     <option>9</option>
                   </Input>
+                </Col>
+                <Col xs="6">
+                  <Label for="scheduledTime">Schedule Time</Label>
+                  <Datetime
+                    value={moment.unix(this.state.modalFormData.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}
+                    dateFormat="dddd, MMMM Do YYYY"
+                    timeFormat="HH:mm A"
+                    isValidDate={(currentDate, selectedDate) => {
+                      if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
+                        return true;
+                      }
+                    }}
+                    onChange={date => {
+                      this.setScheduledTime(date.unix());
+                    }}
+                  />
                 </Col>
               </FormGroup>
               <FormGroup row>

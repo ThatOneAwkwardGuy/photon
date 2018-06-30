@@ -3,6 +3,7 @@ import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from 'reac
 import { CSSTransition } from 'react-transition-group';
 import stores from '../store/shops';
 import Sizes from '../store/sizes';
+import Datetime from 'react-datetime';
 const _ = require('lodash');
 const Shops = _.keys(stores);
 
@@ -25,7 +26,8 @@ class AddTask extends Component {
         profile: this.profileNames[0],
         tasks: '1',
         color: '',
-        category: 'Accessories'
+        category: 'Accessories',
+        scheduledTime: ''
       }
     };
   }
@@ -57,6 +59,15 @@ class AddTask extends Component {
   returnProfileName = (name, index) => <option key={`profile-${index}`}>{name}</option>;
 
   returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
+
+  setScheduledTime = date => {
+    this.setState({
+      formdata: {
+        ...this.state.formdata,
+        scheduledTime: date
+      }
+    });
+  };
 
   returnSizeOptions = object => {
     let tree = [];
@@ -247,6 +258,21 @@ class AddTask extends Component {
                         <option>8</option>
                         <option>9</option>
                       </Input>
+                    </Col>
+                    <Col xs="6">
+                      <Label for="scheduledTime">Schedule Time</Label>
+                      <Datetime
+                        dateFormat="dddd, MMMM Do YYYY"
+                        timeFormat="HH:mm A"
+                        isValidDate={(currentDate, selectedDate) => {
+                          if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
+                            return true;
+                          }
+                        }}
+                        onChange={date => {
+                          this.setScheduledTime(date.unix());
+                        }}
+                      />
                     </Col>
                   </FormGroup>
                   <FormGroup row>

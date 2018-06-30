@@ -6,5 +6,8 @@
 1.0.2
 -Fixed lack of T-shirt category for Supreme in edit modal
 -Added back start all button
--Fixed Supreme checkout (testing required)
+-Rebuilt Supreme checkout (testing required)
 -Reduced min width and height of app as well as allowing resizing
+-Added monitoring logic for Supreme. If item is out of stock or not yet loaded, bot will retry at rate specified in the settings.
+-Added Task Scheduling
+-Set default settings to prevent too many attempts during monitoring mode

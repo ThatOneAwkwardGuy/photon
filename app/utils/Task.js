@@ -22,6 +22,8 @@ export default class Task {
     this.active = false;
     this.monitoring = false;
     this.supremeInstance = '';
+    this.alreadySetTimeout = false;
+    this.scheduledTimeout = '';
   }
 
   handleChangeStatus = status => {
@@ -35,39 +37,51 @@ export default class Task {
         this.supremeInstance.stop();
       default:
         clearTimeout(this.monitoringTimeout);
+        clearTimeout(this.scheduledTimeout);
         this.active = false;
         this.handleChangeStatus('Stopped');
     }
   };
 
   run = () => {
-    if (!this.monitoring) {
-      this.handleChangeStatus('Started');
-    }
-    this.active = true;
-    switch (this.options.task.store) {
-      case 'Supreme':
-        this.Supreme();
-        break;
-      default:
-        switch (this.options.task.mode) {
-          case 'url':
-            this.urlMode();
-            break;
-          case 'keywords':
-            this.keywordsMode();
-            break;
-          case 'variant':
-            this.variantMode();
-            break;
-          case 'homepage':
-            this.homepageMode();
-            break;
-          default:
-            this.handleChangeStatus('Stopped');
-            this.active = false;
-            break;
-        }
+    if (this.options.task.scheduledTime !== '' && this.options.task.scheduledTime !== undefined && this.alreadySetTimeout === false) {
+      if (Date(this.options.task.scheduledTime) <= Date.now()) {
+        this.handleChangeStatus('Time has already passed');
+        return;
+      }
+      this.handleChangeStatus('Waiting');
+      this.alreadySetTimeout = true;
+      this.scheduledTimeout = setTimeout(this.run, new Date(this.options.task.scheduledTime).getTime() * 1000 - Date.now());
+    } else {
+      console.log('starting normally');
+      if (!this.monitoring) {
+        this.handleChangeStatus('Started');
+      }
+      this.active = true;
+      switch (this.options.task.store) {
+        case 'Supreme':
+          this.Supreme();
+          break;
+        default:
+          switch (this.options.task.mode) {
+            case 'url':
+              this.urlMode();
+              break;
+            case 'keywords':
+              this.keywordsMode();
+              break;
+            case 'variant':
+              this.variantMode();
+              break;
+            case 'homepage':
+              this.homepageMode();
+              break;
+            default:
+              this.handleChangeStatus('Stopped');
+              this.active = false;
+              break;
+          }
+      }
     }
   };
 
@@ -77,7 +91,17 @@ export default class Task {
 
   Supreme = () => {
     this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy);
-    this.supremeInstance.checkout();
+    try {
+      this.supremeInstance.checkout();
+    } catch (e) {
+      if (this.active) {
+        this.monitoring = true;
+        this.handleChangeStatus('Monitoring');
+        this.monitoringTimeout = setTimeout(this.Supreme, this.settings.monitorTime);
+      } else {
+        clearTimeout(this.monitoringTimeout);
+      }
+    }
   };
 
   checkoutWithGroupOfVariants = async variantIDs => {

@@ -1,9 +1,9 @@
-import { UPDATE_SETTINGS } from "../actions/settings";
+import { UPDATE_SETTINGS } from '../actions/settings';
 
 const initialState = {
-  monitorTime: 0,
-  errorTime: 0,
-  checkoutTime: 0,
+  monitorTime: 60000,
+  errorTime: 60000,
+  checkoutTime: 2500,
   monitorProxies: []
 };
 
