@@ -11,11 +11,69 @@ import Tasks from '../components/Tasks';
 import Proxies from '../components/Proxies';
 import Profiles from '../components/Profiles';
 import Settings from '../components/Settings';
+import Task from '../utils/Task';
 
 class Active extends Component {
   constructor(props) {
     super(props);
     this.activeComponentCase = this.activeComponentCase.bind(this);
+    this.taskProxy = this.returnRandomProxy();
+    this.state = {
+      taskClasses: []
+    };
+  }
+
+  forceUpdateHandler = () => {
+    this.forceUpdate();
+  };
+
+  returnRandomProxy = () => {
+    const proxies = this.props.proxies;
+    const randomProxy = proxies[Math.floor(Math.random() * proxies.length)];
+    return randomProxy;
+  };
+
+  reInitialize = () => {
+    const tasksArray = this.props.tasks;
+    const taskClassesInitialize = [];
+    const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
+    tasksArray.forEach(element => {
+      taskClassesInitialize.push(new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies));
+    });
+    this.setState({
+      taskClasses: taskClassesInitialize.map((task, index) => (this.state.taskClasses[index] !== undefined && this.state.taskClasses[index].active ? this.state.taskClasses[index] : task))
+    });
+    this.forceUpdate();
+  };
+
+  initialize = tasksArray => {
+    const taskClassesInitialize = [];
+    const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
+    tasksArray.forEach(element => {
+      taskClassesInitialize.push(new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies));
+    });
+    this.setState({
+      taskClasses: taskClassesInitialize
+    });
+    this.forceUpdate();
+  };
+
+  deleteFromState = index => {
+    this.setState({
+      taskClasses: this.state.taskClasses.filter((_, i) => i !== index)
+    });
+  };
+
+  componentDidMount() {
+    this.initialize(this.props.tasks);
+  }
+
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    const prevPropsJSON = JSON.stringify(prevProps);
+    const currPropsJSON = JSON.stringify(this.props);
+    if (prevPropsJSON !== currPropsJSON) {
+      this.reInitialize();
+    }
   }
 
   activeComponentCase(state) {
@@ -25,7 +83,21 @@ class Active extends Component {
       case 'AddTask':
         return <AddTask profiles={this.props.profiles} onAddTask={this.props.onAddTask} />;
       case 'Tasks':
-        return <Tasks onAddTask={this.props.onAddTask} onRemoveTask={this.props.onRemoveTask} onUpdateTask={this.props.onUpdateTask} tasks={this.props.tasks} profiles={this.props.profiles} getCaptchaWindow={this.props.getCaptchaWindow} settings={this.props.settings} proxies={this.props.proxies} />;
+        return (
+          <Tasks
+            deleteFromState={this.deleteFromState}
+            reInitialize={this.reInitialize}
+            taskClasses={this.state.taskClasses}
+            onAddTask={this.props.onAddTask}
+            onRemoveTask={this.props.onRemoveTask}
+            onUpdateTask={this.props.onUpdateTask}
+            tasks={this.props.tasks}
+            profiles={this.props.profiles}
+            getCaptchaWindow={this.props.getCaptchaWindow}
+            settings={this.props.settings}
+            proxies={this.props.proxies}
+          />
+        );
       case 'Proxies':
         return <Proxies onAddProxies={this.props.onAddProxies} proxies={this.props.proxies} />;
       case 'Profiles':

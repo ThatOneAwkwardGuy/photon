@@ -68,17 +68,33 @@ class Captcha extends Component {
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, () => {});
     }
-    if (windowProxy !== '') {
-      win.webContents.session.setProxy(
-        {
-          proxyRules: windowProxy
-        },
-        () => {
-          webview.loadURL('http://supremenewyork.com/checkout');
-        }
-      );
+    if (arg.store === 'Supreme') {
+      if (windowProxy !== '') {
+        win.webContents.session.setProxy(
+          {
+            proxyRules: windowProxy
+          },
+          () => {
+            webview.loadURL('http://supremenewyork.com/checkout');
+          }
+        );
+      } else {
+        webview.loadURL('http://supremenewyork.com/checkout');
+      }
     } else {
-      webview.loadURL('http://supremenewyork.com/checkout');
+      console.log(arg.url);
+      if (windowProxy !== '') {
+        win.webContents.session.setProxy(
+          {
+            proxyRules: windowProxy
+          },
+          () => {
+            webview.loadURL(arg.url);
+          }
+        );
+      } else {
+        webview.loadURL(arg.url);
+      }
     }
     webview.executeJavaScript(`document.querySelector('html').style.visibility = "hidden";document.querySelector('.g-recaptcha').style.visibility = "visible"`);
     this.checkoutCookies.shift();
@@ -87,23 +103,30 @@ class Captcha extends Component {
   awaitCheckoutLoad = webview => {
     webview.addEventListener('did-finish-load', e => {
       webview.executeJavaScript(`window.location.pathname`, pathname => {
-        console.log(pathname);
-        if (pathname.includes('/checkout')) {
+        if (pathname.includes('supreme')) {
+          if (pathname.includes('/checkout')) {
+            webview.executeJavaScript(`document.querySelector("iframe").src`, result => {
+              ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: result, id: this.currentCaptchaID });
+              this.active = false;
+              if (this.checkoutCookies.length > 0) {
+                this.loadCheckoutWindow(this.checkoutCookies[0], webview);
+              }
+            });
+          } else if (pathname.includes('/shop')) {
+            ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: 'Failed', id: this.currentCaptchaID });
+          }
+          if (this.checkoutCookies.length > 0) {
+            this.loadCheckoutWindow(this.checkoutCookies[0], webview);
+          }
+        } else {
           webview.executeJavaScript(`document.querySelector("iframe").src`, result => {
-            console.log('sending');
+            console.log(result);
             ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: result, id: this.currentCaptchaID });
             this.active = false;
-            console.log(this.checkoutCookies.length);
             if (this.checkoutCookies.length > 0) {
               this.loadCheckoutWindow(this.checkoutCookies[0], webview);
             }
           });
-        } else if (pathname.includes('/shop')) {
-          ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: 'Failed', id: this.currentCaptchaID });
-        }
-        if (this.checkoutCookies.length > 0) {
-          console.log(this.checkoutCookies);
-          this.loadCheckoutWindow(this.checkoutCookies[0], webview);
         }
       });
     });
@@ -121,7 +144,8 @@ class Captcha extends Component {
         <CaptchaTopbar />
         <webview
           id="captchaWebview"
-          src="http://example.com/"
+          src="https://accounts.google.com/Login"
+          webpreferences="allowRunningInsecureContent, javascript=yes"
           style={{
             display: 'inline-flex',
             width: '100%',

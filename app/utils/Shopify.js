@@ -1,4 +1,5 @@
 import stores from '../store/shops';
+import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 
@@ -80,7 +81,7 @@ export default class Shopify {
     const payload = {
       utf8: '✓',
       _method: 'patch',
-      authenticity_token: authToken,
+      authenticity_token: authToken !== undefined ? authToken : '',
       previous_step: 'contact_information',
       step: 'shipping_method',
       'checkout[email]': this.options.profile.paymentEmail,
@@ -101,6 +102,7 @@ export default class Shopify {
       'checkout[client_details][javascript_enabled]': '1',
       button: ''
     };
+    console.log(payload);
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
@@ -122,6 +124,11 @@ export default class Shopify {
   returnAuthToken = paymentBody => {
     const $ = cheerio.load(paymentBody);
     return $('input[name="authenticity_token"]').attr('value');
+  };
+
+  returnOrderTotal = paymentBody => {
+    const $ = cheerio.load(paymentBody);
+    return $('span[data-checkout-subtotal-price-target]')['0'].attribs['data-checkout-subtotal-price-target'];
   };
 
   getShippingToken = async () => {
@@ -170,7 +177,7 @@ export default class Shopify {
     });
   };
 
-  sendCheckoutInfo = async (paymentToken, shippingToken, paymentID, authToken, checkoutURL) => {
+  sendCheckoutInfo = async (paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal) => {
     const payload = {
       utf8: '✓',
       _method: 'patch',
@@ -195,7 +202,7 @@ export default class Shopify {
       'checkout[client_details][browser_width]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][browser_height]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][javascript_enabled]': '1',
-      'checkout[total_price]': '4300',
+      'checkout[total_price]': '5000',
       button: ''
     };
     const response = await this.rp({
@@ -215,20 +222,36 @@ export default class Shopify {
     try {
       const start = Date.now();
       await this.addToCart(variantID, this.options.task.quantity);
-      const [paymentToken, checkoutURL, shippingToken] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
-      const checkoutBody = this.getCheckoutBody(checkoutURL);
+      let checkoutURL;
+      const [paymentToken, checkoutURLResponse, shippingToken] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
+      if (this.options.task.store === 'Undefeated') {
+        checkoutURL = `https://undefeated.com${decodeURIComponent(checkoutURLResponse).split('=')[1]}`;
+        await undefeatedAccountLogin({ email: 'xtremexx_11@hotmail.com', password: 'Abimbola123' }, this.cookieJar);
+      } else {
+        checkoutURL = checkoutURLResponse;
+      }
+      const checkoutBody = await this.getCheckoutBody(checkoutURL);
       const paymentID = this.returnPaymentID(checkoutBody);
       const authToken = this.returnAuthToken(checkoutBody);
+      const orderTotal = this.returnOrderTotal(checkoutBody);
+      console.log(paymentID);
+      console.log(authToken);
+      console.log(orderTotal);
       await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
-      await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL);
-      this.handleChangeStatus('Check Email');
       console.log(Date.now() - start);
+      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
+      console.log(checkoutResponse);
+      if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+        this.handleChangeStatus('Stuck On Payment Method Page');
+      } else {
+        this.handleChangeStatus('Check Email');
+      }
     } catch (e) {
-      if (e.options.uri.includes('stock_problems')) {
+      console.log(e);
+      if (_.get(e, 'options.uri').includes('stock_problems')) {
         this.handleChangeStatus('Item Out Of Stock');
       } else {
-        this.handleChangeStatus('Error');
-        console.log(e);
+        this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
     }
   };

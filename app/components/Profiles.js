@@ -421,13 +421,14 @@ export default class Profiles extends Component {
                         this.handleChangeShippingOrBilling(event);
                       }}
                     >
-                      {this.state.regionArrayShipping !== null && this.state.regionArrayShipping !== [] ? (
+                      {/* {this.state.regionArrayShipping !== null && this.state.regionArrayShipping !== [] ? (
                         this.state.formdata.deliveryProvince !== null && this.state.formdata.deliveryProvince !== '' ? (
                           <option key="country-load">{this.state.formdata.deliveryProvince}</option>
                         ) : (
                           this.state.regionArrayShipping.map(this.returnCountry)
                         )
-                      ) : null}
+                      ) : null} */}
+                      {this.state.regionArrayShipping !== null ? this.state.regionArrayShipping.map(this.returnCountry) : null}
                     </Input>
                   </Col>
                   <Col xs="4">

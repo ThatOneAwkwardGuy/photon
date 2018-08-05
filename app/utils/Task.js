@@ -7,7 +7,14 @@ const rp = require('request-promise');
 const cheerio = require('cheerio');
 const _ = require('lodash');
 const convert = require('xml-js');
-
+const sizeSynonymns = {
+  XSmall: ['XSMALL', 'XS', 'XSmall', 'X-Small'],
+  Small: ['SMALL', 'S', 'Small'],
+  Medium: ['Medium', 'M', 'MEDIUM', 'Med', 'MED'],
+  Large: ['LARGE', 'L', 'Large'],
+  XLarge: ['XLARGE', 'X-Large', 'X-LARGE', 'XL'],
+  XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE']
+};
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
     this.forceUpdate = forceUpdateFunction;
@@ -53,7 +60,6 @@ export default class Task {
       this.alreadySetTimeout = true;
       this.scheduledTimeout = setTimeout(this.run, new Date(this.options.task.scheduledTime).getTime() * 1000 - Date.now());
     } else {
-      console.log('starting normally');
       if (!this.monitoring) {
         this.handleChangeStatus('Started');
       }
@@ -61,6 +67,12 @@ export default class Task {
       switch (this.options.task.store) {
         case 'Supreme':
           this.Supreme();
+          break;
+        case 'DSM-EU':
+          this.DSM();
+          break;
+        case 'DSM-US':
+          this.DSM();
           break;
         default:
           switch (this.options.task.mode) {
@@ -104,6 +116,19 @@ export default class Task {
     }
   };
 
+  DSM = async () => {
+    const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
+    const content = await this.getVariantsFromHomepage(pageURL);
+    const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size);
+    if (variantID !== undefined) {
+      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy);
+      const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
+      return checkoutResponse;
+    } else {
+      this.handleChangeStatus('Size Is Unavailable');
+    }
+  };
+
   checkoutWithGroupOfVariants = async variantIDs => {
     const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
     if (variantID !== undefined) {
@@ -133,17 +158,47 @@ export default class Task {
   homepageMode = async () => {
     const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
     const content = await this.getVariantsFromHomepage(pageURL);
+    console.log(content.propertiesHash);
     const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(content.variantIDs, content.propertiesHash);
+  };
+
+  checkSize = (option, size) => {
+    const sizeNames = sizeSynonymns[size];
+    if (sizeNames !== undefined) {
+      for (const size of sizeNames) {
+        if (size === option) {
+          return true;
+        }
+      }
+    } else {
+      if (option === size) {
+        return true;
+      } else if (option.split(' ').includes(size)) {
+        return true;
+      }
+    }
   };
 
   getVariantIDOfSize = (variants, size) => {
     const variantsArray = variants;
     const found = [];
-    variantsArray.forEach(variant => {
-      if ((_.get(variant, 'option1') && _.get(variant, 'option1').includes(size)) || (_.get(variant, 'option2') && _.get(variant, 'option2').includes(size)) || (_.get(variant, 'public_title') && _.get(variant, 'public_title').includes(size))) {
-        found.push(variant.id);
+    if (this.options.task.store.includes('DSM')) {
+      for (const variant in variantsArray) {
+        if (
+          (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
+          (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2'), size)) ||
+          (_.get(variantsArray[variant], 'public_title') && this.checkSize(_.get(variantsArray[variant], 'public_title'), size))
+        ) {
+          found.push(variantsArray[variant].id);
+        }
       }
-    });
+    } else {
+      variantsArray.forEach(variant => {
+        if ((_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1'), size)) || (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2'), size)) || (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size))) {
+          found.push(variant.id);
+        }
+      });
+    }
     return found[0];
   };
 

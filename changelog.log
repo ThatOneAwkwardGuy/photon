@@ -1,9 +1,9 @@
-1.0.1
+1.0.1b
 -Fixed bug where when loading a profile, the region text would not show.
 -Added T-shirt category for Supreme
 -Attempted fix of minimize and close buttons on Windows
 
-1.0.2
+1.0.2b
 -Fixed lack of T-shirt category for Supreme in edit modal
 -Added back start all button
 -Rebuilt Supreme checkout (testing required)
@@ -11,3 +11,16 @@
 -Added monitoring logic for Supreme. If item is out of stock or not yet loaded, bot will retry at rate specified in the settings.
 -Added Task Scheduling
 -Set default settings to prevent too many attempts during monitoring mode
+
+1.0.3b
+-Fixed versioning problem in bottom right of footer where correct version was not being displayed.
+-Removed capital letters from keyword input as that could cause confusion later on
+-Fixed bug from previous update where states of America were not being shown in the delivery section of making a new profile
+-Temporary fix for different size naming schemes e.g XSMALL = XS, by providing more options e.g S, M, L, XL, will add a more elegant solution later
+
+1.0.4b
+-Tasks now run in background
+-Random shoe size added
+-Fixed different size naming schemes properly e.g XSMALL = XS
+-Fixed bug where bot would say 'Check Email' even though checkout didnt complete
+-Added some more task statuses

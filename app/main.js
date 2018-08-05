@@ -19,8 +19,9 @@ let initialiseCaptchaWindow = () => {
     minHeight: 300,
     width: 400,
     height: 600,
-    resizable: true,
-    frame: false
+    frame: false,
+    resizable: false,
+    allowRunningInsecureContent: true
   });
   captchaWindow.loadURL(
     url.format({
@@ -77,12 +78,12 @@ app.on('ready', async () => {
   //   autoUpdater.quitAndInstall();
   // });
   mainWindow = new BrowserWindow({
-    height: 800,
+    minHeight: 400,
+    minWidth: 662,
     width: 1324,
-    minHeight: 1324,
-    minWidth: 800,
+    height: 800,
     frame: false,
-    resizable: false
+    resizable: true
   });
 
   mainWindow.loadURL(

@@ -5,6 +5,7 @@ import stores from '../store/shops';
 import Sizes from '../store/sizes';
 import Datetime from 'react-datetime';
 const _ = require('lodash');
+const moment = require('moment');
 const Shops = _.keys(stores);
 
 class AddTask extends Component {
@@ -21,7 +22,7 @@ class AddTask extends Component {
         modeInput: '',
         keywords: '',
         proxy: '',
-        size: Sizes[0],
+        size: Sizes.Shoes[0],
         quantity: '1',
         profile: this.profileNames[0],
         tasks: '1',
@@ -33,11 +34,6 @@ class AddTask extends Component {
   }
 
   handleChange(e) {
-    this.setState({
-      formdata: Object.assign({}, this.state.formdata, {
-        [e.target.name]: e.target.value
-      })
-    });
     if (e.target.value === 'Supreme') {
       this.setState({
         formdata: Object.assign({}, this.state.formdata, {
@@ -45,10 +41,19 @@ class AddTask extends Component {
           mode: 'keywords'
         })
       });
+    } else {
+      this.setState({
+        formdata: Object.assign({}, this.state.formdata, {
+          [e.target.name]: e.target.value
+        })
+      });
     }
   }
 
   handleSubmit() {
+    if (this.state.formdata.size === 'Random Shoe Size') {
+      this.state.formdata.size = Sizes.Shoes.slice(1)[Math.floor(Math.random() * Sizes.Shoes.slice(1).length)];
+    }
     const task = {
       task: this.state.formdata,
       profileID: this.state.formdata.profile
@@ -61,6 +66,7 @@ class AddTask extends Component {
   returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
 
   setScheduledTime = date => {
+    console.log(date);
     this.setState({
       formdata: {
         ...this.state.formdata,
@@ -160,6 +166,7 @@ class AddTask extends Component {
                             value={this.state.formdata.keywords}
                             placeholder="+nikeBoyzWeDontDo3Stripes -adidas"
                             onChange={event => {
+                              event.target.value = event.target.value.toLowerCase();
                               this.handleChange(event);
                             }}
                           />
@@ -262,6 +269,7 @@ class AddTask extends Component {
                     <Col xs="6">
                       <Label for="scheduledTime">Schedule Time</Label>
                       <Datetime
+                        value={this.state.formdata.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.formdata.scheduledTime)}
                         dateFormat="dddd, MMMM Do YYYY"
                         timeFormat="HH:mm A"
                         isValidDate={(currentDate, selectedDate) => {
@@ -273,6 +281,19 @@ class AddTask extends Component {
                           this.setScheduledTime(date.unix());
                         }}
                       />
+                      <Button
+                        style={{ marginTop: '30px', float: 'right' }}
+                        onClick={() => {
+                          this.setState({
+                            formdata: {
+                              ...this.state.formdata,
+                              scheduledTime: ''
+                            }
+                          });
+                        }}
+                      >
+                        Clear Time
+                      </Button>
                     </Col>
                   </FormGroup>
                   <FormGroup row>
@@ -342,7 +363,7 @@ class AddTask extends Component {
                               modeInput: '',
                               keywords: '',
                               proxy: '',
-                              size: Sizes[0],
+                              size: Sizes.Shoes[0],
                               quantity: '1',
                               profile: this.profileNames[0],
                               tasks: '1'

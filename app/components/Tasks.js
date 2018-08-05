@@ -18,10 +18,8 @@ export default class Tasks extends Component {
   constructor(props) {
     super(props);
     this.profileNames = _.keys(this.props.profiles);
-    this.taskClasses = [];
-    this.taskProxy = this.returnRandomProxy();
+    this.taskClasses = this.props.taskClasses;
     this.state = {
-      taskClasses: [],
       taskEditModal: false,
       taskExportSuccess: false,
       taskExportFailure: false,
@@ -46,39 +44,17 @@ export default class Tasks extends Component {
   }
 
   componentDidMount = () => {
-    this.initialize(this.props.tasks);
-  };
-
-  componentWillReceiveProps = nextProps => {
-    this.initialize(nextProps.tasks);
+    this.props.reInitialize();
   };
 
   forceUpdateHandler = () => {
     this.forceUpdate();
   };
 
-  returnRandomProxy = () => {
-    const proxies = this.props.proxies;
-    const randomProxy = proxies[Math.floor(Math.random() * proxies.length)];
-    return randomProxy;
-  };
-
   returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
 
   handleSaveUpdatedTask = (task, id) => {
     this.props.onUpdateTask({ task, id });
-  };
-
-  initialize = tasksArray => {
-    const taskClassesInitialize = [];
-    const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
-    tasksArray.forEach(element => {
-      taskClassesInitialize.push(new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies));
-    });
-    this.setState({
-      taskClasses: taskClassesInitialize
-    });
-    this.forceUpdate();
   };
 
   handleChange = e => {
@@ -132,13 +108,13 @@ export default class Tasks extends Component {
     //   element.run();
     // });
     // ipcRenderer.send(RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
-    for (const task of this.state.taskClasses) {
+    for (const task of this.props.taskClasses) {
       task.run();
     }
   };
 
   stopAllTasks = () => {
-    this.state.taskClasses.forEach(element => {
+    this.props.taskClasses.forEach(element => {
       element.stop();
     });
   };
@@ -244,11 +220,9 @@ export default class Tasks extends Component {
         </Button>
         <Button
           onClick={() => {
+            this.props.taskClasses[index].stop();
             this.props.onRemoveTask(this.props.tasks[index]);
-            this.setState({
-              ...this.state,
-              taskClasses: this.state.taskClasses.filter(item => item !== task)
-            });
+            this.props.deleteFromState(index);
           }}
           className="taskButton"
         >
@@ -276,7 +250,7 @@ export default class Tasks extends Component {
                   <th>actions</th>
                 </tr>
               </thead>
-              <tbody>{this.state.taskClasses.map(this.returnTasks)}</tbody>
+              <tbody>{this.props.taskClasses.map(this.returnTasks)}</tbody>
             </Table>
             <Container className="taskTableButtonsContainer">
               <Row>
@@ -392,6 +366,7 @@ export default class Tasks extends Component {
                         value={this.state.modalFormData.task.keywords}
                         placeholder="+nikeBoyzWeDontDo3Stripes -adidas"
                         onChange={event => {
+                          event.target.value = event.target.value.toLowerCase();
                           this.handleChange(event);
                         }}
                       />
@@ -493,7 +468,9 @@ export default class Tasks extends Component {
                 <Col xs="6">
                   <Label for="scheduledTime">Schedule Time</Label>
                   <Datetime
-                    value={moment.unix(this.state.modalFormData.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}
+                    // value={moment.unix(this.state.modalFormData.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}
+                    value={this.state.modalFormData.task.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.modalFormData.task.scheduledTime)}
+                    // value={this.state.modalFormData.task.scheduledTime}
                     dateFormat="dddd, MMMM Do YYYY"
                     timeFormat="HH:mm A"
                     isValidDate={(currentDate, selectedDate) => {
