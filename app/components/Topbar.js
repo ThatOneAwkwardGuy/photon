@@ -23,24 +23,24 @@ export default class Topbar extends Component {
         </Col>
         <Col xs="8" className="topbarMiddle" />
         <Col xs="1" className="text-right topbarOptionsCol">
-          <div
+          <a
             className="windowButton"
             onClick={() => {
               this.minimiseWindow();
             }}
           >
             <img src={Minimize} />
-          </div>
+          </a>
         </Col>
         <Col xs="1" className="text-left topbarOptionsCol">
-          <div
+          <a
             className="windowButton"
             onClick={() => {
               this.closeWindow();
             }}
           >
             <img src={Close} />
-          </div>
+          </a>
         </Col>
       </Row>
     );
