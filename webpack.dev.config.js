@@ -49,10 +49,9 @@ const appConfig = {
   target: 'electron-renderer',
   entry: './app/app.js',
   output: {
-    path: path.resolve(__dirname, './webpack-pack/') + '/',
+    path: path.resolve(__dirname, 'webpack-pack'),
     filename: 'app.js',
-    publicPath: path.resolve(__dirname, './webpack-pack/') + '/'
-  },
+    publicPath: path.resolve(__dirname, 'webpack-pack'),
   devServer: {
     hot: true
   },
@@ -73,13 +72,13 @@ const appConfig = {
       },
       {
         test: /\.(jpe?g|png|gif)$/,
-        use: [{ loader: 'file-loader?name=img/[name]__[hash:base64:5].[ext]' }]
+        use: [{ loader: 'file-loader?name=/img/[name]__[hash:base64:5].[ext]' }]
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2)$/,
         use: [
           {
-            loader: 'file-loader?name=files/[name]__[hash:base64:5].[ext]',
+            loader: 'file-loader?name=/files/[name]__[hash:base64:5].[ext]',
             options: {
               useRelativePath: true
             }
