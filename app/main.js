@@ -83,8 +83,7 @@ app.on('ready', async () => {
     minHeight: 400,
     minWidth: 600,
     frame: false,
-    resizable: true,
-    titleBarStyle: 'hidden'
+    resizable: true
   });
 
   mainWindow.loadURL(

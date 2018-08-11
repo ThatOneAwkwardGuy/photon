@@ -24,3 +24,7 @@
 -Fixed different size naming schemes properly e.g XSMALL = XS
 -Fixed bug where bot would say 'Check Email' even though checkout didnt complete
 -Added some more task statuses
+
+1.0.5b
+-Fixed windows version of bot looking like utter shit
+-Fixed windows minimize and close functionality

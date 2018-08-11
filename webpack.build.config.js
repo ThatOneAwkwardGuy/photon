@@ -77,12 +77,20 @@ const appConfig = {
       },
       {
         test: /\.(jpe?g|png|gif)$/,
-        use: [{ loader: 'file-loader?name=img/[name]__[hash:base64:5].[ext]' }]
+        use: [{ loader: 'file-loader?name=/img/[name]__[hash:base64:5].[ext]' }]
       },
       {
-        test: /\.(eot|svg|ttf|woff|woff2)$/,
-        use: [{ loader: 'file-loader?name=files/[name]__[hash:base64:5].[ext]' }]
-      }
+        test: /\.(svg)$/,
+        use: [
+          {
+            loader: 'file-loader?name=/files/[name]__[hash:base64:5].[ext]',
+            options: {
+              useRelativePath: true
+            }
+          }
+        ]
+      },
+      { test: /\.(png|woff|woff2|eot|ttf)$/, loader: 'url-loader?limit=100000' }
     ]
   },
   plugins: [
