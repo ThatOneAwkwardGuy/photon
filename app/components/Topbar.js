@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'reactstrap';
-import Logo from '../img/logo.png';
-import Minimize from '../img/minimise.png';
-import Close from '../img/close.png';
+import Logo from '../img/svg/logo.svg';
+import Minimize from '../img/svg/minimise.svg';
+import Close from '../img/svg/close.svg';
 import { remote } from 'electron';
 export default class Topbar extends Component {
   minimiseWindow = () => {

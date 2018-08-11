@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'reactstrap';
 import { remote } from 'electron';
-import Minimize from '../img/minimise.png';
-import Close from '../img/close.png';
+import Minimize from '../img/svg/minimise.svg';
+import Close from '../img/svg/close.svg';
 export default class CaptchaTopbar extends Component {
   minimiseWindow() {
     remote.BrowserWindow.getFocusedWindow().minimize();
