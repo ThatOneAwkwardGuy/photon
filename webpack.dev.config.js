@@ -51,7 +51,8 @@ const appConfig = {
   output: {
     path: path.resolve(__dirname, 'webpack-pack'),
     filename: 'app.js',
-    publicPath: path.resolve(__dirname, 'webpack-pack'),
+    publicPath: path.resolve(__dirname, 'webpack-pack')
+  },
   devServer: {
     hot: true
   },
