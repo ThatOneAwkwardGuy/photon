@@ -83,7 +83,8 @@ app.on('ready', async () => {
     minHeight: 400,
     minWidth: 600,
     frame: false,
-    resizable: true
+    resizable: true,
+    titleBarStyle: 'customButtonsOnHover'
   });
 
   mainWindow.loadURL(
