@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'reactstrap';
-import NotSignedIn from '../img/notsignedin.svg';
-import SignedIn from '../img/signedin.svg';
+import NotSignedIn from '../img/notsignedin.png';
+import SignedIn from '../img/signedin.png';
 import packageJson from '../../package.json';
 import FontAwesome from 'react-fontawesome';
 var shell = require('electron').shell;
