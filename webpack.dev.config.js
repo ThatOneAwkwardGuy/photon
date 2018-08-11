@@ -72,8 +72,12 @@ const appConfig = {
         use: [{ loader: 'file-loader?name=img/[name]__[hash:base64:5].[ext]' }]
       },
       {
-        test: /\.(eot|svg|ttf|woff|woff2)$/,
+        test: /\.(eot|ttf|woff|woff2)$/,
         use: [{ loader: 'file-loader?name=files/[name]__[hash:base64:5].[ext]' }]
+      },
+      {
+        test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+        use: [{ loader: 'url-loader?limit=10000&mimetype=image/svg+xml' }]
       }
     ]
   },

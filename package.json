@@ -129,6 +129,7 @@
     "lint": "eslint --no-ignore scripts app test *.js",
     "pack": "run-s private:clean private:compile private:build:all",
     "webpack:dev": "NODE_ENV=development run-p webpack:dev:server webpack:dev:start",
+    "webpack:dev:windows": "run-p webpack:dev:server webpack:dev:start",
     "webpack:dev:pack": "webpack --mode development --config webpack.dev.config.js",
     "webpack:dev:server": "webpack --watch --config webpack.dev.config.js",
     "webpack:dev:start": "cross-env BABEL_ENV=electron electron -r babel-register webpack-pack/main.js",

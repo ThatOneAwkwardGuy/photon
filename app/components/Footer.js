@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'reactstrap';
 import NotSignedIn from '../img/notsignedin.svg';
-import SignedIn from '../img/signedin.svg';
+// import SignedIn from '../img/signedin.svg';
+var SignedIn = require('svg-inline-loader?classPrefix!../img/signedin.svg');
 
 export default class Footer extends Component {
   constructor(props) {
     super(props);
+    console.log(SignedIn)
   }
   render() {
     return (

@@ -77,12 +77,12 @@ app.on('ready', async () => {
   //   autoUpdater.quitAndInstall();
   // });
   mainWindow = new BrowserWindow({
-    height: 800,
-    width: 1324,
-    minHeight: 1324,
+    height: 500,
+    width: 800,
+    minHeight: 500,
     minWidth: 800,
     frame: false,
-    resizable: false
+    resizable: true
   });
 
   mainWindow.loadURL(

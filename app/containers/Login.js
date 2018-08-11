@@ -47,23 +47,27 @@ class Login extends Component {
   }
 
   checkLoggedIn = async () => {
-    await auth.authorise.onAuthStateChanged(async user => {
-      if (user !== null) {
-        this.setState({
-          currentlyLoggingIn: true
-        });
-        await setUserMachineIDOnFirstLoad(user.uid);
-        const machineIDStatus = await checkIfUserMachineIDMatches(user.uid);
-        if (user && machineIDStatus) {
-          this.props.history.push('/bot');
-        } else {
+    if(process.env.NODE_ENV !== "development"){
+      await auth.authorise.onAuthStateChanged(async user => {
+        if (user !== null) {
           this.setState({
-            loginError: true,
-            currentlyLoggingIn: false
+            currentlyLoggingIn: true
           });
+          await setUserMachineIDOnFirstLoad(user.uid);
+          const machineIDStatus = await checkIfUserMachineIDMatches(user.uid);
+          if (user && machineIDStatus) {
+            this.props.history.push('/bot');
+          } else {
+            this.setState({
+              loginError: true,
+              currentlyLoggingIn: false
+            });
+          }
         }
-      }
-    });
+      });
+    } else {
+      this.props.history.push('/bot');
+    }
   };
 
   handleLogin = async () => {
