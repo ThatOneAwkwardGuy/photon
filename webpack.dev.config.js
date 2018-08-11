@@ -73,7 +73,7 @@ const appConfig = {
         use: [{ loader: 'file-loader?name=/img/[name]__[hash:base64:5].[ext]' }]
       },
       {
-        test: /\.(eot|ttf|woff|woff2)$/,
+        test: /\.(svg)$/,
         use: [
           {
             loader: 'file-loader?name=/files/[name]__[hash:base64:5].[ext]',
