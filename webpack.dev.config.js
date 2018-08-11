@@ -4,11 +4,17 @@ const path = require('path');
 const webpack = require('webpack');
 var LiveReloadPlugin = require('webpack-livereload-plugin');
 
+console.log(__dirname);
+console.log(path.resolve(__dirname, 'app'));
+
 const mainConfig = {
   mode: 'development',
   devtool: 'source-map',
   target: 'electron-main',
-  entry: { main: './app/main.js', vendor: ['firebase'] },
+  entry: {
+    main: path.resolve(__dirname, 'app', 'main.js'),
+    vendor: ['firebase']
+  },
   output: {
     path: path.resolve(__dirname, './webpack-pack') + '/',
     filename: '[name].js',
@@ -71,7 +77,14 @@ const appConfig = {
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2)$/,
-        use: [{ loader: 'file-loader?name=files/[name]__[hash:base64:5].[ext]' }]
+        use: [
+          {
+            loader: 'file-loader?name=files/[name]__[hash:base64:5].[ext]',
+            options: {
+              useRelativePath: true
+            }
+          }
+        ]
       }
     ]
   },
