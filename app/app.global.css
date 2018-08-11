@@ -521,3 +521,8 @@ canvas {
 .collapse.show {
   height: 100%;
 }
+
+.twitterLogoFooter:hover {
+  color: #0084b4;
+  cursor: pointer;
+}

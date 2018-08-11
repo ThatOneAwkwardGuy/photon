@@ -19,8 +19,9 @@ let initialiseCaptchaWindow = () => {
     minHeight: 300,
     width: 400,
     height: 600,
-    resizable: true,
-    frame: false
+    frame: false,
+    resizable: false,
+    allowRunningInsecureContent: true
   });
   captchaWindow.loadURL(
     url.format({

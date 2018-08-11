@@ -1,15 +1,11 @@
 import stores from '../store/shops';
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL } from '../utils/constants';
-const ipcRenderer = require('electron').ipcRenderer;
 const request = require('request-promise');
 const cheerio = require('cheerio');
-const uuidv4 = require('uuid/v4');
 
 export default class Shopify {
-  constructor(options, handleChangeStatus, propertiesHash, proxy) {
+  constructor(options, handleChangeStatus, propertiesHash) {
     this.options = options;
     this.handleChangeStatus = handleChangeStatus;
-    this.proxy = proxy;
     this.propertiesHash = propertiesHash;
     this.cookieJar = request.jar();
     this.rp = request.defaults({
@@ -17,8 +13,7 @@ export default class Shopify {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.117 Safari/537.36',
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
-      jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : this.options.task.proxy
+      jar: this.cookieJar
     });
   }
 
@@ -33,11 +28,15 @@ export default class Shopify {
       quantity: amount,
       'properties[_hash]': this.propertiesHash
     };
-    const response = await this.rp({
-      method: 'POST',
-      uri: `${stores[this.options.task.store]}/cart/add.js`,
-      form: payload
-    });
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: `${stores[this.options.task.store]}/cart/add.js`,
+        form: payload
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   generatePaymentToken = async () => {
@@ -50,13 +49,17 @@ export default class Shopify {
         verification_value: this.options.profile.paymentCVV
       }
     };
-    const response = await this.rp({
-      method: 'POST',
-      uri: 'https://elb.deposit.shopifycs.com/sessions',
-      body: payload,
-      json: true
-    });
-    return response.id;
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: 'https://elb.deposit.shopifycs.com/sessions',
+        body: payload,
+        json: true
+      });
+      return response.id;
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   getCheckoutBody = async checkoutURL => {
@@ -75,8 +78,7 @@ export default class Shopify {
         resolveWithFullResponse: true,
         followAllRedirects: true
       });
-      return { checkoutURL: response.request.href, sendCustomerInfoBody: response.body };
-      // return response.request.href;
+      return response.request.href;
     } catch (e) {
       console.error(e);
     }
@@ -105,21 +107,24 @@ export default class Shopify {
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1',
-      'g-recaptcha-response':
-        '03AEMEkEnnjIgC0E3YQIJtkLHMT2iAuYzJFh_9ojDBxGEuyqLtjPZMfcO9cAR8eg2w4fjXvzKcvWX-YhZsxsiVHhnLdOPiCWnlEjvgsrY7xM84NQWBej_HaWX4qH-Yvid46s-6ragtcoUZDWEPufC7tUgrraNY1oKSrRDl6xEJsZlns697VmKx1cFIp9YUACCwPZI2qf22mdS1Y9-3W2e5P_LSwHu0lxSZ5cLQy0fpFt-sKQwAQc6Z9X5pz5BqavzHw84KAAyq3a5E8p4q8kIUQG95YtFfaNuhip6DBbzkmR2eQGHSCPMPmAppHfAxxqj2kbDNKL6EDWgYOCjo6Zk8HUMhVZjU8A2XHdI-LqhRanARl8ULdBhApsOXA-3c2LPxqH6l2VL9RAd0',
       button: ''
     };
-    const response = await this.rp({
-      method: 'POST',
-      uri: checkoutURL,
-      followAllRedirects: true,
-      resolveWithFullResponse: true,
-      form: payload,
-      headers: {
-        Cookie: this.cookieJar.getCookieString(checkoutURL)
-      }
-    });
-    return response;
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: checkoutURL,
+        followAllRedirects: true,
+        resolveWithFullResponse: true,
+        form: payload,
+        headers: {
+          Cookie: this.cookieJar.getCookieString(checkoutURL)
+        }
+      });
+      return response;
+    } catch (e) {
+      this.handleChangeStatus('Failed Sending Customer Info');
+      console.error(e);
+    }
   };
 
   returnPaymentID = paymentBody => {
@@ -132,21 +137,6 @@ export default class Shopify {
     return $('input[name="authenticity_token"]').attr('value');
   };
 
-  getCaptchaToken = async (paymentBody, pageURL) => {
-    const tokenID = uuidv4();
-    const $ = cheerio.load(paymentBody, { xmlMode: true });
-    const captchaURL = $('.g-recaptcha-nojs__iframe').attr('src');
-    const captchaBodyResponse = await this.rp({
-      method: 'GET',
-      uri: captchaURL
-    });
-    console.log(captchaBodyResponse);
-    const captchaBody = cheerio.load(captchaBodyResponse);
-    const captchaToken = captchaBody('#recaptcha-token').attr('value');
-    console.log(captchaToken);
-    // ipcRenderer.send(SEND_SUPREME_CHECKOUT_COOKIE, { cookies: this.cookieJar.getCookieString(stores[this.options.task.store]), proxy: this.proxy, id: tokenID, store: 'DSM', url: pageURL });
-  };
-
   getShippingToken = async () => {
     const payload = {
       shipping_address: {
@@ -155,17 +145,20 @@ export default class Shopify {
         province: this.options.profile.deliveryProvince
       }
     };
-
-    const response = await this.rp({
-      method: 'POST',
-      json: true,
-      uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
-      body: payload
-    });
-    const shipOpt = response.shipping_rates[0].name.replace(/ /g, '%20');
-    const shipPrc = response.shipping_rates[0].price;
-    const shippingOption = `shopify-${shipOpt}-${shipPrc}`;
-    return shippingOption;
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        json: true,
+        uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
+        body: payload
+      });
+      const shipOpt = response.shipping_rates[0].name.replace(/ /g, '%20');
+      const shipPrc = response.shipping_rates[0].price;
+      const shippingOption = `shopify-${shipOpt}-${shipPrc}`;
+      return shippingOption;
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   sendShippingMethod = async (shippingToken, checkoutURL) => {
@@ -181,16 +174,20 @@ export default class Shopify {
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1'
     };
-    const response = await this.rp({
-      method: 'POST',
-      uri: checkoutURL,
-      resolveWithFullResponse: true,
-      followAllRedirects: true,
-      form: payload,
-      headers: {
-        Cookie: this.cookieJar.getCookieString(checkoutURL)
-      }
-    });
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: checkoutURL,
+        resolveWithFullResponse: true,
+        followAllRedirects: true,
+        form: payload,
+        headers: {
+          Cookie: this.cookieJar.getCookieString(checkoutURL)
+        }
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   sendCheckoutInfo = async (paymentToken, shippingToken, paymentID, authToken, checkoutURL) => {
@@ -218,48 +215,48 @@ export default class Shopify {
       'checkout[client_details][browser_width]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][browser_height]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][javascript_enabled]': '1',
-      'checkout[total_price]': '7500',
+      'checkout[total_price]': '4300',
       button: ''
     };
-    const response = await this.rp({
-      method: 'POST',
-      uri: checkoutURL,
-      form: payload,
-      resolveWithFullResponse: true,
-      followAllRedirects: true,
-      headers: {
-        Cookie: this.cookieJar.getCookieString(checkoutURL)
-      }
-    });
-    return response;
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: checkoutURL,
+        form: payload,
+        resolveWithFullResponse: true,
+        followAllRedirects: true,
+        headers: {
+          Cookie: this.cookieJar.getCookieString(checkoutURL)
+        }
+      });
+      console.log(response);
+      return response;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  checkoutPoll = async checkoutURL => {
+    try {
+      await this.rp({
+        method: 'GET',
+        url: `${checkoutURL}/throttle/queue?js_poll=1`
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   checkoutWithVariant = async variantID => {
-    try {
-      const start = Date.now();
-      await this.addToCart(variantID, this.options.task.quantity);
-      const [paymentToken, getCheckoutUrlResponse, shippingToken] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
-      const checkoutBody = await this.getCheckoutBody(getCheckoutUrlResponse.checkoutURL);
-      const paymentID = this.returnPaymentID(checkoutBody);
-      const authToken = this.returnAuthToken(checkoutBody);
-      const [sendCheckoutInfoResponse, sendShippingMethodResponse] = await Promise.all([this.sendCustomerInfo(getCheckoutUrlResponse.checkoutURL, authToken), this.sendShippingMethod(shippingToken, getCheckoutUrlResponse.checkoutURL)]);
-      const captchaToken = this.getCaptchaToken(getCheckoutUrlResponse.sendCustomerInfoBody, getCheckoutUrlResponse.checkoutURL);
-      console.log(Date.now() - start);
-      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, getCheckoutUrlResponse.checkoutURL);
-      console.log(checkoutResponse);
-      if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
-        this.handleChangeStatus('Stuck On Payment Method Page');
-      } else {
-        this.handleChangeStatus('Check Email');
-      }
-    } catch (e) {
-      console.log(e);
-      if (e.options.uri.includes('stock_problems')) {
-        this.handleChangeStatus('Item Out Of Stock');
-      } else {
-        this.handleChangeStatus(e.error.error['0']);
-        console.log(e);
-      }
-    }
+    const start = Date.now();
+    await this.addToCart(variantID, this.options.task.quantity);
+    // await this.checkoutPoll(checkoutURL);
+    const [paymentToken, checkoutURL, shippingToken] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
+    const checkoutBody = this.getCheckoutBody(checkoutURL);
+    const paymentID = this.returnPaymentID(checkoutBody);
+    const authToken = this.returnAuthToken(checkoutBody);
+    await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
+    await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL);
+    console.log(Date.now() - start);
   };
 }

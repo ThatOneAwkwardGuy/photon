@@ -8,6 +8,7 @@ const uuidv4 = require('uuid/v4');
 import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL } from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy) {
+    this.startTime = '';
     this.options = options;
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
@@ -54,8 +55,10 @@ export default class Supreme {
         const captchaBody = cheerio.load(captchaBodyResponse);
         const captchaToken = captchaBody('#recaptcha-token').attr('value');
         this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms Before Checkout`);
+        console.log(Date.now() - this.startTime);
         await this.sleep(parseInt(this.settings.checkoutTime));
         const checkoutResponse = await this.checkoutWithCapctcha(captchaToken);
+        console.log(Date.now() - this.startTime);
         if (args.captchaURL === 'Failed') {
           this.handleChangeStatus('Item Likely Out Of Stock');
         } else if (checkoutResponse.body.includes('Unfortunately, we cannot process your payment')) {
@@ -215,6 +218,7 @@ export default class Supreme {
   checkout = async () => {
     const tokenID = uuidv4();
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
+    this.startTime = Date.now();
     this.recieveCaptchaTokenURL(tokenID);
     const [productID, styleID, sizeID] = await this.getProduct();
     const addToCart = await this.addToCart(productID, styleID, sizeID);
