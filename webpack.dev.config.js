@@ -10,9 +10,9 @@ const mainConfig = {
   target: 'electron-main',
   entry: { main: './app/main.js', vendor: ['firebase'] },
   output: {
-    path: path.resolve(__dirname, 'webpack-pack') + '/',
+    path: path.resolve(__dirname, './webpack-pack') + '/',
     filename: '[name].js',
-    publicPath: path.resolve(__dirname, 'webpack-pack') + '/'
+    publicPath: path.resolve(__dirname, './webpack-pack') + '/'
   },
   node: {
     __dirname: false,
@@ -43,13 +43,11 @@ const appConfig = {
   target: 'electron-renderer',
   entry: './app/app.js',
   output: {
-    path: path.resolve(__dirname, 'webpack-pack/') + '/',
+    path: path.resolve(__dirname, './webpack-pack/') + '/',
     filename: 'app.js',
-    publicPath: path.resolve(__dirname, 'webpack-pack/') + '/'
+    publicPath: path.resolve(__dirname, './webpack-pack/') + '/'
   },
   devServer: {
-    // contentBase: path.resolve(__dirname, "./"),
-    // publicPath: path.resolve(__dirname, "webpack-pack/")
     hot: true
   },
   module: {
