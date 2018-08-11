@@ -42,7 +42,7 @@ class HomePage extends Component {
   };
 
   checkAccount() {
-    if (auth.authorise.currentUser === null) {
+    if (auth.authorise.currentUser === null && process.env.NODE_ENV !== 'development') {
       this.props.history.push('/');
     }
   }
