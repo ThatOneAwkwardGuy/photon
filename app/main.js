@@ -84,7 +84,7 @@ app.on('ready', async () => {
     minWidth: 600,
     frame: false,
     resizable: true,
-    titleBarStyle: 'customButtonsOnHover'
+    titleBarStyle: 'hidden'
   });
 
   mainWindow.loadURL(

@@ -413,6 +413,7 @@ canvas {
   height: 32px;
   align-self: flex-end;
   display: block;
+  -webkit-app-region: no-drag;
 }
 
 .taskTableButtonsContainer {
