@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'reactstrap';
-import Logo from '../img/logo.svg';
-import Minimize from '../img/minimise.svg';
-import Close from '../img/close.svg';
+import Logo from '../img/svg/logo.svg';
+import Minimize from '../img/svg/minimise.svg';
+import Close from '../img/svg/close.svg';
 import { remote } from 'electron';
 export default class Topbar extends Component {
   minimiseWindow = () => {
-    // remote.BrowserWindow.getFocusedWindow().minimize();
+    console.log('minimising');
     remote.getCurrentWindow().minimize();
   };
 
@@ -23,24 +23,24 @@ export default class Topbar extends Component {
         </Col>
         <Col xs="8" className="topbarMiddle" />
         <Col xs="1" className="text-right topbarOptionsCol">
-          <div
+          <a
             className="windowButton"
             onClick={() => {
               this.minimiseWindow();
             }}
           >
             <img src={Minimize} />
-          </div>
+          </a>
         </Col>
         <Col xs="1" className="text-left topbarOptionsCol">
-          <div
+          <a
             className="windowButton"
             onClick={() => {
               this.closeWindow();
             }}
           >
             <img src={Close} />
-          </div>
+          </a>
         </Col>
       </Row>
     );

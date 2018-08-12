@@ -1,4 +1,3 @@
-// const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
 const webpack = require('webpack');
@@ -8,11 +7,14 @@ const mainConfig = {
   mode: 'development',
   devtool: 'source-map',
   target: 'electron-main',
-  entry: { main: './app/main.js', vendor: ['firebase'] },
+  entry: {
+    main: path.normalize(path.resolve(__dirname, 'app', 'main.js')),
+    vendor: ['firebase']
+  },
   output: {
-    path: path.resolve(__dirname, 'webpack-pack') + '/',
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
     filename: '[name].js',
-    publicPath: path.resolve(__dirname, 'webpack-pack') + '/'
+    publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
   node: {
     __dirname: false,
@@ -43,13 +45,11 @@ const appConfig = {
   target: 'electron-renderer',
   entry: './app/app.js',
   output: {
-    path: path.resolve(__dirname, 'webpack-pack/') + '/',
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
     filename: 'app.js',
-    publicPath: path.resolve(__dirname, 'webpack-pack/') + '/'
+    publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
   devServer: {
-    // contentBase: path.resolve(__dirname, "./"),
-    // publicPath: path.resolve(__dirname, "webpack-pack/")
     hot: true
   },
   module: {
@@ -69,16 +69,20 @@ const appConfig = {
       },
       {
         test: /\.(jpe?g|png|gif)$/,
-        use: [{ loader: 'file-loader?name=img/[name]__[hash:base64:5].[ext]' }]
+        use: [{ loader: 'file-loader?name=/img/[name]__[hash:base64:5].[ext]' }]
       },
       {
-        test: /\.(eot|ttf|woff|woff2)$/,
-        use: [{ loader: 'file-loader?name=files/[name]__[hash:base64:5].[ext]' }]
+        test: /\.(svg)$/,
+        use: [
+          {
+            loader: 'file-loader?name=/files/[name]__[hash:base64:5].[ext]',
+            options: {
+              useRelativePath: true
+            }
+          }
+        ]
       },
-      {
-        test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        use: [{ loader: 'url-loader?limit=10000&mimetype=image/svg+xml' }]
-      }
+      { test: /\.(png|woff|woff2|eot|ttf)$/, loader: 'url-loader?limit=100000' }
     ]
   },
   plugins: [

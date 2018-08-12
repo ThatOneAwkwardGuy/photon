@@ -47,7 +47,7 @@ class Login extends Component {
   }
 
   checkLoggedIn = async () => {
-    if(process.env.NODE_ENV !== "development"){
+    if (process.env.NODE_ENV !== 'development') {
       await auth.authorise.onAuthStateChanged(async user => {
         if (user !== null) {
           this.setState({
