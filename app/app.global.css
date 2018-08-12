@@ -524,7 +524,17 @@ canvas {
   height: 100%;
 }
 
+.browserLogoFooter:hover {
+  color: #5eafdd;
+  cursor: pointer;
+}
+
 .twitterLogoFooter:hover {
   color: #0084b4;
   cursor: pointer;
+}
+
+.logoFooter {
+  margin-right: 10px;
+  margin-left: 10px;
 }

@@ -1,7 +1,19 @@
 import path from 'path';
 import url from 'url';
 import { app, crashReporter, BrowserWindow, Menu } from 'electron';
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL, RESET_CAPTCHA_WINDOW, RECEIVE_SUPREME_CAPTCHA_URL, ALERT_UPDATE_AVAILABLE, RESET_CAPTCHA_TOKENS_ARRAY, RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY } from './utils/constants';
+import {
+  SEND_SUPREME_CHECKOUT_COOKIE,
+  RECEIVE_SUPREME_CHECKOUT_COOKIE,
+  CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE,
+  BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
+  OPEN_CAPTCHA_WINDOW,
+  SEND_SUPREME_CAPTCHA_URL,
+  RESET_CAPTCHA_WINDOW,
+  RECEIVE_SUPREME_CAPTCHA_URL,
+  ALERT_UPDATE_AVAILABLE,
+  RESET_CAPTCHA_TOKENS_ARRAY,
+  RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY
+} from './utils/constants';
 import { autoUpdater } from 'electron-updater';
 const ipcMain = require('electron').ipcMain;
 
@@ -65,21 +77,10 @@ app.on('ready', async () => {
   if (isDevelopment) {
     await installExtensions();
   }
-  // autoUpdater.setFeedURL({
-  //   token: "912c34e85a9d67783b0edd1982f6e5d1bc6a124e",
-  //   owner: "ThatOneAwkwardGuy",
-  //   repo: "photon",
-  //   provider: "github"
-  // });
-  // ipcMain.on(CHECK_FOR_UPDATE, (event, arg) => {
-  //   autoUpdater.checkForUpdates();
-  // });
-  // ipcMain.on(BEGIN_UPDATE, (event, arg) => {
-  //   autoUpdater.quitAndInstall();
-  // });
+
   mainWindow = new BrowserWindow({
-    height: 500,
-    width: 800,
+    height: 600,
+    width: 900,
     minHeight: 500,
     minWidth: 800,
     frame: false,
@@ -96,35 +97,6 @@ app.on('ready', async () => {
 
   initialiseCaptchaWindow();
 
-  ipcMain.on(SEND_SUPREME_CHECKOUT_COOKIE, (event, arg) => {
-    captchaWindow.send(RECEIVE_SUPREME_CHECKOUT_COOKIE, arg);
-  });
-
-  ipcMain.on(RESET_CAPTCHA_WINDOW, (event, arg) => {
-    initialiseCaptchaWindow();
-  });
-
-  ipcMain.on(SEND_SUPREME_CAPTCHA_URL, (event, arg) => {
-    mainWindow.send(RECEIVE_SUPREME_CAPTCHA_URL, arg);
-  });
-
-  ipcMain.on(OPEN_CAPTCHA_WINDOW, (event, arg) => {
-    if (captchaWindow.isDestroyed()) {
-      initialiseCaptchaWindow();
-      captchaWindow.show();
-    } else {
-      captchaWindow.show();
-    }
-  });
-
-  ipcMain.on(RESET_CAPTCHA_TOKENS_ARRAY, (event, arg) => {
-    captchaWindow.send(RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
-  });
-
-  autoUpdater.on('update-downloaded', info => {
-    mainWindow.send(ALERT_UPDATE_AVAILABLE, info);
-  });
-
   // show window once on first load
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.show();
@@ -135,6 +107,7 @@ app.on('ready', async () => {
     // 1. App should not terminate if window has been closed
     // 2. Click on icon in dock should re-open the window
     // 3. ⌘+Q should close the window and quit the app
+
     if (process.platform === 'darwin') {
       mainWindow.on('close', function(e) {
         if (!forceQuit) {
@@ -175,4 +148,27 @@ app.on('ready', async () => {
       ]).popup(mainWindow);
     });
   }
+
+  ipcMain.on(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, (event, args) => {
+    console.log('Message Received');
+    captchaWindow.send(CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, args);
+  });
+
+  ipcMain.on(OPEN_CAPTCHA_WINDOW, (event, arg) => {
+    console.log('Opening Captcha Window');
+    if (captchaWindow.isDestroyed()) {
+      initialiseCaptchaWindow();
+      captchaWindow.show();
+    } else {
+      captchaWindow.show();
+    }
+  });
+
+  ipcMain.on(RESET_CAPTCHA_TOKENS_ARRAY, (event, arg) => {
+    captchaWindow.send(RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
+  });
+
+  autoUpdater.on('update-downloaded', info => {
+    mainWindow.send(ALERT_UPDATE_AVAILABLE, info);
+  });
 });

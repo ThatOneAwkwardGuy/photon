@@ -132,6 +132,7 @@ export const undefeatedAccountLogin = async (accountObject, cookieJar) => {
       resolveWithFullResponse: true,
       followAllRedirects: true
     });
+    return response;
     // console.log({
     //   form_type: 'customer_login',
     //   utf8: '✓',

@@ -1,8 +1,10 @@
 import stores from '../store/shops';
+import captchaNeeded from '../store/captcha';
 import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
-
+const ipcRenderer = require('electron').ipcRenderer;
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE } from '../utils/constants';
 export default class Shopify {
   constructor(options, handleChangeStatus, proxy) {
     this.options = options;
@@ -224,19 +226,26 @@ export default class Shopify {
       await this.addToCart(variantID, this.options.task.quantity);
       let checkoutURL;
       const [paymentToken, checkoutURLResponse, shippingToken] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
+
       if (this.options.task.store === 'Undefeated') {
         checkoutURL = `https://undefeated.com${decodeURIComponent(checkoutURLResponse).split('=')[1]}`;
         await undefeatedAccountLogin({ email: 'xtremexx_11@hotmail.com', password: 'Abimbola123' }, this.cookieJar);
       } else {
         checkoutURL = checkoutURLResponse;
       }
+
+      if (captchaNeeded[this.options.task.store]) {
+        ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+          cookies: this.cookieJar.getCookieString(checkoutURL),
+          checkoutURL: checkoutURL,
+          baseURL: stores[this.options.task.store]
+        });
+      }
+
       const checkoutBody = await this.getCheckoutBody(checkoutURL);
       const paymentID = this.returnPaymentID(checkoutBody);
       const authToken = this.returnAuthToken(checkoutBody);
       const orderTotal = this.returnOrderTotal(checkoutBody);
-      console.log(paymentID);
-      console.log(authToken);
-      console.log(orderTotal);
       await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
       console.log(Date.now() - start);
       const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);

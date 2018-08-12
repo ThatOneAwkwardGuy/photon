@@ -21,10 +21,17 @@ export default class Footer extends Component {
         <Col xs="1" className="d-flex align-items-center">
           <a
             onClick={() => {
+              shell.openExternal('http://photonaio.app/');
+            }}
+          >
+            <FontAwesome name="desktop" className="browserLogoFooter logoFooter" />
+          </a>
+          <a
+            onClick={() => {
               shell.openExternal('https://twitter.com/bot_photon');
             }}
           >
-            <FontAwesome name="twitter" className="twitterLogoFooter" />
+            <FontAwesome name="twitter" className="twitterLogoFooter logoFooter" />
           </a>
         </Col>
         <Col xs="2" className="text-right footerRightSection">

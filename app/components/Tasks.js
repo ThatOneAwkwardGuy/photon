@@ -295,11 +295,11 @@ export default class Tasks extends Component {
             </Container>
           </Col>
         </CSSTransition>
-        <Modal isOpen={this.state.taskEditModal} toggle={this.toggle} className={this.props.className} centered={true}>
+        <Modal size="lg" isOpen={this.state.taskEditModal} toggle={this.toggle} className={this.props.className} centered={true}>
           <ModalBody>
             <Form>
               <FormGroup row>
-                <Col xs="3">
+                <Col xs="6">
                   <Label for="store">store</Label>
                   <Input
                     type="select"
@@ -315,7 +315,7 @@ export default class Tasks extends Component {
                 </Col>
               </FormGroup>
               <FormGroup row>
-                <Col xs="3">
+                <Col xs="6">
                   <Label for="mode">mode</Label>
                   <Input
                     type="select"
@@ -394,7 +394,7 @@ export default class Tasks extends Component {
               <FormGroup row>
                 {this.state.modalFormData.task.mode !== 'variant' ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="3">
+                    <Col xs="6">
                       <Label for="size">size</Label>
                       <Input
                         type="select"
@@ -414,7 +414,7 @@ export default class Tasks extends Component {
                 )}
                 {this.state.modalFormData.task.store === 'Supreme' ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="3">
+                    <Col xs="6">
                       <Label for="category">category</Label>
                       <Input
                         type="select"
@@ -443,7 +443,7 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
-                <Col xs="3">
+                <Col xs="6">
                   <Label for="quantity">quantity</Label>
                   <Input
                     type="select"
@@ -485,7 +485,7 @@ export default class Tasks extends Component {
                 </Col>
               </FormGroup>
               <FormGroup row>
-                <Col xs="3">
+                <Col xs="6">
                   <Label for="profile">profile</Label>
                   <Input
                     type="select"
@@ -500,7 +500,7 @@ export default class Tasks extends Component {
                   </Input>
                 </Col>
                 {this.state.modalFormData.task.store === 'Supreme' ? (
-                  <Col xs="3">
+                  <Col xs="6">
                     <Label for="profile">color</Label>
                     <Input
                       type="text"
