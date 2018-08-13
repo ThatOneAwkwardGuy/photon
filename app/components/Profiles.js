@@ -64,7 +64,9 @@ export default class Profiles extends Component {
 
   loadProfile = () => {
     this.setState({
-      formdata: this.props.profiles[this.state.profileIDLoad]
+      formdata: this.props.profiles[this.state.profileIDLoad],
+      regionArrayBilling: Countries[this.props.profiles[this.state.profileIDLoad].billingCountry].provinces,
+      regionArrayShipping: Countries[this.props.profiles[this.state.profileIDLoad].deliveryCountry].provinces
     });
   };
 
