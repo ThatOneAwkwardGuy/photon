@@ -4,7 +4,7 @@ import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE } from '../utils/constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Shopify {
   constructor(options, handleChangeStatus, proxy) {
     this.options = options;
@@ -240,20 +240,36 @@ export default class Shopify {
           checkoutURL: checkoutURL,
           baseURL: stores[this.options.task.store]
         });
-      }
-
-      const checkoutBody = await this.getCheckoutBody(checkoutURL);
-      const paymentID = this.returnPaymentID(checkoutBody);
-      const authToken = this.returnAuthToken(checkoutBody);
-      const orderTotal = this.returnOrderTotal(checkoutBody);
-      await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
-      console.log(Date.now() - start);
-      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
-      console.log(checkoutResponse);
-      if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
-        this.handleChangeStatus('Stuck On Payment Method Page');
+        this.handleChangeStatus('Waiting For Captcha');
+        ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+          const checkoutBody = await this.getCheckoutBody(checkoutURL);
+          const paymentID = this.returnPaymentID(checkoutBody);
+          const authToken = this.returnAuthToken(checkoutBody);
+          const orderTotal = this.returnOrderTotal(checkoutBody);
+          await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
+          console.log(Date.now() - start);
+          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
+          console.log(checkoutResponse);
+          if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+            this.handleChangeStatus('Stuck On Payment Method Page');
+          } else {
+            this.handleChangeStatus('Check Email');
+          }
+        });
       } else {
-        this.handleChangeStatus('Check Email');
+        const checkoutBody = await this.getCheckoutBody(checkoutURL);
+        const paymentID = this.returnPaymentID(checkoutBody);
+        const authToken = this.returnAuthToken(checkoutBody);
+        const orderTotal = this.returnOrderTotal(checkoutBody);
+        await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
+        console.log(Date.now() - start);
+        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
+        console.log(checkoutResponse);
+        if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+          this.handleChangeStatus('Stuck On Payment Method Page');
+        } else {
+          this.handleChangeStatus('Check Email');
+        }
       }
     } catch (e) {
       console.log(e);

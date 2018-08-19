@@ -12,7 +12,9 @@ import {
   RECEIVE_SUPREME_CAPTCHA_URL,
   ALERT_UPDATE_AVAILABLE,
   RESET_CAPTCHA_TOKENS_ARRAY,
-  RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY
+  RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY,
+  SEND_CAPTCHA_TOKEN,
+  RECEIVE_CAPTCHA_TOKEN
 } from './utils/constants';
 import { autoUpdater } from 'electron-updater';
 const ipcMain = require('electron').ipcMain;
@@ -32,7 +34,7 @@ let initialiseCaptchaWindow = () => {
     width: 400,
     height: 600,
     frame: false,
-    resizable: false,
+    resizable: true,
     allowRunningInsecureContent: true
   });
   captchaWindow.loadURL(
@@ -150,12 +152,10 @@ app.on('ready', async () => {
   }
 
   ipcMain.on(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, (event, args) => {
-    console.log('Message Received');
     captchaWindow.send(CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, args);
   });
 
   ipcMain.on(OPEN_CAPTCHA_WINDOW, (event, arg) => {
-    console.log('Opening Captcha Window');
     if (captchaWindow.isDestroyed()) {
       initialiseCaptchaWindow();
       captchaWindow.show();
@@ -166,6 +166,11 @@ app.on('ready', async () => {
 
   ipcMain.on(RESET_CAPTCHA_TOKENS_ARRAY, (event, arg) => {
     captchaWindow.send(RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
+  });
+
+  ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
+    mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
+    captchaWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
   });
 
   autoUpdater.on('update-downloaded', info => {

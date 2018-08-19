@@ -9,7 +9,6 @@ var shell = require('electron').shell;
 export default class Footer extends Component {
   constructor(props) {
     super(props);
-    console.log(SignedIn)
   }
   render() {
     return (

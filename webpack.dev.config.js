@@ -49,6 +49,9 @@ const appConfig = {
     filename: 'app.js',
     publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
+  node: {
+    __dirname: true
+  },
   devServer: {
     hot: true
   },
