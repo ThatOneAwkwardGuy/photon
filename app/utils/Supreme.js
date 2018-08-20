@@ -4,7 +4,7 @@ const ipcRenderer = require('electron').ipcRenderer;
 const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
-
+import stores from '../store/shops';
 import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy) {
@@ -229,9 +229,9 @@ export default class Supreme {
     const [productID, styleID, sizeID] = await this.getProduct();
     const addToCart = await this.addToCart(productID, styleID, sizeID);
     const checkoutCookies = await addToCart.request.headers.Cookie;
-
+    console.log(productID, styleID, sizeID);
     ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-      cookies: checkoutCookies,
+      cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
       checkoutURL: 'http://supremenewyork.com/checkout',
       baseURL: stores[this.options.task.store]
     });

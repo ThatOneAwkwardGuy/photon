@@ -4,10 +4,26 @@ const ipcMain = require('electron').ipcMain;
 checkCaptcha = () => {
   console.log('checking');
   let captchaResponse = grecaptcha.getResponse();
-  if (captchaResponse !== '') {
+  let invisibleCaptcha = document.querySelector('.g-recaptcha').getAttribute('data-size');
+  if (invisibleCaptcha === 'invisible') {
+    clearInterval(checkCaptcha);
+    grecaptcha.execute().then(() => {
+      clearInterval(checkCaptcha);
+      const captchaResponse3 = grecaptcha.getResponse();
+      if (captchaResponse3 !== '') {
+        ipcRenderer.send('send-captcha-token', captchaResponse3);
+      }
+    });
+  } else if (captchaResponse !== '') {
     console.log(captchaResponse);
     ipcRenderer.send('send-captcha-token', captchaResponse);
-    clearInterval(captchaChecker);
+    clearInterval(checkCaptcha);
+  } else {
+    let captchaResponse2 = document.querySelector('#recaptcha-token').value;
+    if (captchaResponse2 !== '' && captchaResponse2 !== null) {
+      ipcRenderer.send('send-captcha-token', captchaResponse);
+      clearInterval(checkCaptcha);
+    }
   }
 };
 

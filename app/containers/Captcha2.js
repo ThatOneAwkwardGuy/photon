@@ -30,7 +30,7 @@ class Captchav2 extends Component {
     for (const cookie of cookieArray) {
       const nameValuePair = cookie.replace(/\s+/g, '').split('=');
       formattedCookieArray.push({
-        url: baseURL,
+        url: baseURL.split('//')[1],
         value: nameValuePair[1],
         domain: baseURL.split('//')[1],
         path: '/',
@@ -44,19 +44,20 @@ class Captchav2 extends Component {
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.baseURL, args.cookies);
+    console.log(formattedCookies);
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, () => {});
     }
     webview.addEventListener('did-finish-load', e => {
       if (!e.target.src.includes('google.com')) {
         webview.openDevTools();
-        webview.executeJavaScript(`
-        document.querySelector('body').style.height = "200px";
-        document.querySelector('html').style.visibility = "hidden";
-        document.querySelector('.g-recaptcha').style.visibility = "visible";
-        document.querySelector('.g-recaptcha').style.position = "fixed";
-        document.querySelector('.g-recaptcha').style.top = "10px";
-        document.querySelector('.g-recaptcha').style.marginTop = "0px";`);
+        // webview.executeJavaScript(`
+        // document.querySelector('body').style.height = "200px";
+        // document.querySelector('html').style.visibility = "hidden";
+        // document.querySelector('.g-recaptcha').style.visibility = "visible";
+        // document.querySelector('.g-recaptcha').style.position = "fixed";
+        // document.querySelector('.g-recaptcha').style.top = "10px";
+        // document.querySelector('.g-recaptcha').style.marginTop = "0px";`);
       }
     });
     webview.loadURL(args.checkoutURL);
