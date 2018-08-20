@@ -5,7 +5,7 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL } from '../utils/constants';
+import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy) {
     this.startTime = '';
@@ -216,14 +216,29 @@ export default class Supreme {
   };
 
   checkout = async () => {
-    const tokenID = uuidv4();
-    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
-    this.startTime = Date.now();
-    this.recieveCaptchaTokenURL(tokenID);
+    // // const tokenID = uuidv4();
+    // console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
+    // this.startTime = Date.now();
+    // // this.recieveCaptchaTokenURL(tokenID);
+    // const [productID, styleID, sizeID] = await this.getProduct();
+    // const addToCart = await this.addToCart(productID, styleID, sizeID);
+    // const checkoutCookies = await addToCart.request.headers.Cookie;
+    // this.sendSupremeCheckoutCookie({ cookies: checkoutCookies, proxy: this.proxy, id: tokenID });
+    // this.handleChangeStatus('Waiting for captcha');
+
     const [productID, styleID, sizeID] = await this.getProduct();
     const addToCart = await this.addToCart(productID, styleID, sizeID);
     const checkoutCookies = await addToCart.request.headers.Cookie;
-    this.sendSupremeCheckoutCookie({ cookies: checkoutCookies, proxy: this.proxy, id: tokenID });
-    this.handleChangeStatus('Waiting for captcha');
+
+    ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+      cookies: checkoutCookies,
+      checkoutURL: 'http://supremenewyork.com/checkout',
+      baseURL: stores[this.options.task.store]
+    });
+    this.handleChangeStatus('Waiting For Captcha');
+    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+      console.log(captchaToken);
+      this.checkoutWithCapctcha(captchaToken);
+    });
   };
 }
