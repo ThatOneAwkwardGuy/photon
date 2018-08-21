@@ -11,17 +11,16 @@ checkCaptcha = () => {
       clearInterval(checkCaptcha);
       const captchaResponse3 = grecaptcha.getResponse();
       if (captchaResponse3 !== '') {
-        ipcRenderer.send('send-captcha-token', captchaResponse3);
+        ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse3, id: document });
       }
     });
   } else if (captchaResponse !== '') {
-    console.log(captchaResponse);
-    ipcRenderer.send('send-captcha-token', captchaResponse);
+    ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: document });
     clearInterval(checkCaptcha);
   } else {
     let captchaResponse2 = document.querySelector('#recaptcha-token').value;
     if (captchaResponse2 !== '' && captchaResponse2 !== null) {
-      ipcRenderer.send('send-captcha-token', captchaResponse);
+      ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: document });
       clearInterval(checkCaptcha);
     }
   }

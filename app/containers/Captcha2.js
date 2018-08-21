@@ -5,6 +5,8 @@ import CaptchaTopbar from '../components/CaptchaTopbar';
 import CaptchaFooter from '../components/CaptchaFooter';
 import { webview, remote, ipcRenderer } from 'electron';
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, SEND_CAPTCHA_RESPONSE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+var os = require('os');
+
 class Captchav2 extends Component {
   constructor(props) {
     super(props);
@@ -27,17 +29,17 @@ class Captchav2 extends Component {
   convertCookieString = (baseURL, cookieString) => {
     const cookieArray = cookieString.split(';');
     let formattedCookieArray = [];
+    const operatingSystem = os.platform();
     for (const cookie of cookieArray) {
       const nameValuePair = cookie.replace(/\s+/g, '').split('=');
       formattedCookieArray.push({
-        url: baseURL,
+        url: operatingSystem === 'darwin' ? baseURL.split('//')[1] : baseURL,
         value: nameValuePair[1],
         domain: baseURL.split('//')[1],
         path: '/',
         name: nameValuePair[0]
       });
     }
-    console.log(formattedCookieArray);
     return formattedCookieArray;
   };
 
@@ -45,10 +47,12 @@ class Captchav2 extends Component {
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.baseURL, args.cookies);
-    console.log(formattedCookies);
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, () => {});
     }
+    webview.executeJavaScript(`document.tokenID = ${args.id}`, response => {
+      console.log(response);
+    });
     webview.addEventListener('did-finish-load', e => {
       if (!e.target.src.includes('google.com')) {
         webview.openDevTools();

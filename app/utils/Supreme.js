@@ -88,7 +88,9 @@ export default class Supreme {
         followAllRedirects: true
       });
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
-      console.log(response);
+      if (response.body.includes('Unfortunately, we cannot process your payment. This could be due to  your payment being declined by your card issuer.')) {
+        this.handleChangeStatus('Error Processing Payment');
+      }
       return response;
     } catch (e) {
       console.error(e);
@@ -140,6 +142,8 @@ export default class Supreme {
       });
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
+      console.log(categoryOfProducts);
+      console.log(product);
       const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
       return [product.id, styleID, sizeID];
     } catch (e) {
@@ -190,7 +194,7 @@ export default class Supreme {
   };
 
   checkout = async () => {
-    // // const tokenID = uuidv4();
+    const tokenID = uuidv4();
     // console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
     // this.startTime = Date.now();
     // // this.recieveCaptchaTokenURL(tokenID);
@@ -202,17 +206,21 @@ export default class Supreme {
     ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
     const [productID, styleID, sizeID] = await this.getProduct();
     const addToCart = await this.addToCart(productID, styleID, sizeID);
+    console.log(addToCart);
     const checkoutCookies = await addToCart.request.headers.Cookie;
     ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
       cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
       checkoutURL: 'http://supremenewyork.com/checkout',
-      baseURL: stores[this.options.task.store]
+      baseURL: stores[this.options.task.store],
+      id: tokenID
     });
 
     this.handleChangeStatus('Waiting For Captcha');
-    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
-      console.log(captchaToken);
-      this.checkoutWithCapctcha(captchaToken);
+    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+      console.log(args);
+      console.log(args.captchaResponse);
+      console.log(args.id);
+      this.checkoutWithCapctcha(args.captchaResponse);
       ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
     });
   };
