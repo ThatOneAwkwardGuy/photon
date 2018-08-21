@@ -30,13 +30,14 @@ class Captchav2 extends Component {
     for (const cookie of cookieArray) {
       const nameValuePair = cookie.replace(/\s+/g, '').split('=');
       formattedCookieArray.push({
-        url: baseURL.split('//')[1],
+        url: baseURL,
         value: nameValuePair[1],
         domain: baseURL.split('//')[1],
         path: '/',
         name: nameValuePair[0]
       });
     }
+    console.log(formattedCookieArray);
     return formattedCookieArray;
   };
 

@@ -5,7 +5,7 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 import stores from '../store/shops';
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy) {
     this.startTime = '';
@@ -42,32 +42,6 @@ export default class Supreme {
     clearTimeout(this.monitoringTimeout);
     this.active = false;
     this.handleChangeStatus('Stopped');
-  };
-
-  recieveCaptchaTokenURL = tokenID => {
-    ipcRenderer.on(RECEIVE_SUPREME_CAPTCHA_URL, async (event, args) => {
-      if (args.id === tokenID && !this.runOnce && args.captchaURL !== 'Failed') {
-        this.runOnce = true;
-        const captchaBodyResponse = await this.rp({
-          method: 'GET',
-          uri: args.captchaURL
-        });
-        const captchaBody = cheerio.load(captchaBodyResponse);
-        const captchaToken = captchaBody('#recaptcha-token').attr('value');
-        this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms Before Checkout`);
-        console.log(Date.now() - this.startTime);
-        await this.sleep(parseInt(this.settings.checkoutTime));
-        const checkoutResponse = await this.checkoutWithCapctcha(captchaToken);
-        console.log(Date.now() - this.startTime);
-        if (args.captchaURL === 'Failed') {
-          this.handleChangeStatus('Item Likely Out Of Stock');
-        } else if (checkoutResponse.body.includes('Unfortunately, we cannot process your payment')) {
-          this.handleChangeStatus('Payment Error');
-        } else {
-          this.handleChangeStatus('Check Your Email');
-        }
-      }
-    });
   };
 
   getCardType = number => {
@@ -225,20 +199,21 @@ export default class Supreme {
     // const checkoutCookies = await addToCart.request.headers.Cookie;
     // this.sendSupremeCheckoutCookie({ cookies: checkoutCookies, proxy: this.proxy, id: tokenID });
     // this.handleChangeStatus('Waiting for captcha');
-
+    ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
     const [productID, styleID, sizeID] = await this.getProduct();
     const addToCart = await this.addToCart(productID, styleID, sizeID);
     const checkoutCookies = await addToCart.request.headers.Cookie;
-    console.log(productID, styleID, sizeID);
     ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
       cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
       checkoutURL: 'http://supremenewyork.com/checkout',
       baseURL: stores[this.options.task.store]
     });
+
     this.handleChangeStatus('Waiting For Captcha');
     ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
       console.log(captchaToken);
       this.checkoutWithCapctcha(captchaToken);
+      ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
     });
   };
 }

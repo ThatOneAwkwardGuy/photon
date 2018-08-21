@@ -41,7 +41,9 @@ export default class Task {
   stop = () => {
     switch (this.options.task.store) {
       case 'Supreme':
-        this.supremeInstance.stop();
+        if (this.supremeInstance !== '') {
+          this.supremeInstance.stop();
+        }
       default:
         clearTimeout(this.monitoringTimeout);
         clearTimeout(this.scheduledTimeout);
