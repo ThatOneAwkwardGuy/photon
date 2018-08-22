@@ -50,12 +50,12 @@ class Captchav2 extends Component {
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, () => {});
     }
-    webview.executeJavaScript(`document.tokenID = ${args.id}`, response => {
-      console.log(response);
-    });
+    win.openDevTools();
+    webview.openDevTools();
+
     webview.addEventListener('did-finish-load', e => {
       if (!e.target.src.includes('google.com')) {
-        webview.openDevTools();
+        // webview.openDevTools();
         // webview.executeJavaScript(`
         // document.querySelector('body').style.height = "200px";
         // document.querySelector('html').style.visibility = "hidden";
@@ -66,6 +66,21 @@ class Captchav2 extends Component {
       }
     });
     webview.loadURL(args.checkoutURL);
+    global.tokenID = args.id;
+
+    webview.executeJavaScript(
+      `
+    alert(${args.id});
+    console.log(${args.id});`,
+      response => {
+        console.log(response);
+      }
+    );
+
+    webview.executeJavaScript(`var tokenID = ${args.id};`, response => {
+      console.log(response);
+    });
+
     ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, args => {
       if (this.jobsQueue.length > 0) {
         this.processCaptcha(this.jobsQueue.shift());

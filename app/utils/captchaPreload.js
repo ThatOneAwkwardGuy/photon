@@ -1,6 +1,5 @@
 const ipcRenderer = require('electron').ipcRenderer;
-const ipcMain = require('electron').ipcMain;
-
+console.log(global.tokenID);
 checkCaptcha = () => {
   console.log('checking');
   let captchaResponse = grecaptcha.getResponse();

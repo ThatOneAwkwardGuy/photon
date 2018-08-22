@@ -27,6 +27,9 @@ let forceQuit = false;
 
 let initialiseCaptchaWindow = () => {
   captchaWindow = new BrowserWindow({
+    webPreferences: {
+      contextIsolation: false
+    },
     modal: true,
     show: false,
     minWidth: 200,
