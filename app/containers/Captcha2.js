@@ -52,7 +52,6 @@ class Captchav2 extends Component {
     win.openDevTools();
     webview.openDevTools();
     ipcRenderer.send(SET_GLOBAL_ID_VARIABLE, args.id);
-    console.log(`Sent ID ${args.id}`);
     // webview.addEventListener('did-finish-load', e => {
     //   if (!e.target.src.includes('google.com')) {
     //     // webview.openDevTools();
@@ -70,6 +69,7 @@ class Captchav2 extends Component {
     //There doesnt seem to be a reason for both RECEIVE_CAPTCHA_TOKEN and CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE to be seperate;
     ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, () => {
       if (this.jobsQueue.length > 0) {
+        console.log(this.jobsQueue);
         this.processCaptcha(this.jobsQueue.shift());
       } else {
         ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);

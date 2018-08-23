@@ -193,7 +193,6 @@ export default class Supreme {
 
   checkout = async () => {
     const tokenID = uuidv4();
-    console.log(this);
     // console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
     // this.startTime = Date.now();
     // // this.recieveCaptchaTokenURL(tokenID);
@@ -205,7 +204,6 @@ export default class Supreme {
     ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
     const [productID, styleID, sizeID] = await this.getProduct();
     const addToCart = await this.addToCart(productID, styleID, sizeID);
-    console.log(addToCart);
     const checkoutCookies = await addToCart.request.headers.Cookie;
     ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
       cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
@@ -213,15 +211,13 @@ export default class Supreme {
       baseURL: stores[this.options.task.store],
       id: tokenID
     });
-
     this.handleChangeStatus('Waiting For Captcha');
     ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-      console.log(tokenID);
-      console.log(args.id);
       if (tokenID === args.id) {
         console.log(args.id);
         this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
         await this.sleep(this.settings.checkoutTime);
+        this.handleChangeStatus('Fake Checkout');
         // this.checkoutWithCapctcha(args.captchaResponse);
         // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
       }

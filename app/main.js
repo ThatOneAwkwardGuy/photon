@@ -175,10 +175,10 @@ app.on('ready', async () => {
   ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
     mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
     captchaWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
+    console.log(arg.id);
   });
 
   ipcMain.on(SET_GLOBAL_ID_VARIABLE, (event, arg) => {
-    console.log(arg);
     global.captcaTokenID = arg;
   });
 
