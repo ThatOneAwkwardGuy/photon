@@ -13,5 +13,6 @@ export const CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE = 'captcha-receive-cookies
 export const OPEN_CAPTCHA_WINDOW = 'open-captcha-window';
 export const SEND_CAPTCHA_TOKEN = 'send-captcha-token';
 export const RECEIVE_CAPTCHA_TOKEN = 'receive-captcha-token';
+export const SET_GLOBAL_ID_VARIABLE = 'set-global-variable';
 // export const RESET_CAPTCHA_TOKENS_ARRAY = 'reset-captcha-tokens-array';
 // export const RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY = 'receive-reset-captcha-tokens-array';

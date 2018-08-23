@@ -1,5 +1,6 @@
 const ipcRenderer = require('electron').ipcRenderer;
-console.log(global.tokenID);
+const remote = require('electron').remote;
+
 checkCaptcha = () => {
   console.log('checking');
   let captchaResponse = grecaptcha.getResponse();
@@ -10,17 +11,18 @@ checkCaptcha = () => {
       clearInterval(checkCaptcha);
       const captchaResponse3 = grecaptcha.getResponse();
       if (captchaResponse3 !== '') {
-        ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse3, id: document });
+        clearInterval(checkCaptcha);
+        ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse3, id: remote.getGlobal('captcaTokenID') });
       }
     });
   } else if (captchaResponse !== '') {
-    ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: document });
     clearInterval(checkCaptcha);
+    ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: remote.getGlobal('captcaTokenID') });
   } else {
     let captchaResponse2 = document.querySelector('#recaptcha-token').value;
     if (captchaResponse2 !== '' && captchaResponse2 !== null) {
-      ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: document });
       clearInterval(checkCaptcha);
+      ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: remote.getGlobal('captcaTokenID') });
     }
   }
 };

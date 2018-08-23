@@ -10,6 +10,7 @@ import {
   SEND_SUPREME_CAPTCHA_URL,
   RESET_CAPTCHA_WINDOW,
   RECEIVE_SUPREME_CAPTCHA_URL,
+  SET_GLOBAL_ID_VARIABLE,
   ALERT_UPDATE_AVAILABLE,
   RESET_CAPTCHA_TOKENS_ARRAY,
   RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY,
@@ -174,6 +175,11 @@ app.on('ready', async () => {
   ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
     mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
     captchaWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
+  });
+
+  ipcMain.on(SET_GLOBAL_ID_VARIABLE, (event, arg) => {
+    console.log(arg);
+    global.captcaTokenID = arg;
   });
 
   autoUpdater.on('update-downloaded', info => {

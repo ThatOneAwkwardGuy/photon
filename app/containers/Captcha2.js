@@ -1,10 +1,9 @@
 import React, { Component } from 'react';
-import { Alert, Container, Row, Col, Button } from 'reactstrap';
-import Particles from 'react-particles-js';
+import { Container } from 'reactstrap';
 import CaptchaTopbar from '../components/CaptchaTopbar';
 import CaptchaFooter from '../components/CaptchaFooter';
-import { webview, remote, ipcRenderer } from 'electron';
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, SEND_CAPTCHA_RESPONSE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { remote, ipcRenderer } from 'electron';
+import { SET_GLOBAL_ID_VARIABLE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 var os = require('os');
 
 class Captchav2 extends Component {
@@ -52,7 +51,8 @@ class Captchav2 extends Component {
     }
     win.openDevTools();
     webview.openDevTools();
-
+    ipcRenderer.send(SET_GLOBAL_ID_VARIABLE, args.id);
+    console.log(`Sent ID ${args.id}`);
     webview.addEventListener('did-finish-load', e => {
       if (!e.target.src.includes('google.com')) {
         // webview.openDevTools();
@@ -65,26 +65,13 @@ class Captchav2 extends Component {
         // document.querySelector('.g-recaptcha').style.marginTop = "0px";`);
       }
     });
+
     webview.loadURL(args.checkoutURL);
-    global.tokenID = args.id;
-
-    webview.executeJavaScript(
-      `
-    alert(${args.id});
-    console.log(${args.id});`,
-      response => {
-        console.log(response);
-      }
-    );
-
-    webview.executeJavaScript(`var tokenID = ${args.id};`, response => {
-      console.log(response);
-    });
-
-    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, args => {
+    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, () => {
       if (this.jobsQueue.length > 0) {
         this.processCaptcha(this.jobsQueue.shift());
       } else {
+        ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
         webview.loadURL('https://accounts.google.com/Login');
       }
     });

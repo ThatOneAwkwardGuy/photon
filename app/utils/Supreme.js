@@ -142,8 +142,6 @@ export default class Supreme {
       });
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
-      console.log(categoryOfProducts);
-      console.log(product);
       const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
       return [product.id, styleID, sizeID];
     } catch (e) {
@@ -217,11 +215,11 @@ export default class Supreme {
 
     this.handleChangeStatus('Waiting For Captcha');
     ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-      console.log(args);
-      console.log(args.captchaResponse);
-      console.log(args.id);
-      this.checkoutWithCapctcha(args.captchaResponse);
-      ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+      if (tokenID === args.id) {
+        console.log(args.id);
+        // this.checkoutWithCapctcha(args.captchaResponse);
+        // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+      }
     });
   };
 }
