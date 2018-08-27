@@ -15,7 +15,8 @@ import {
   RESET_CAPTCHA_TOKENS_ARRAY,
   RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY,
   SEND_CAPTCHA_TOKEN,
-  RECEIVE_CAPTCHA_TOKEN
+  RECEIVE_CAPTCHA_TOKEN,
+  FINISH_SENDING_CAPTCHA_TOKEN
 } from './utils/constants';
 import { autoUpdater } from 'electron-updater';
 const ipcMain = require('electron').ipcMain;
@@ -172,14 +173,14 @@ app.on('ready', async () => {
     captchaWindow.send(RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
   });
 
-  ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
-    mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
-    captchaWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
-    console.log(arg.id);
-  });
-
   ipcMain.on(SET_GLOBAL_ID_VARIABLE, (event, arg) => {
     global.captcaTokenID = arg;
+  });
+
+  ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
+    mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
+    captchaWindow.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
+    console.log(arg.id);
   });
 
   autoUpdater.on('update-downloaded', info => {

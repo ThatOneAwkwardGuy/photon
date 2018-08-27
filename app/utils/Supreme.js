@@ -20,6 +20,7 @@ export default class Supreme {
     this.monitoringTimeout = '';
     this.runOnce = false;
     this.cookieJar = request.jar();
+    this.tokenID = uuidv4();
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.117 Safari/537.36',
@@ -192,7 +193,6 @@ export default class Supreme {
   };
 
   checkout = async () => {
-    const tokenID = uuidv4();
     // console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
     // this.startTime = Date.now();
     // // this.recieveCaptchaTokenURL(tokenID);
@@ -209,11 +209,11 @@ export default class Supreme {
       cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
       checkoutURL: 'http://supremenewyork.com/checkout',
       baseURL: stores[this.options.task.store],
-      id: tokenID
+      id: this.tokenID
     });
     this.handleChangeStatus('Waiting For Captcha');
     ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-      if (tokenID === args.id) {
+      if (this.tokenID === args.id) {
         console.log(args.id);
         this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
         await this.sleep(this.settings.checkoutTime);

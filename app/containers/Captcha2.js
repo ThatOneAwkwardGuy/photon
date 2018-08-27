@@ -3,7 +3,7 @@ import { Container } from 'reactstrap';
 import CaptchaTopbar from '../components/CaptchaTopbar';
 import CaptchaFooter from '../components/CaptchaFooter';
 import { remote, ipcRenderer } from 'electron';
-import { SET_GLOBAL_ID_VARIABLE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { SET_GLOBAL_ID_VARIABLE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../utils/constants';
 var os = require('os');
 
 class Captchav2 extends Component {
@@ -67,12 +67,12 @@ class Captchav2 extends Component {
 
     webview.loadURL(args.checkoutURL);
     //There doesnt seem to be a reason for both RECEIVE_CAPTCHA_TOKEN and CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE to be seperate;
-    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, () => {
+    ipcRenderer.on(FINISH_SENDING_CAPTCHA_TOKEN, () => {
       if (this.jobsQueue.length > 0) {
         console.log(this.jobsQueue);
         this.processCaptcha(this.jobsQueue.shift());
       } else {
-        ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+        ipcRenderer.removeAllListeners(FINISH_SENDING_CAPTCHA_TOKEN);
         webview.loadURL('https://accounts.google.com/Login');
       }
     });
