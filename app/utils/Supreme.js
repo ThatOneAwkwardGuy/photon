@@ -5,7 +5,7 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 import stores from '../store/shops';
-import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, RECEIVE_SUPREME_CAPTCHA_URL, SEND_SUPREME_CAPTCHA_URL, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, FINISH_SENDING_CAPTCHA_TOKEN, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy) {
     this.startTime = '';
@@ -192,35 +192,47 @@ export default class Supreme {
     }
   };
 
+  checkStock = async (productID, styleID, sizeID) => {
+    const response = await this.rp({
+      method: 'GET',
+      uri: `http://www.supremenewyork.com/shop/${productID}.json`,
+      gzip: true,
+      json: true,
+      followAllRedirects: true
+    });
+    const matchingStyle = response.styles.filter(element => element.id === styleID);
+    const matchingSize = matchingStyle[0].sizes.filter(element => element.id === sizeID);
+    const stockLevel = matchingSize[0].stock_level;
+    return stockLevel;
+  };
+
   checkout = async () => {
-    // console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
-    // this.startTime = Date.now();
-    // // this.recieveCaptchaTokenURL(tokenID);
-    // const [productID, styleID, sizeID] = await this.getProduct();
-    // const addToCart = await this.addToCart(productID, styleID, sizeID);
-    // const checkoutCookies = await addToCart.request.headers.Cookie;
-    // this.sendSupremeCheckoutCookie({ cookies: checkoutCookies, proxy: this.proxy, id: tokenID });
-    // this.handleChangeStatus('Waiting for captcha');
     ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
     const [productID, styleID, sizeID] = await this.getProduct();
-    const addToCart = await this.addToCart(productID, styleID, sizeID);
-    const checkoutCookies = await addToCart.request.headers.Cookie;
-    ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-      cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
-      checkoutURL: 'http://supremenewyork.com/checkout',
-      baseURL: stores[this.options.task.store],
-      id: this.tokenID
-    });
-    this.handleChangeStatus('Waiting For Captcha');
-    ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-      if (this.tokenID === args.id) {
-        console.log(args.id);
-        this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
-        await this.sleep(this.settings.checkoutTime);
-        this.handleChangeStatus('Fake Checkout');
-        // this.checkoutWithCapctcha(args.captchaResponse);
-        // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
-      }
-    });
+    const stockLevel = await this.checkStock(productID, styleID, sizeID);
+    if (stockLevel > 0) {
+      const addToCart = await this.addToCart(productID, styleID, sizeID);
+      const checkoutCookies = await addToCart.request.headers.Cookie;
+      ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+        cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
+        checkoutURL: 'http://supremenewyork.com/checkout',
+        baseURL: stores[this.options.task.store],
+        id: this.tokenID
+      });
+      this.handleChangeStatus('Waiting For Captcha');
+      ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+        if (this.tokenID === args.id) {
+          console.log(args);
+          this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
+          await this.sleep(this.settings.checkoutTime);
+          this.handleChangeStatus('Fake Checkout');
+          ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
+          // this.checkoutWithCapctcha(args.captchaResponse);
+          // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+        }
+      });
+    } else {
+      this.handleChangeStatus('Out Of Stock');
+    }
   };
 }

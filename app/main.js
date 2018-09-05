@@ -2,14 +2,10 @@ import path from 'path';
 import url from 'url';
 import { app, crashReporter, BrowserWindow, Menu } from 'electron';
 import {
-  SEND_SUPREME_CHECKOUT_COOKIE,
-  RECEIVE_SUPREME_CHECKOUT_COOKIE,
   CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE,
   BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
   OPEN_CAPTCHA_WINDOW,
-  SEND_SUPREME_CAPTCHA_URL,
   RESET_CAPTCHA_WINDOW,
-  RECEIVE_SUPREME_CAPTCHA_URL,
   SET_GLOBAL_ID_VARIABLE,
   ALERT_UPDATE_AVAILABLE,
   RESET_CAPTCHA_TOKENS_ARRAY,
@@ -128,7 +124,6 @@ app.on('ready', async () => {
       });
 
       app.on('before-quit', () => {
-        // mainWindow.send(ALERT_RENDERER_OF_QUIT, true);
         forceQuit = true;
       });
     } else {
@@ -181,6 +176,18 @@ app.on('ready', async () => {
     mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
     captchaWindow.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
     console.log(arg.id);
+  });
+
+  ipcMain.on(RESET_CAPTCHA_WINDOW, (event, arg) => {
+    // captchaWindow.reload();
+    captchaWindow.loadURL(
+      url.format({
+        pathname: path.join(__dirname, 'index.html'),
+        protocol: 'file:',
+        slashes: true,
+        hash: 'captcha'
+      })
+    );
   });
 
   autoUpdater.on('update-downloaded', info => {

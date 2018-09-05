@@ -10,7 +10,9 @@ import { BounceLoader } from 'react-spinners';
 class Login extends Component {
   constructor(props) {
     super(props);
-    if (location.hash === '#captcha') {
+    if (location.hash === '#waiting') {
+      this.props.history.push('/waiting');
+    } else if (location.hash === '#captcha') {
       this.props.history.push('/captcha');
     } else {
       this.checkLoggedIn();

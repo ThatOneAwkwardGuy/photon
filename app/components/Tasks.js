@@ -186,7 +186,7 @@ export default class Tasks extends Component {
 
   returnTasks = (task, index) => (
     <tr key={`task-${index}`}>
-      <td>{index}</td>
+      <td>{index + 1}</td>
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
       <td>{task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput}</td>
@@ -204,6 +204,7 @@ export default class Tasks extends Component {
         </Button>
         <Button
           onClick={() => {
+            ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
             task.stop();
           }}
           className="taskButton"
@@ -257,7 +258,6 @@ export default class Tasks extends Component {
                 <Col xs="2">
                   <Button
                     onClick={() => {
-                      ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
                       this.startAllTasks();
                     }}
                   >
@@ -267,6 +267,7 @@ export default class Tasks extends Component {
                 <Col xs="2">
                   <Button
                     onClick={() => {
+                      ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
                       this.stopAllTasks();
                     }}
                   >

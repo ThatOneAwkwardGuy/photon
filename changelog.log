@@ -28,3 +28,6 @@
 1.0.5b
 -Fixed windows version of bot looking like utter shit
 -Fixed windows minimize and close functionality
+-Added Full Captcha Support For Shopify and Supreme
+-- Inivisible captchas handled automatically
+-- Normal captchas wait for user to complete captcha and get token on completion
