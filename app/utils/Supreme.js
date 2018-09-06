@@ -121,7 +121,7 @@ export default class Supreme {
           if (_.difference(styleKeywordsArray, styleArray).length === 0) {
             const sizes = style.sizes;
             for (const size of sizes) {
-              if (size.name === sizeInput) {
+              if (size.name.toLowerCase() === sizeInput.toLowerCase()) {
                 return [style.id, size.id];
               }
             }

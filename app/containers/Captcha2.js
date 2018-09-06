@@ -48,15 +48,15 @@ class Captchav2 extends Component {
   };
 
   processCaptcha = args => {
-    console.log(args);
     this.active = true;
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.baseURL, args.cookies);
     for (const cookie of formattedCookies) {
-      console.log(cookie);
       win.webContents.session.cookies.set(cookie, error => {
-        console.log(error);
+        if (error !== null) {
+          console.log(error);
+        }
       });
     }
     win.openDevTools();
