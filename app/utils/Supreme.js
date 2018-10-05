@@ -23,8 +23,8 @@ export default class Supreme {
     this.tokenID = uuidv4();
     this.rp = request.defaults({
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.117 Safari/537.36',
-        Cookie: this.cookieJar.getCookieString('supremenewyork.com/')
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
+        // Cookie: this.cookieJar.getCookieString('supremenewyork.com/')
       },
       jar: this.cookieJar,
       proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : ''
@@ -103,7 +103,7 @@ export default class Supreme {
       const response = await this.rp({
         method: 'GET',
         json: true,
-        uri: `http://www.supremenewyork.com/shop/${productID}.json`
+        uri: `https://www.supremenewyork.com/shop/${productID}.json`
       });
       const styles = response.styles;
       if (styles.length === 1) {
@@ -125,12 +125,15 @@ export default class Supreme {
                 return [style.id, size.id];
               }
             }
+          } else {
+            return ['', '', ''];
           }
         }
       }
     } catch (e) {
       this.handleChangeStatus('Error Getting Supreme Product Style');
       console.error(e);
+      return ['', '', ''];
     }
   };
 
@@ -139,22 +142,38 @@ export default class Supreme {
       const response = await this.rp({
         method: 'GET',
         json: true,
-        uri: 'http://www.supremenewyork.com/shop.json'
+        uri: 'https://www.supremenewyork.com/shop.json'
       });
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
-      const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
-      return [product.id, styleID, sizeID];
+      if (product !== undefined) {
+        const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
+        if (styleID !== '') {
+          return [product.id, styleID, sizeID];
+        } else {
+          throw error;
+        }
+      } else {
+        if (this.active) {
+          this.monitoring = true;
+          this.monitoringTimeout = setTimeout(this.checkout, this.settings.monitorTime);
+          console.error(`Monitoring - Product Not Currently Found - ${this.options.task.keywords}`);
+          this.handleChangeStatus('Monitoring - Product Not Currently Found');
+          return ['', '', ''];
+        } else {
+          clearTimeout(this.monitoringTimeout);
+        }
+      }
     } catch (e) {
-      this.handleChangeStatus('Error Getting Supreme Products');
       if (this.active) {
+        console.error(`Monitoring - Size/Style Not Currently Found - ${this.options.task.keywords}`);
         this.monitoring = true;
-        this.handleChangeStatus('Monitoring');
+        this.handleChangeStatus('Monitoring - Size/Style Not Currently Found');
         this.monitoringTimeout = setTimeout(this.checkout, this.settings.monitorTime);
+        return ['', '', ''];
       } else {
         clearTimeout(this.monitoringTimeout);
       }
-      console.error(e);
     }
   };
 
@@ -169,7 +188,7 @@ export default class Supreme {
       const response = await this.rp({
         method: 'POST',
         form: payload,
-        uri: `http://www.supremenewyork.com/shop/${productID}/add`,
+        uri: `https://www.supremenewyork.com/shop/${productID}/add`,
         gzip: true,
         resolveWithFullResponse: true,
         followAllRedirects: true
@@ -195,7 +214,7 @@ export default class Supreme {
   checkStock = async (productID, styleID, sizeID) => {
     const response = await this.rp({
       method: 'GET',
-      uri: `http://www.supremenewyork.com/shop/${productID}.json`,
+      uri: `https://www.supremenewyork.com/shop/${productID}.json`,
       gzip: true,
       json: true,
       followAllRedirects: true
@@ -209,30 +228,34 @@ export default class Supreme {
   checkout = async () => {
     ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
     const [productID, styleID, sizeID] = await this.getProduct();
-    const stockLevel = await this.checkStock(productID, styleID, sizeID);
-    if (stockLevel > 0) {
-      const addToCart = await this.addToCart(productID, styleID, sizeID);
-      const checkoutCookies = await addToCart.request.headers.Cookie;
-      ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-        cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
-        checkoutURL: 'http://supremenewyork.com/checkout',
-        baseURL: stores[this.options.task.store],
-        id: this.tokenID
-      });
-      this.handleChangeStatus('Waiting For Captcha');
-      ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-        if (this.tokenID === args.id) {
-          console.log(args);
-          this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
-          await this.sleep(this.settings.checkoutTime);
-          this.handleChangeStatus('Fake Checkout');
-          ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
-          // this.checkoutWithCapctcha(args.captchaResponse);
-          // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
-        }
-      });
+    if (productID !== '') {
+      const stockLevel = await this.checkStock(productID, styleID, sizeID);
+      if (stockLevel > 0) {
+        const addToCart = await this.addToCart(productID, styleID, sizeID);
+        const checkoutCookies = await addToCart.request.headers.Cookie;
+        ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+          cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
+          checkoutURL: 'https://supremenewyork.com/checkout',
+          baseURL: stores[this.options.task.store],
+          id: this.tokenID
+        });
+        this.handleChangeStatus('Waiting For Captcha');
+        ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+          if (this.tokenID === args.id) {
+            console.log(args);
+            this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
+            await this.sleep(this.settings.checkoutTime);
+            // this.handleChangeStatus('Fake Checkout');
+            ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
+            this.checkoutWithCapctcha(args.captchaResponse);
+            // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+          }
+        });
+      } else {
+        this.handleChangeStatus('Out Of Stock');
+      }
     } else {
-      this.handleChangeStatus('Out Of Stock');
+      // this.handleChangeStatus('Monitoring - Product Not Currently Found');
     }
   };
 }

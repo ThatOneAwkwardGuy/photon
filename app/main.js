@@ -32,8 +32,8 @@ let initialiseCaptchaWindow = () => {
     show: false,
     minWidth: 200,
     minHeight: 300,
-    width: 400,
-    height: 600,
+    width: 500,
+    height: 650,
     frame: false,
     resizable: true,
     allowRunningInsecureContent: true

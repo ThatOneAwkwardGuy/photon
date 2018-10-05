@@ -31,3 +31,6 @@
 -Added Full Captcha Support For Shopify and Supreme
 -- Inivisible captchas handled automatically
 -- Normal captchas wait for user to complete captcha and get token on completion
+
+1.0.6b
+-Fixed adding multiple tasks bug

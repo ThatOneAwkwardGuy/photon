@@ -330,6 +330,12 @@ svg {
   text-align: center;
 }
 
+.footerRightSection button,
+.footerLeftSection button {
+  white-space: normal !important;
+  padding: 5px !important;
+}
+
 .footerCenterSection {
   display: flex;
   justify-content: center;

@@ -23,16 +23,25 @@ export default class CaptchaFooter extends Component {
   render() {
     return (
       <Row className="captchaFooter">
-        <Col xs="6" className="text-center footerRightSection">
+        <Col xs="4" className="text-center footerRightSection">
           <Button
             onClick={() => {
               this.props.clearCookies();
             }}
           >
-            Delete Cookies
+            Clear Cookies
           </Button>
         </Col>
-        <Col xs="6" className="text-left footerLeftSection">
+        <Col xs="4" className="text-left footerLeftSection">
+          <Button
+            onClick={() => {
+              this.props.goToYoutube();
+            }}
+          >
+            Youtube
+          </Button>
+        </Col>
+        <Col xs="4" className="text-left footerLeftSection">
           <Button
             onClick={() => {
               this.props.goToGoogleLogin();

@@ -19,7 +19,26 @@ class Captchav2 extends Component {
 
   goToGoogleLogin = () => {
     const webviewWindow = document.querySelector('webview');
-    webviewWindow.loadURL('https://accounts.google.com/Login');
+    this.setState(
+      {
+        waiting: false
+      },
+      () => {
+        webviewWindow.loadURL('https://accounts.google.com/Login');
+      }
+    );
+  };
+
+  goToYoutube = () => {
+    const webviewWindow = document.querySelector('webview');
+    this.setState(
+      {
+        waiting: false
+      },
+      () => {
+        webviewWindow.loadURL('https://youtube.com');
+      }
+    );
   };
 
   clearCookies = () => {
@@ -124,7 +143,7 @@ class Captchav2 extends Component {
             height: this.state.waiting ? '0px' : 'calc(100% - 90px)'
           }}
         />
-        <CaptchaFooter clearCookies={this.clearCookies} goToGoogleLogin={this.goToGoogleLogin} />
+        <CaptchaFooter clearCookies={this.clearCookies} goToGoogleLogin={this.goToGoogleLogin} goToYoutube={this.goToYoutube} />
       </Container>
     );
   }

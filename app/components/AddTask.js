@@ -330,23 +330,14 @@ class AddTask extends Component {
                     <Col xs="3">
                       <Label for="tasks">tasks</Label>
                       <Input
-                        type="select"
+                        type="number"
                         name="tasks"
                         id="tasks"
+                        value={this.state.formdata.tasks}
                         onChange={event => {
                           this.handleChange(event);
                         }}
-                      >
-                        <option>1</option>
-                        <option>2</option>
-                        <option>3</option>
-                        <option>4</option>
-                        <option>5</option>
-                        <option>6</option>
-                        <option>7</option>
-                        <option>8</option>
-                        <option>9</option>
-                      </Input>
+                      />
                     </Col>
                   </FormGroup>
                   <FormGroup row>
@@ -366,7 +357,7 @@ class AddTask extends Component {
                               size: Sizes.Shoes[0],
                               quantity: '1',
                               profile: this.profileNames[0],
-                              tasks: '1'
+                              tasks: 1
                             }
                           });
                         }}
