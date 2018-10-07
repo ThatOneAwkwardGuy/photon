@@ -121,14 +121,15 @@ export default class Supreme {
           if (_.difference(styleKeywordsArray, styleArray).length === 0) {
             const sizes = style.sizes;
             for (const size of sizes) {
-              if (size.name.toLowerCase() === sizeInput.toLowerCase()) {
+              const sizeArray = size.name.toLowerCase().split(/[^a-zA-Z0-9']/);
+              const sizeKeywordsArray = sizeInput.toLowerCase().split(/[^a-zA-Z0-9']/);
+              if (_.difference(sizeKeywordsArray, sizeArray).length === 0) {
                 return [style.id, size.id];
               }
             }
-          } else {
-            return ['', '', ''];
           }
         }
+        return ['', '', ''];
       }
     } catch (e) {
       this.handleChangeStatus('Error Getting Supreme Product Style');

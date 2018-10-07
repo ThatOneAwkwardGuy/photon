@@ -34,3 +34,4 @@
 
 1.0.6b
 -Fixed adding multiple tasks bug
+-Fixed Shoes Bug (Selects First Number e.g US 12 / UK 11 it will assume the size is 12)
