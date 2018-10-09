@@ -78,8 +78,8 @@ class Captchav2 extends Component {
         }
       });
     }
-    win.openDevTools();
-    webview.openDevTools();
+    // win.openDevTools();
+    // webview.openDevTools();
     ipcRenderer.send(SET_GLOBAL_ID_VARIABLE, args.id);
 
     webview.addEventListener('did-finish-load', e => {
@@ -135,7 +135,7 @@ class Captchav2 extends Component {
         <Waiting visible={this.state.waiting} />
         <webview
           id="captchaWebview"
-          src="https://accounts.google.com/Login"
+          src="http://google.com"
           webpreferences="allowRunningInsecureContent, javascript=yes"
           preload="../app/utils/captchaPreload.js"
           style={{

@@ -4,7 +4,7 @@ import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Shopify {
   constructor(options, handleChangeStatus, proxy) {
     this.options = options;
@@ -79,7 +79,7 @@ export default class Shopify {
     }
   };
 
-  sendCustomerInfo = async (checkoutURL, authToken) => {
+  sendCustomerInfo = async (checkoutURL, authToken, captchaToken) => {
     const payload = {
       utf8: '✓',
       _method: 'patch',
@@ -102,7 +102,8 @@ export default class Shopify {
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1',
-      button: ''
+      button: '',
+      'g-recaptcha-response': captchaToken
     };
     console.log(payload);
     const response = await this.rp({
@@ -204,7 +205,7 @@ export default class Shopify {
       'checkout[client_details][browser_width]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][browser_height]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][javascript_enabled]': '1',
-      'checkout[total_price]': '5000',
+      'checkout[total_price]': orderTotal,
       button: ''
     };
     const response = await this.rp({
@@ -235,6 +236,7 @@ export default class Shopify {
       }
 
       if (captchaNeeded[this.options.task.store]) {
+        ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
           cookies: this.cookieJar.getCookieString(checkoutURL),
           checkoutURL: checkoutURL,
@@ -246,7 +248,7 @@ export default class Shopify {
           const paymentID = this.returnPaymentID(checkoutBody);
           const authToken = this.returnAuthToken(checkoutBody);
           const orderTotal = this.returnOrderTotal(checkoutBody);
-          await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
+          await Promise.all([this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse), this.sendShippingMethod(shippingToken, checkoutURL)]);
           console.log(Date.now() - start);
           const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
           console.log(checkoutResponse);
