@@ -103,7 +103,7 @@ export default class Shopify {
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1',
       button: '',
-      'g-recaptcha-response': captchaToken
+      'g-recaptcha-response': captchaToken !== undefined ? captchaToken : ''
     };
     console.log(payload);
     const response = await this.rp({
@@ -151,8 +151,13 @@ export default class Shopify {
     });
     const shipOpt = response.shipping_rates[0].name.replace(/ /g, '%20');
     const shipPrc = response.shipping_rates[0].price;
+    console.log(shipPrc);
     const shippingOption = `shopify-${shipOpt}-${shipPrc}`;
-    return shippingOption;
+    const shippingInfo = {
+      token: shippingOption,
+      price: shipPrc
+    };
+    return shippingInfo;
   };
 
   sendShippingMethod = async (shippingToken, checkoutURL) => {
@@ -180,7 +185,7 @@ export default class Shopify {
     });
   };
 
-  sendCheckoutInfo = async (paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal) => {
+  sendCheckoutInfo = async (paymentToken, shippingToken, shippingPrice, paymentID, authToken, checkoutURL, orderTotal) => {
     const payload = {
       utf8: '✓',
       _method: 'patch',
@@ -205,9 +210,10 @@ export default class Shopify {
       'checkout[client_details][browser_width]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][browser_height]': (Math.floor(Math.random() * 2000) + 1000).toString(),
       'checkout[client_details][javascript_enabled]': '1',
-      'checkout[total_price]': orderTotal,
+      'checkout[total_price]': parseInt(orderTotal) + shippingPrice * 100,
       button: ''
     };
+    console.log(payload);
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
@@ -226,7 +232,7 @@ export default class Shopify {
       const start = Date.now();
       await this.addToCart(variantID, this.options.task.quantity);
       let checkoutURL;
-      const [paymentToken, checkoutURLResponse, shippingToken] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
+      const [paymentToken, checkoutURLResponse, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
 
       if (this.options.task.store === 'Undefeated') {
         checkoutURL = `https://undefeated.com${decodeURIComponent(checkoutURLResponse).split('=')[1]}`;
@@ -248,9 +254,9 @@ export default class Shopify {
           const paymentID = this.returnPaymentID(checkoutBody);
           const authToken = this.returnAuthToken(checkoutBody);
           const orderTotal = this.returnOrderTotal(checkoutBody);
-          await Promise.all([this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse), this.sendShippingMethod(shippingToken, checkoutURL)]);
+          await Promise.all([this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse), this.sendShippingMethod(shipping.token, checkoutURL)]);
           console.log(Date.now() - start);
-          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
+          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, authToken, checkoutURL, orderTotal);
           console.log(checkoutResponse);
           if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
             this.handleChangeStatus('Stuck On Payment Method Page');
@@ -263,9 +269,9 @@ export default class Shopify {
         const paymentID = this.returnPaymentID(checkoutBody);
         const authToken = this.returnAuthToken(checkoutBody);
         const orderTotal = this.returnOrderTotal(checkoutBody);
-        await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shippingToken, checkoutURL)]);
+        await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shipping.token, checkoutURL)]);
         console.log(Date.now() - start);
-        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shippingToken, paymentID, authToken, checkoutURL, orderTotal);
+        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, authToken, checkoutURL, orderTotal);
         console.log(checkoutResponse);
         if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
           this.handleChangeStatus('Stuck On Payment Method Page');
