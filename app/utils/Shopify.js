@@ -250,6 +250,7 @@ export default class Shopify {
         });
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+          this.handleChangeStatus('Checking Out');
           const checkoutBody = await this.getCheckoutBody(checkoutURL);
           const paymentID = this.returnPaymentID(checkoutBody);
           const authToken = this.returnAuthToken(checkoutBody);
@@ -258,13 +259,16 @@ export default class Shopify {
           console.log(Date.now() - start);
           const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, authToken, checkoutURL, orderTotal);
           console.log(checkoutResponse);
-          if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
-            this.handleChangeStatus('Stuck On Payment Method Page');
+          // if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+          if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
+            // this.handleChangeStatus('Stuck On Payment Method Page');
+            this.handleChangeStatus('Error Processing Payment');
           } else {
             this.handleChangeStatus('Check Email');
           }
         });
       } else {
+        this.handleChangeStatus('Checking Out');
         const checkoutBody = await this.getCheckoutBody(checkoutURL);
         const paymentID = this.returnPaymentID(checkoutBody);
         const authToken = this.returnAuthToken(checkoutBody);
@@ -273,8 +277,10 @@ export default class Shopify {
         console.log(Date.now() - start);
         const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, authToken, checkoutURL, orderTotal);
         console.log(checkoutResponse);
-        if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
-          this.handleChangeStatus('Stuck On Payment Method Page');
+        // if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+        if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
+          // this.handleChangeStatus('Stuck On Payment Method Page');
+          this.handleChangeStatus('Error Processing Payment');
         } else {
           this.handleChangeStatus('Check Email');
         }
