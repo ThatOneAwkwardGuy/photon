@@ -261,8 +261,9 @@ export default class Shopify {
           console.log(checkoutResponse);
           // if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
           if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
-            // this.handleChangeStatus('Stuck On Payment Method Page');
             this.handleChangeStatus('Error Processing Payment');
+          } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
+            this.handleChangeStatus('Stuck On Customer Info Page');
           } else {
             this.handleChangeStatus('Check Email');
           }
@@ -279,8 +280,11 @@ export default class Shopify {
         console.log(checkoutResponse);
         // if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
         if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
-          // this.handleChangeStatus('Stuck On Payment Method Page');
           this.handleChangeStatus('Error Processing Payment');
+        } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
+          this.handleChangeStatus('Stuck On Customer Info Page');
+        } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
+          this.handleChangeStatus('Stuck On Shipping Method Page');
         } else {
           this.handleChangeStatus('Check Email');
         }

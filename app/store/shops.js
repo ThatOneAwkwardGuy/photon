@@ -1,6 +1,6 @@
 export default {
   '12amrun': 'https://www.12amrun.com',
-  '18montrose': 'https://18montrose.com',
+  // '18montrose': 'https://18montrose.com',
   'A-Ma-Maniere': 'https://www.a-ma-maniere.com',
   APBStore: 'https://www.apbstore.com',
   AddictMiami: 'https://www.addictmiami.com',
