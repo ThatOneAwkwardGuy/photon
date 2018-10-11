@@ -87,7 +87,7 @@ export default class Shopify {
       previous_step: 'contact_information',
       step: 'shipping_method',
       'checkout[email]': this.options.profile.paymentEmail,
-      'checkout[buyer_accepts_marketing]': '0',
+      'checkout[buyer_accepts_marketing]': '1',
       'checkout[shipping_address][first_name]': this.options.profile.deliveryFirstName,
       'checkout[shipping_address][last_name]': this.options.profile.deliveryLastName,
       'checkout[shipping_address][company]': '',
@@ -102,9 +102,12 @@ export default class Shopify {
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1',
-      button: '',
-      'g-recaptcha-response': captchaToken !== undefined ? captchaToken : ''
+      button: ''
     };
+
+    if (captchaToken !== undefined) {
+      payload['g-recaptcha-response'] = captchaToken;
+    }
     console.log(payload);
     const response = await this.rp({
       method: 'POST',
@@ -264,6 +267,8 @@ export default class Shopify {
             this.handleChangeStatus('Error Processing Payment');
           } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
             this.handleChangeStatus('Stuck On Customer Info Page');
+          } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
+            this.handleChangeStatus('Stuck On Shipping Method Page');
           } else {
             this.handleChangeStatus('Check Email');
           }
