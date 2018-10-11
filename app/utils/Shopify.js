@@ -87,7 +87,7 @@ export default class Shopify {
       previous_step: 'contact_information',
       step: 'shipping_method',
       'checkout[email]': this.options.profile.paymentEmail,
-      'checkout[buyer_accepts_marketing]': '1',
+      'checkout[buyer_accepts_marketing]': 1,
       'checkout[shipping_address][first_name]': this.options.profile.deliveryFirstName,
       'checkout[shipping_address][last_name]': this.options.profile.deliveryLastName,
       'checkout[shipping_address][company]': '',
@@ -98,10 +98,10 @@ export default class Shopify {
       'checkout[shipping_address][province]': this.options.profile.deliveryCountry,
       'checkout[shipping_address][zip]': this.options.profile.deliveryZip,
       'checkout[shipping_address][phone]': this.options.profile.phoneNumber,
-      'checkout[remember_me]': '0',
-      'checkout[client_details][browser_width]': '1710',
-      'checkout[client_details][browser_height]': '1289',
-      'checkout[client_details][javascript_enabled]': '1',
+      'checkout[remember_me]': 0,
+      'checkout[client_details][browser_width]': 1710,
+      'checkout[client_details][browser_height]': 1289,
+      'checkout[client_details][javascript_enabled]': 1,
       button: ''
     };
 
@@ -172,9 +172,9 @@ export default class Shopify {
       step: 'payment_method',
       'checkout[shipping_rate][id]': shippingToken,
       button: '',
-      'checkout[client_details][browser_width]': '1710',
-      'checkout[client_details][browser_height]': '1289',
-      'checkout[client_details][javascript_enabled]': '1'
+      'checkout[client_details][browser_width]': 1710,
+      'checkout[client_details][browser_height]': 1289,
+      'checkout[client_details][javascript_enabled]': 1
     };
     const response = await this.rp({
       method: 'POST',
@@ -197,8 +197,8 @@ export default class Shopify {
       step: '',
       s: paymentToken,
       'checkout[payment_gateway]': paymentID,
-      'checkout[credit_card][vault]': 'false',
-      'checkout[different_billing_address]': 'true',
+      'checkout[credit_card][vault]': false,
+      'checkout[different_billing_address]': true,
       'checkout[billing_address][first_name]': this.options.profile.billingFirstName,
       'checkout[billing_address][last_name]': this.options.profile.billingLastName,
       'checkout[billing_address][address1]': this.options.profile.billingAddress,
@@ -209,14 +209,23 @@ export default class Shopify {
       'checkout[billing_address][zip]': this.options.profile.billingZip,
       'checkout[billing_address][phone]': this.options.profile.phoneNumber,
       'checkout[shipping_rate][id]': shippingToken,
-      complete: '1',
-      'checkout[client_details][browser_width]': (Math.floor(Math.random() * 2000) + 1000).toString(),
-      'checkout[client_details][browser_height]': (Math.floor(Math.random() * 2000) + 1000).toString(),
-      'checkout[client_details][javascript_enabled]': '1',
-      'checkout[total_price]': parseInt(orderTotal) + shippingPrice * 100,
-      button: ''
+      complete: 1,
+      'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
+      'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
+      'checkout[client_details][javascript_enabled]': 1,
+      'checkout[total_price]': parseInt(orderTotal) + shippingPrice * 100
     };
     console.log(payload);
+    console.log(`${this.cookieJar.getCookieString(checkoutURL)};${this.cookieJar.getCookieString(cookieURLOne)};${this.cookieJar.getCookieString(cookieURLTwo)}`);
+    console.log(checkoutURL);
+    const cookieURLOne = checkoutURL
+      .split('/')
+      .slice(0, 3)
+      .join('/');
+    const cookieURLTwo = checkoutURL
+      .split('/')
+      .slice(0, 4)
+      .join('/');
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
@@ -224,10 +233,18 @@ export default class Shopify {
       resolveWithFullResponse: true,
       followAllRedirects: true,
       headers: {
-        Cookie: this.cookieJar.getCookieString(checkoutURL)
+        Cookie: `${this.cookieJar.getCookieString(checkoutURL)};${this.cookieJar.getCookieString(cookieURLOne)};${this.cookieJar.getCookieString(cookieURLTwo)}`
       }
     });
     return response;
+  };
+
+  getHomepage = async () => {
+    const response = await this.rp({
+      method: 'GET',
+      json: true,
+      uri: `${stores[this.options.task.store]}`
+    });
   };
 
   checkoutWithVariant = async variantID => {
@@ -281,6 +298,7 @@ export default class Shopify {
         const orderTotal = this.returnOrderTotal(checkoutBody);
         await Promise.all([this.sendCustomerInfo(checkoutURL, authToken), this.sendShippingMethod(shipping.token, checkoutURL)]);
         console.log(Date.now() - start);
+        console.log(this.cookieJar);
         const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, authToken, checkoutURL, orderTotal);
         console.log(checkoutResponse);
         // if (checkoutResponse.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
