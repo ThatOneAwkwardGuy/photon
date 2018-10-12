@@ -13,7 +13,7 @@ export default class Shopify {
     this.cookieJar = request.jar();
     this.rp = request.defaults({
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/66.0.3359.117 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
@@ -114,11 +114,12 @@ export default class Shopify {
       uri: checkoutURL,
       followAllRedirects: true,
       resolveWithFullResponse: true,
-      form: payload,
-      headers: {
-        Cookie: this.cookieJar.getCookieString(checkoutURL)
-      }
+      form: payload
+      // headers: {
+      //   Cookie: this.cookieJar.getCookieString(checkoutURL)
+      // }
     });
+    console.log(response);
     return response;
   };
 
@@ -181,10 +182,7 @@ export default class Shopify {
       uri: checkoutURL,
       resolveWithFullResponse: true,
       followAllRedirects: true,
-      form: payload,
-      headers: {
-        Cookie: this.cookieJar.getCookieString(checkoutURL)
-      }
+      form: payload
     });
   };
 
@@ -216,25 +214,14 @@ export default class Shopify {
       'checkout[total_price]': parseInt(orderTotal) + shippingPrice * 100
     };
     console.log(payload);
-    console.log(`${this.cookieJar.getCookieString(checkoutURL)};${this.cookieJar.getCookieString(cookieURLOne)};${this.cookieJar.getCookieString(cookieURLTwo)}`);
     console.log(checkoutURL);
-    const cookieURLOne = checkoutURL
-      .split('/')
-      .slice(0, 3)
-      .join('/');
-    const cookieURLTwo = checkoutURL
-      .split('/')
-      .slice(0, 4)
-      .join('/');
+
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
       form: payload,
       resolveWithFullResponse: true,
-      followAllRedirects: true,
-      headers: {
-        Cookie: `${this.cookieJar.getCookieString(checkoutURL)};${this.cookieJar.getCookieString(cookieURLOne)};${this.cookieJar.getCookieString(cookieURLTwo)}`
-      }
+      followAllRedirects: true
     });
     return response;
   };
