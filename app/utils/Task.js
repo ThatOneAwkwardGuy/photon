@@ -13,7 +13,8 @@ const sizeSynonymns = {
   Medium: ['Medium', 'M', 'MEDIUM', 'Med', 'MED'],
   Large: ['LARGE', 'L', 'Large'],
   XLarge: ['XLARGE', 'X-Large', 'X-LARGE', 'XL'],
-  XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE']
+  XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE'],
+  'N/A': ['N/A', 'Default Title']
 };
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
@@ -186,6 +187,7 @@ export default class Task {
     const found = [];
     if (this.options.task.store.includes('DSM')) {
       for (const variant in variantsArray) {
+        console.log(variant);
         if (
           (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
           (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2'), size)) ||

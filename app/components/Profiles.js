@@ -22,6 +22,7 @@ export default class Profiles extends Component {
         deliveryLastName: '',
         deliveryProvince: '',
         deliveryZip: '',
+        deliveryAptorSuite: '',
         billingZip: '',
         billingCountry: '',
         billingAddress: '',
@@ -29,6 +30,7 @@ export default class Profiles extends Component {
         billingFirstName: '',
         billingLastName: '',
         billingProvince: '',
+        billingAptorSuite: '',
         phoneNumber: '',
         paymentEmail: '',
         paymentCardholdersName: '',
@@ -86,7 +88,8 @@ export default class Profiles extends Component {
         billingFirstName: this.state.formdata.deliveryFirstName,
         billingLastName: this.state.formdata.deliveryLastName,
         billingProvince: this.state.formdata.deliveryProvince,
-        billingZip: this.state.formdata.deliveryZip
+        billingZip: this.state.formdata.deliveryZip,
+        billingAptorSuite: this.state.formdata.deliveryAptorSuite
       })
     });
   };
@@ -150,6 +153,7 @@ export default class Profiles extends Component {
         deliveryLastName: '',
         deliveryProvince: '',
         deliveryZip: '',
+        deliveryAptorSuite: '',
         billingZip: '',
         billingCountry: '',
         billingAddress: '',
@@ -157,6 +161,7 @@ export default class Profiles extends Component {
         billingFirstName: '',
         billingLastName: '',
         billingProvince: '',
+        billingAptorSuite: '',
         phoneNumber: '',
         paymentEmail: '',
         paymentCardholdersName: '',
@@ -375,6 +380,7 @@ export default class Profiles extends Component {
                       type="text"
                       name="deliveryAptorSuite"
                       id="deliveryAptorSuite"
+                      value={this.state.formdata.deliveryAptorSuite}
                       onChange={event => {
                         this.handleChangeShippingOrBilling(event);
                       }}
@@ -496,6 +502,7 @@ export default class Profiles extends Component {
                       type="text"
                       name="billingAptorSuite"
                       id="billingAptorSuite"
+                      value={this.state.formdata.billingAptorSuite}
                       onChange={event => {
                         this.handleChangeShippingOrBilling(event);
                       }}

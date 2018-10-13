@@ -67,7 +67,7 @@ export default {
   Solefly: 'https://www.solefly.com',
   Soleheaven: 'https://www.soleheaven.com',
   Suede: 'https://suede-store.com',
-  Supreme: 'http://www.supremenewyork.com',
+  Supreme: 'https://www.supremenewyork.com',
   TrophyRoom: 'https://www.trophyroomstore.com',
   Undefeated: 'https://undefeated.com',
   Unknwn: 'https://www.unknwn.com',
