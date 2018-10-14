@@ -7,10 +7,11 @@ var tough = require('tough-cookie');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Shopify {
-  constructor(options, handleChangeStatus, proxy) {
+  constructor(options, handleChangeStatus, proxy, stop) {
     this.options = options;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
+    this.stop = stop;
     this.cookieJar = request.jar();
     this.rp = request.defaults({
       headers: {
@@ -74,8 +75,9 @@ export default class Shopify {
     //     const splitCookie = replacedCookie.split(';');
     //     this.cookieJar.setCookie(splitCookie[0], stores[this.options.task.store]);
     //   }
-    //   this.cookieJar.setCookie('_shopify_fs=2018-10-12T17%3A56%3A06.398Z', stores[this.options.task.store]);
-    //   this.cookieJar.setCookie('_shopify_sa_t=2018-10-12T17%3A56%3A06.411Z', stores[this.options.task.store]);
+    // });
+    // this.cookieJar.setCookie('_shopify_fs=2018-10-12T17%3A56%3A06.398Z', stores[this.options.task.store]);
+    // this.cookieJar.setCookie('_shopify_sa_t=2018-10-12T17%3A56%3A06.411Z', stores[this.options.task.store]);
 
     // if (cookie.includes('_shopify_s')) {
     //   const splitCookie = cookie.split(/[\s,;=]+/);
@@ -200,8 +202,9 @@ export default class Shopify {
       uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
       body: payload
     });
+    console.log(response);
     for (const shippingRates of response.shipping_rates) {
-      if (!shippingRates.name.toLowerCase().includes('collection')) {
+      if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
         const shipOpt = shippingRates.name.replace(/ /g, '%20');
         const shipPrc = shippingRates.price;
         const shipSource = shippingRates.source;
@@ -247,28 +250,28 @@ export default class Shopify {
     const payload = {
       utf8: '✓',
       _method: 'patch',
-      authenticity_token: authToken,
+      authenticity_token: `${authToken}`,
       previous_step: 'payment_method',
       step: '',
-      s: paymentToken,
-      'checkout[payment_gateway]': paymentID,
-      'checkout[credit_card][vault]': false,
-      'checkout[different_billing_address]': false,
-      'checkout[billing_address][first_name]': this.options.profile.billingFirstName,
-      'checkout[billing_address][last_name]': this.options.profile.billingLastName,
-      'checkout[billing_address][address1]': this.options.profile.billingAddress,
-      'checkout[billing_address][address2]': this.options.profile.billingAptorSuite,
-      'checkout[billing_address][city]': this.options.profile.billingCity,
-      'checkout[billing_address][country]': this.options.profile.billingCountry,
-      'checkout[billing_address][province]': this.options.profile.billingProvince,
-      'checkout[billing_address][zip]': this.options.profile.billingZip,
-      'checkout[billing_address][phone]': this.options.profile.phoneNumber,
-      'checkout[shipping_rate][id]': shippingToken,
-      complete: 1,
+      s: `${paymentToken}`,
+      'checkout[payment_gateway]': `${paymentID}`,
+      'checkout[credit_card][vault]': 'false',
+      'checkout[different_billing_address]': 'true',
+      'checkout[billing_address][first_name]': `${this.options.profile.billingFirstName}`,
+      'checkout[billing_address][last_name]': `${this.options.profile.billingLastName}`,
+      'checkout[billing_address][address1]': `${this.options.profile.billingAddress}`,
+      'checkout[billing_address][address2]': `${this.options.profile.billingAptorSuite}`,
+      'checkout[billing_address][city]': `${this.options.profile.billingCity}`,
+      'checkout[billing_address][country]': `${this.options.profile.billingCountry}`,
+      'checkout[billing_address][province]': `${this.options.profile.billingProvince}`,
+      'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
+      'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
+      // 'checkout[shipping_rate][id]': `${shippingToken}`,
+      complete: '1',
       'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
       'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
-      'checkout[client_details][javascript_enabled]': 1,
-      'checkout[total_price]': parseInt(orderTotal) + shippingPrice * 100
+      'checkout[client_details][javascript_enabled]': '1',
+      'checkout[total_price]': `${parseInt(orderTotal) + shippingPrice * 100}`
     };
     const response = await this.rp({
       method: 'POST',
@@ -303,6 +306,7 @@ export default class Shopify {
           checkoutURL: checkoutURL,
           baseURL: stores[this.options.task.store]
         });
+
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
           this.handleChangeStatus('Checking Out');
@@ -312,10 +316,11 @@ export default class Shopify {
           const authToken = bodyInfo.authToken;
           const orderTotal = bodyInfo.orderTotal;
           const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
-          const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL);
+          const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+          const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+          const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
           console.log(Date.now() - start);
-          const authToken1 = this.returnAuthToken(sendShippingMethodResponse.body);
-          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, authToken, checkoutURL, orderTotal);
+          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
           if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
             this.handleChangeStatus('Error Processing Payment');
           } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
@@ -330,11 +335,9 @@ export default class Shopify {
         this.handleChangeStatus('Checking Out');
         const checkoutBody = await this.getCheckoutBody(checkoutURL);
         const bodyInfo = this.returnBodyInfo(checkoutBody);
-
         const paymentID = bodyInfo.paymentID;
         const authToken = bodyInfo.authToken;
         const orderTotal = bodyInfo.orderTotal;
-
         const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
         const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
         const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
@@ -351,8 +354,8 @@ export default class Shopify {
           this.handleChangeStatus('Check Email');
         }
       }
+      this.stop(true);
     } catch (e) {
-      this.active = false;
       console.log(e);
       if (_.get(e, 'options.uri').includes('stock_problems')) {
         this.handleChangeStatus('Item Out Of Stock');
@@ -361,6 +364,7 @@ export default class Shopify {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
+      this.stop(true);
     }
   };
 }

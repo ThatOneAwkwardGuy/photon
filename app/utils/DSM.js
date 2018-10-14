@@ -6,10 +6,11 @@ const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
 
 export default class Shopify {
-  constructor(options, handleChangeStatus, propertiesHash, proxy) {
+  constructor(options, handleChangeStatus, propertiesHash, proxy, stop) {
     this.options = options;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
+    this.stop = stop;
     this.propertiesHash = propertiesHash;
     this.cookieJar = request.jar();
     this.rp = request.defaults({

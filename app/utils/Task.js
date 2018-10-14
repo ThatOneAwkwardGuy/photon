@@ -27,7 +27,6 @@ export default class Task {
     this.proxy = checkoutProxy;
     this.monitorProxy = monitorProxies[Math.floor(Math.random() * monitorProxies.length)];
     this.monitoringTimeout = '';
-    this.active = false;
     this.monitoring = false;
     this.supremeInstance = '';
     this.alreadySetTimeout = false;
@@ -39,7 +38,7 @@ export default class Task {
     this.forceUpdate();
   };
 
-  stop = () => {
+  stop = (checkoutComplete = false) => {
     switch (this.options.task.store) {
       case 'Supreme':
         if (this.supremeInstance !== '') {
@@ -49,7 +48,9 @@ export default class Task {
         clearTimeout(this.monitoringTimeout);
         clearTimeout(this.scheduledTimeout);
         this.active = false;
-        this.handleChangeStatus('Stopped');
+        if ((checkoutComplete !== undefined) & !checkoutComplete) {
+          this.handleChangeStatus('Stopped');
+        }
     }
   };
 
@@ -105,7 +106,7 @@ export default class Task {
   };
 
   Supreme = () => {
-    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy);
+    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stop);
     try {
       this.supremeInstance.checkout();
     } catch (e) {
@@ -124,7 +125,7 @@ export default class Task {
     const content = await this.getVariantsFromHomepage(pageURL);
     const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy);
+      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy, this.stop);
       const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -135,7 +136,7 @@ export default class Task {
   checkoutWithGroupOfVariants = async variantIDs => {
     const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy);
+      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stop);
       const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -154,7 +155,7 @@ export default class Task {
   };
 
   variantMode = async variant => {
-    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus);
+    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stop);
     const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(this.options.task.modeInput);
   };
 
@@ -169,7 +170,8 @@ export default class Task {
     const sizeNames = sizeSynonymns[size];
     if (sizeNames !== undefined) {
       for (const size of sizeNames) {
-        if (size === option) {
+        // if (size === option) {
+        if (option.split(' ').includes(size)) {
           return true;
         }
       }
@@ -187,7 +189,6 @@ export default class Task {
     const found = [];
     if (this.options.task.store.includes('DSM')) {
       for (const variant in variantsArray) {
-        console.log(variant);
         if (
           (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
           (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2'), size)) ||

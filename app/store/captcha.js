@@ -10,7 +10,7 @@ export default {
   BapeOnline: false,
   Beatniconline: false,
   BlackMarketUS: false,
-  Blends: false,
+  Blends: true,
   Bodega: false,
   BowsAndArrows: false,
   BurnRubber: false,
