@@ -36,6 +36,7 @@ let initialiseCaptchaWindow = () => {
     height: 650,
     frame: false,
     resizable: true,
+    focusable: false,
     allowRunningInsecureContent: true
   });
   captchaWindow.loadURL(
