@@ -31,10 +31,16 @@ export default class Task {
     this.supremeInstance = '';
     this.alreadySetTimeout = false;
     this.scheduledTimeout = '';
+    this.productName = '';
   }
 
   handleChangeStatus = status => {
     this.status = status;
+    this.forceUpdate();
+  };
+
+  handleChangeProductName = newProductName => {
+    this.productName = newProductName;
     this.forceUpdate();
   };
 
@@ -106,7 +112,7 @@ export default class Task {
   };
 
   Supreme = () => {
-    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stop);
+    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stop, this.handleChangeProductName);
     try {
       this.supremeInstance.checkout();
     } catch (e) {
@@ -275,6 +281,7 @@ export default class Task {
       const siteMap = await getSitemapJSON(siteUrl);
       if (siteMap[0] === 'JSON') {
         const matchedProductJSON = checkSitemapJSONForKeywords(siteMap[1], this.keywords);
+        this.handleChangeProductName(matchedProductJSON.title);
         return matchedProductJSON.variants;
       } else if (siteMap[0] === 'XML') {
         const matchedProductXML = checkSitemapXMLForKeywords(siteMap[1], this.keywords);

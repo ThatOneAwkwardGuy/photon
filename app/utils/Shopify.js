@@ -364,7 +364,7 @@ export default class Shopify {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
-      this.stop(true);
+      // this.stop(false);
     }
   };
 }

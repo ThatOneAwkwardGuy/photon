@@ -189,7 +189,7 @@ export default class Tasks extends Component {
       <td>{index + 1}</td>
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
-      <td>{task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput}</td>
+      <td>{task.productName === '' ? (task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput) : task.productName}</td>
       <td>{task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined ? 'manual' : moment.unix(task.options.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}</td>
       <td>{task.options.task.size}</td>
       <td>{task.status}</td>
@@ -234,6 +234,7 @@ export default class Tasks extends Component {
   );
 
   render() {
+    console.log(this.taskClasses);
     return (
       <div>
         <CSSTransition in={true} appear={true} timeout={300} classNames="fade">

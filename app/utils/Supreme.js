@@ -7,8 +7,10 @@ const uuidv4 = require('uuid/v4');
 import stores from '../store/shops';
 import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, FINISH_SENDING_CAPTCHA_TOKEN, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
-  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy) {
+  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stop, handleChangeProductName) {
     this.startTime = '';
+    this.stop = stop;
+    this.handleChangeProductName = handleChangeProductName;
     this.options = options;
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
@@ -96,6 +98,7 @@ export default class Supreme {
     } catch (e) {
       console.error(e);
     }
+    this.stop(true);
   };
 
   getProductStyleID = async (productID, color, sizeInput) => {
@@ -148,6 +151,7 @@ export default class Supreme {
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
       if (product !== undefined) {
+        this.handleChangeProductName(product.name);
         const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
         if (styleID !== '') {
           return [product.id, styleID, sizeID];
@@ -257,6 +261,7 @@ export default class Supreme {
       }
     } else {
       // this.handleChangeStatus('Monitoring - Product Not Currently Found');
+      // this.stop();
     }
   };
 }
