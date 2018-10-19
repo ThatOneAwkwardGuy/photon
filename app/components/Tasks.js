@@ -115,7 +115,7 @@ export default class Tasks extends Component {
 
   stopAllTasks = () => {
     this.props.taskClasses.forEach(element => {
-      element.stop();
+      element.stopTask();
     });
   };
 
@@ -205,7 +205,7 @@ export default class Tasks extends Component {
         <Button
           onClick={() => {
             ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
-            task.stop();
+            task.stopTask();
           }}
           className="taskButton"
         >
@@ -221,7 +221,7 @@ export default class Tasks extends Component {
         </Button>
         <Button
           onClick={() => {
-            this.props.taskClasses[index].stop();
+            this.props.taskClasses[index].stopTask();
             this.props.onRemoveTask(this.props.tasks[index]);
             this.props.deleteFromState(index);
           }}
@@ -234,7 +234,6 @@ export default class Tasks extends Component {
   );
 
   render() {
-    console.log(this.taskClasses);
     return (
       <div>
         <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
@@ -467,7 +466,7 @@ export default class Tasks extends Component {
                     <option>9</option>
                   </Input>
                 </Col>
-                <Col xs="6">
+                <Col xs="6" style={{ marginTop: '20px' }}>
                   <Label for="scheduledTime">Schedule Time</Label>
                   <Datetime
                     // value={moment.unix(this.state.modalFormData.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}
@@ -484,6 +483,19 @@ export default class Tasks extends Component {
                       this.setScheduledTime(date.unix());
                     }}
                   />
+                  <Button
+                    style={{ marginTop: '20px' }}
+                    onClick={() => {
+                      this.setState({
+                        modalFormData: {
+                          ...this.state.modalFormData,
+                          task: { ...this.state.modalFormData.task, scheduledTime: '' }
+                        }
+                      });
+                    }}
+                  >
+                    Clear Time
+                  </Button>
                 </Col>
               </FormGroup>
               <FormGroup row>

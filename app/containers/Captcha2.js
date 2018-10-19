@@ -71,6 +71,7 @@ class Captchav2 extends Component {
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.baseURL, args.cookies);
+    console.log(formattedCookies);
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, error => {
         if (error !== null) {
@@ -78,8 +79,8 @@ class Captchav2 extends Component {
         }
       });
     }
-    // win.openDevTools();
-    // webview.openDevTools();
+    win.openDevTools();
+    webview.openDevTools();
     ipcRenderer.send(SET_GLOBAL_ID_VARIABLE, args.id);
 
     webview.addEventListener('did-finish-load', e => {

@@ -11,23 +11,28 @@ checkCaptcha = () => {
     grecaptcha.execute().then(() => {
       const captchaResponse3 = grecaptcha.getResponse();
       if (captchaResponse3 !== '') {
-        ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse3, id: tokenID });
+        ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse3, id: tokenID, supremeAuthToken: getSupremeAuthToken() });
         clearInterval(captchaChecker);
         console.log(tokenID);
       }
     });
   } else if (captchaResponse !== '') {
-    ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: tokenID });
+    ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: tokenID, supremeAuthToken: getSupremeAuthToken() });
     clearInterval(captchaChecker);
     console.log(tokenID);
   } else {
     let captchaResponse2 = document.querySelector('#recaptcha-token').value;
     if (captchaResponse2 !== '' && captchaResponse2 !== null) {
-      ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: tokenID });
+      ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: tokenID, supremeAuthToken: getSupremeAuthToken() });
       clearInterval(captchaChecker);
       console.log(tokenID);
     }
   }
+};
+
+getSupremeAuthToken = () => {
+  const authToken = document.querySelector('input[name=authenticity_token]').value;
+  return authToken;
 };
 
 if (!window.location.href.includes('google.com')) {

@@ -39,3 +39,7 @@
 -Shopify Checkout Working (Currently Testing All Sites On Sitelist)
 -Supreme Monitor Added On Discord
 -Product column now changes to product title when produc is found - Shopify
+
+1.0.7b
+-Added seconds to date/time picker for auto running tasks
+-Added Clear Time button when editing task

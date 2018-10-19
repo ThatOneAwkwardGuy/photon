@@ -271,7 +271,7 @@ class AddTask extends Component {
                       <Datetime
                         value={this.state.formdata.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.formdata.scheduledTime)}
                         dateFormat="dddd, MMMM Do YYYY"
-                        timeFormat="HH:mm A"
+                        timeFormat="HH:mm:ss A"
                         isValidDate={(currentDate, selectedDate) => {
                           if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
                             return true;

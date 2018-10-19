@@ -5,11 +5,12 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 import stores from '../store/shops';
+import countryCodes from '../store/countryCodes';
 import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, FINISH_SENDING_CAPTCHA_TOKEN, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
-  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stop, handleChangeProductName) {
+  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName) {
     this.startTime = '';
-    this.stop = stop;
+    this.stopTask = stopTask;
     this.handleChangeProductName = handleChangeProductName;
     this.options = options;
     this.keywords = keywords;
@@ -44,7 +45,6 @@ export default class Supreme {
   stop = () => {
     clearTimeout(this.monitoringTimeout);
     this.active = false;
-    this.handleChangeStatus('Stopped');
   };
 
   getCardType = number => {
@@ -57,23 +57,30 @@ export default class Supreme {
     return '';
   };
 
-  checkoutWithCapctcha = async captchaToken => {
+  string_chop = (str, size) => {
+    if (str == null) return [];
+    str = String(str);
+    size = ~~size;
+    return size > 0 ? str.match(new RegExp('.{1,' + size + '}', 'g')) : [str];
+  };
+
+  checkoutWithCapctcha = async (captchaToken, authToken) => {
     const payload = {
       utf8: '\u2713',
-      authenticity_token: '',
-      'order[billing_name]': this.options.profile.billingFirstName,
+      authenticity_token: authToken,
+      'order[billing_name]': `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
       'order[email]': this.options.profile.paymentEmail,
       'order[tel]': this.options.profile.phoneNumber,
       'order[billing_address]': this.options.profile.billingAddress,
       'order[billing_address_2]': '',
-      'order[billing_address_3]': '',
+      'order[billing_address_3]': this.options.profile.billingCity,
       'order[billing_city]': this.options.profile.billingCity,
       'order[billing_zip]': this.options.profile.billingZip,
-      'order[billing_country]': this.options.profile.billingCountry,
+      'order[billing_country]': countryCodes[this.options.profile.billingCountry],
       same_as_billing_address: '1',
-      store_credit_id: '0',
+      store_credit_id: '',
       'credit_card[type]': this.getCardType(this.options.profile.paymentCardnumber),
-      'credit_card[cnb]': this.options.profile.paymentCardnumber,
+      'credit_card[cnb]': this.string_chop(this.options.profile.paymentCardnumber, 4).join(' '),
       'credit_card[month]': this.options.profile.paymentCardExpiryMonth,
       'credit_card[year]': this.options.profile.paymentCardExpiryYear,
       'credit_card[vval]': this.options.profile.paymentCVV,
@@ -93,12 +100,18 @@ export default class Supreme {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       if (response.body.includes('Unfortunately, we cannot process your payment. This could be due to  your payment being declined by your card issuer.')) {
         this.handleChangeStatus('Error Processing Payment');
+      } else if (response.body.includes('number is not a valid credit card number')) {
+        this.handleChangeStatus('Number Is Not A Valid Credit Card Number');
+      } else {
+        this.handleChangeStatus('Check Email');
       }
+      console.log(payload);
+      console.log(response);
       return response;
     } catch (e) {
       console.error(e);
     }
-    this.stop(true);
+    this.stopTask(true);
   };
 
   getProductStyleID = async (productID, color, sizeInput) => {
@@ -252,12 +265,14 @@ export default class Supreme {
             await this.sleep(this.settings.checkoutTime);
             // this.handleChangeStatus('Fake Checkout');
             ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
-            this.checkoutWithCapctcha(args.captchaResponse);
+            this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);
             // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
           }
         });
       } else {
+        console.log('out of stock');
         this.handleChangeStatus('Out Of Stock');
+        this.stopTask(true);
       }
     } else {
       // this.handleChangeStatus('Monitoring - Product Not Currently Found');
