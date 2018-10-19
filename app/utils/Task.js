@@ -14,7 +14,7 @@ const sizeSynonymns = {
   Large: ['LARGE', 'L', 'Large'],
   XLarge: ['XLARGE', 'X-Large', 'X-LARGE', 'XL'],
   XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE'],
-  'N/A': ['N/A', 'Default Title']
+  'N/A': ['N/A', 'Default Title', 'One Size']
 };
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
@@ -180,7 +180,7 @@ export default class Task {
     if (sizeNames !== undefined) {
       for (const size of sizeNames) {
         // if (size === option) {
-        if (option.split(' ').includes(size)) {
+        if (option.split(' ').includes(size) || option === size) {
           return true;
         }
       }
@@ -195,6 +195,7 @@ export default class Task {
 
   getVariantIDOfSize = (variants, size) => {
     const variantsArray = variants;
+    console.log(variantsArray);
     const found = [];
     if (this.options.task.store.includes('DSM')) {
       for (const variant in variantsArray) {
@@ -213,6 +214,7 @@ export default class Task {
         }
       });
     }
+    console.log(found);
     return found[0];
   };
 
