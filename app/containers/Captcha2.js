@@ -3,7 +3,7 @@ import { Container } from 'reactstrap';
 import CaptchaTopbar from '../components/CaptchaTopbar';
 import CaptchaFooter from '../components/CaptchaFooter';
 import Waiting from '../components/Waiting';
-import { remote, ipcRenderer } from 'electron';
+import { remote, ipcRenderer, session } from 'electron';
 import { SET_GLOBAL_ID_VARIABLE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../utils/constants';
 var os = require('os');
 
@@ -15,6 +15,9 @@ class Captchav2 extends Component {
     this.state = {
       waiting: true
     };
+    // ipcRenderer.on('login', (event, webContents, request, authInfo, callback) => {
+    //   callback('admin', 'photon123');
+    // });
   }
 
   goToGoogleLogin = () => {
@@ -67,11 +70,11 @@ class Captchav2 extends Component {
   };
 
   processCaptcha = args => {
+    console.log(args);
     this.active = true;
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.baseURL, args.cookies);
-    console.log(formattedCookies);
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, error => {
         if (error !== null) {
@@ -79,32 +82,67 @@ class Captchav2 extends Component {
         }
       });
     }
-    win.openDevTools();
-    webview.openDevTools();
-    ipcRenderer.send(SET_GLOBAL_ID_VARIABLE, args.id);
 
-    webview.addEventListener('did-finish-load', e => {
-      // win.webContents.session.cookies.get({}, (error, cookies) => {
-      //   console.log(error, cookies);
-      // });
-      if (!e.target.src.includes('google.com')) {
-        webview.executeJavaScript(`
-        document.querySelector('body').style.height = "200px";
-        document.querySelector('html').style.visibility = "hidden";
-        document.querySelector('.g-recaptcha').style.visibility = "visible";
-        document.querySelector('.g-recaptcha').style.position = "fixed";
-        document.querySelector('.g-recaptcha').style.top = "10px";
-        document.querySelector('.g-recaptcha').style.marginTop = "0px";`);
-      }
-    });
+    if (process.env.NODE_ENV === 'development') {
+      win.openDevTools();
+      webview.openDevTools();
+    }
+    // const proxySplit = args.proxy
+    //   .slice(7)
+    //   .replace('@', ':')
+    //   .split(':');
+    // this.proxyUsername = proxySplit[0];
+    // this.proxyUsername = proxySplit[1];
+
+    // console.log(args.proxy);
+    // console.log(`http=${proxySplit[2]}:${proxySplit[3]};https=${proxySplit[2]}:${proxySplit[3]}`);
+
+    // webview.addEventListener('did-finish-load', e => {
+    //   // win.webContents.session.cookies.get({}, (error, cookies) => {
+    //   //   console.log(error, cookies);
+    //   // });
+    //   if (!e.target.src.includes('google.com')) {
+    //     webview.executeJavaScript(`
+    //     document.querySelector('body').style.height = "200px";
+    //     document.querySelector('html').style.visibility = "hidden";
+    //     document.querySelector('.g-recaptcha').style.visibility = "visible";
+    //     document.querySelector('.g-recaptcha').style.position = "fixed";
+    //     document.querySelector('.g-recaptcha').style.top = "10px";
+    //     document.querySelector('.g-recaptcha').style.marginTop = "0px";`);
+    //   }
+    // });
+
+    // console.log(args.proxy);
+
+    // if (args.proxy !== '') {
+    //   session.fromPartition('captchaWebview').setProxy(
+    //     {
+    //       // proxyRules: `http=http://${proxySplit[2]}:${proxySplit[3]};https=https://${proxySplit[2]}:${proxySplit[3]}`
+    //       proxyRules: `http=http://${args.proxy.slice(7)};https=https://${args.proxy.slice(7)};socks=socks://${args.proxy.slice(7)}`
+    //     },
+    //     () => {
+    //       webview.loadURL(args.checkoutURL);
+    //     }
+    //   );
+    // win.webContents.session.setProxy(
+    //   {
+    //     // proxyRules: `http=http://${proxySplit[2]}:${proxySplit[3]};https=https://${proxySplit[2]}:${proxySplit[3]}`
+    //     proxyRules: `http=http://${args.proxy.slice(7)};https=https://${args.proxy.slice(7)};socks=socks://${args.proxy.slice(7)}`
+    //   },
+    //   () => {
+    //     webview.loadURL(args.checkoutURL);
+    //   }
+    // );
+    // }
+    const sendGlobalID = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args.id);
     webview.loadURL(args.checkoutURL);
     ipcRenderer.on(FINISH_SENDING_CAPTCHA_TOKEN, () => {
-      this.active = false;
       if (this.jobsQueue.length > 0) {
         this.processCaptcha(this.jobsQueue.shift());
       } else {
         ipcRenderer.removeAllListeners(FINISH_SENDING_CAPTCHA_TOKEN);
         this.setState({ waiting: true });
+        this.active = false;
         // webview.loadURL('https://accounts.google.com/Login');
       }
     });

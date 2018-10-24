@@ -4,18 +4,16 @@ import { remote } from 'electron';
 import Minimize from '../img/svg/minimise.svg';
 import Close from '../img/svg/close.svg';
 export default class CaptchaTopbar extends Component {
-  minimiseWindow() {
-    remote.BrowserWindow.getFocusedWindow().minimize();
-  }
+  minimiseWindow = () => {
+    remote.getCurrentWindow().minimize();
+  };
 
-  closeWindow() {
-    remote.BrowserWindow.getFocusedWindow().close();
-  }
+  closeWindow = () => {
+    remote.getCurrentWindow().close();
+  };
 
   constructor() {
     super();
-    this.minimiseWindow = this.minimiseWindow.bind(this);
-    this.closeWindow = this.closeWindow.bind(this);
   }
 
   render() {

@@ -6,6 +6,7 @@ const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 import stores from '../store/shops';
 import countryCodes from '../store/countryCodes';
+import states from '../store/states';
 import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, FINISH_SENDING_CAPTCHA_TOKEN, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName) {
@@ -16,7 +17,7 @@ export default class Supreme {
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
-    this.proxy = proxy;
+    this.proxy = this.options.task.proxy === '' ? (proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : `http://${this.options.task.proxy}`;
     this.monitorProxy = monitorProxy;
     this.active = true;
     this.monitoring = false;
@@ -30,7 +31,7 @@ export default class Supreme {
         // Cookie: this.cookieJar.getCookieString('supremenewyork.com/')
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : ''
+      proxy: this.proxy
     });
   }
 
@@ -65,29 +66,57 @@ export default class Supreme {
   };
 
   checkoutWithCapctcha = async (captchaToken, authToken) => {
-    const payload = {
-      utf8: '\u2713',
-      authenticity_token: authToken,
-      'order[billing_name]': `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
-      'order[email]': this.options.profile.paymentEmail,
-      'order[tel]': this.options.profile.phoneNumber,
-      'order[billing_address]': this.options.profile.billingAddress,
-      'order[billing_address_2]': '',
-      'order[billing_address_3]': this.options.profile.billingCity,
-      'order[billing_city]': this.options.profile.billingCity,
-      'order[billing_zip]': this.options.profile.billingZip,
-      'order[billing_country]': countryCodes[this.options.profile.billingCountry],
-      same_as_billing_address: '1',
-      store_credit_id: '',
-      'credit_card[type]': this.getCardType(this.options.profile.paymentCardnumber),
-      'credit_card[cnb]': this.string_chop(this.options.profile.paymentCardnumber, 4).join(' '),
-      'credit_card[month]': this.options.profile.paymentCardExpiryMonth,
-      'credit_card[year]': this.options.profile.paymentCardExpiryYear,
-      'credit_card[vval]': this.options.profile.paymentCVV,
-      'order[terms]': '1',
-      'g-recaptcha-response': captchaToken,
-      hpcvv: ''
-    };
+    let payload;
+    console.log(this.options.task.store);
+    if (this.options.task.store === 'Supreme-UK') {
+      payload = {
+        utf8: '\u2713',
+        authenticity_token: authToken,
+        'order[billing_name]': `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
+        'order[email]': this.options.profile.paymentEmail,
+        'order[tel]': this.options.profile.phoneNumber,
+        'order[billing_address]': this.options.profile.billingAddress,
+        'order[billing_address_2]': '',
+        'order[billing_address_3]': this.options.profile.billingCity,
+        'order[billing_city]': this.options.profile.billingCity,
+        'order[billing_zip]': this.options.profile.billingZip,
+        'order[billing_country]': countryCodes[this.options.profile.billingCountry],
+        same_as_billing_address: '1',
+        store_credit_id: '',
+        'credit_card[type]': this.getCardType(this.options.profile.paymentCardnumber),
+        'credit_card[cnb]': this.string_chop(this.options.profile.paymentCardnumber, 4).join(' '),
+        'credit_card[month]': this.options.profile.paymentCardExpiryMonth,
+        'credit_card[year]': this.options.profile.paymentCardExpiryYear,
+        'credit_card[vval]': this.options.profile.paymentCVV,
+        'order[terms]': '1',
+        'g-recaptcha-response': captchaToken,
+        hpcvv: ''
+      };
+    } else if (this.options.task.store === 'Supreme-US') {
+      payload = {
+        utf8: '\u2713',
+        authenticity_token: authToken,
+        'order[billing_name]': `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
+        'order[email]': this.options.profile.paymentEmail,
+        'order[tel]': this.options.profile.phoneNumber,
+        'order[billing_address]': this.options.profile.billingAddress,
+        'order[billing_address_2]': this.options.profile.billingAptorSuite,
+        'order[billing_zip]': this.options.profile.billingZip,
+        'order[billing_city]': this.options.profile.billingCity,
+        'order[billing_state]': states[this.options.profile.billingProvince],
+        'order[billing_country]': this.options.profile.billingCountry === 'United States' ? 'USA' : this.options.profile.billingCountry === 'Canada' ? 'CANADA' : '',
+        asec: 'Rmasn',
+        same_as_billing_address: '1',
+        store_credit_id: '',
+        'credit_card[nlb]': this.string_chop(this.options.profile.paymentCardnumber, 4).join(' '),
+        'credit_card[month]': this.options.profile.paymentCardExpiryMonth,
+        'credit_card[year]': this.options.profile.paymentCardExpiryYear,
+        'credit_card[rvv]': this.options.profile.paymentCVV,
+        'order[terms]': '1',
+        'g-recaptcha-response': captchaToken,
+        'credit_card[vval]': '862'
+      };
+    }
     try {
       const response = await this.rp({
         method: 'POST',
@@ -105,10 +134,9 @@ export default class Supreme {
       } else {
         this.handleChangeStatus('Check Email');
       }
-      console.log(payload);
-      console.log(response);
       return response;
     } catch (e) {
+      this.handleChangeStatus(e.message);
       console.error(e);
     }
     this.stopTask(true);
@@ -161,6 +189,7 @@ export default class Supreme {
         json: true,
         uri: 'https://www.supremenewyork.com/shop.json'
       });
+      console.log(response);
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
       if (product !== undefined) {
@@ -183,6 +212,7 @@ export default class Supreme {
         }
       }
     } catch (e) {
+      console.log(e);
       if (this.active) {
         console.error(`Monitoring - Size/Style Not Currently Found - ${this.options.task.keywords}`);
         this.monitoring = true;
@@ -246,31 +276,32 @@ export default class Supreme {
   checkout = async () => {
     ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
     const [productID, styleID, sizeID] = await this.getProduct();
+    console.log(productID, styleID, sizeID);
     if (productID !== '') {
       const stockLevel = await this.checkStock(productID, styleID, sizeID);
       if (stockLevel > 0) {
         const addToCart = await this.addToCart(productID, styleID, sizeID);
-        const checkoutCookies = await addToCart.request.headers.Cookie;
+        // const checkoutCookies = await addToCart.request.headers.Cookie;
+        // console.log(this.cookieJar.getCookieString(stores[this.options.task.store]));
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
           cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
           checkoutURL: 'https://supremenewyork.com/checkout',
           baseURL: stores[this.options.task.store],
-          id: this.tokenID
+          id: this.tokenID,
+          proxy: this.proxy
         });
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+          // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
           if (this.tokenID === args.id) {
-            console.log(args);
             this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
             await this.sleep(this.settings.checkoutTime);
             // this.handleChangeStatus('Fake Checkout');
             ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
             this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);
-            // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
           }
         });
       } else {
-        console.log('out of stock');
         this.handleChangeStatus('Out Of Stock');
         this.stopTask(true);
       }

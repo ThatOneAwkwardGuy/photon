@@ -37,6 +37,8 @@ let initialiseCaptchaWindow = () => {
     frame: false,
     resizable: true,
     focusable: false,
+    minimizable: true,
+    closable: true,
     allowRunningInsecureContent: true
   });
   captchaWindow.loadURL(
@@ -171,6 +173,7 @@ app.on('ready', async () => {
 
   ipcMain.on(SET_GLOBAL_ID_VARIABLE, (event, arg) => {
     global.captcaTokenID = arg;
+    event.returnValue = true;
   });
 
   ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
@@ -195,3 +198,7 @@ app.on('ready', async () => {
     mainWindow.send(ALERT_UPDATE_AVAILABLE, info);
   });
 });
+
+// app.on('login', (event, webContents, request, authInfo, callback) => {
+//   event.preventDefault();
+// });

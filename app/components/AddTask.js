@@ -34,7 +34,7 @@ class AddTask extends Component {
   }
 
   handleChange(e) {
-    if (e.target.value === 'Supreme') {
+    if (e.target.value.includes('Supreme')) {
       this.setState({
         formdata: Object.assign({}, this.state.formdata, {
           [e.target.name]: e.target.value,
@@ -111,7 +111,7 @@ class AddTask extends Component {
                       </Input>
                     </Col>
                   </FormGroup>
-                  {this.state.formdata.store === 'Supreme' ? (
+                  {this.state.formdata.store.includes('Supreme') ? (
                     ''
                   ) : (
                     <FormGroup row>
@@ -212,7 +212,7 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )}
-                    {this.state.formdata.store === 'Supreme' ? (
+                    {this.state.formdata.store.includes('Supreme') ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="category">category</Label>
@@ -311,7 +311,7 @@ class AddTask extends Component {
                         {this.profileNames.map(this.returnProfileName)}
                       </Input>
                     </Col>
-                    {this.state.formdata.store === 'Supreme' ? (
+                    {this.state.formdata.store.includes('Supreme') ? (
                       <Col xs="3">
                         <Label for="profile">color</Label>
                         <Input

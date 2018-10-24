@@ -16,6 +16,7 @@ const sizeSynonymns = {
   XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE'],
   'N/A': ['N/A', 'Default Title', 'One Size']
 };
+
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
     this.forceUpdate = forceUpdateFunction;
@@ -46,7 +47,15 @@ export default class Task {
 
   stopTask = (checkoutComplete = false) => {
     switch (this.options.task.store) {
-      case 'Supreme':
+      case 'Supreme-UK':
+        if (this.supremeInstance !== '') {
+          this.supremeInstance.stop();
+          this.active = false;
+          if ((checkoutComplete !== undefined) & !checkoutComplete) {
+            this.handleChangeStatus('Stopped');
+          }
+        }
+      case 'Supreme-US':
         if (this.supremeInstance !== '') {
           this.supremeInstance.stop();
           this.active = false;
@@ -79,7 +88,10 @@ export default class Task {
       }
       this.active = true;
       switch (this.options.task.store) {
-        case 'Supreme':
+        case 'Supreme-UK':
+          this.Supreme();
+          break;
+        case 'Supreme-US':
           this.Supreme();
           break;
         case 'DSM-EU':

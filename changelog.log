@@ -43,3 +43,8 @@
 1.0.7b
 -Added seconds to date/time picker for auto running tasks
 -Added Clear Time button when editing task
+
+1.0.8b
+-Fixed bug where minimise and close buttons on captcha window would minimise or close main window
+-Proxies currently work for when checking out, but do not currently work for sites that require captcha
+-Supreme US Support in testing
