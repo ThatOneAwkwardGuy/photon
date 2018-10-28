@@ -1,7 +1,7 @@
-import React, { Component } from "react";
-import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from "reactstrap";
-import { CSSTransition } from "react-transition-group";
-
+import React, { Component } from 'react';
+import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from 'reactstrap';
+import { CSSTransition } from 'react-transition-group';
+import { auth } from '../api/firebase/index';
 export default class Settings extends Component {
   constructor(props) {
     super(props);
@@ -10,7 +10,7 @@ export default class Settings extends Component {
         monitorTime: 0,
         errorTime: 0,
         checkoutTime: 0,
-        monitorProxies: ""
+        monitorProxies: ''
       }
     };
   }
@@ -32,7 +32,7 @@ export default class Settings extends Component {
         ...this.state,
         settings: {
           ...this.state.settings,
-          monitorProxies: monitorProxies.length > 0 ? this.state.settings.monitorProxies.trim() : ""
+          monitorProxies: monitorProxies.length > 0 ? this.state.settings.monitorProxies.trim() : ''
         }
       },
       () => {
@@ -124,6 +124,17 @@ export default class Settings extends Component {
                     </Button>
                   </FormGroup>
                 </Form>
+              </Col>
+            </Row>
+            <Row>
+              <Col>
+                <Button
+                  onClick={() => {
+                    auth.authorise.signOut();
+                  }}
+                >
+                  Sign Out
+                </Button>
               </Col>
             </Row>
           </Container>

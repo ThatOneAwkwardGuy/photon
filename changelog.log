@@ -48,3 +48,17 @@
 -Fixed bug where minimise and close buttons on captcha window would minimise or close main window
 -Proxies currently work for when checking out, but do not currently work for sites that require captcha
 -Supreme US Support in testing
+
+1.0.9b
+-Tested and working (at the time) Supreme US Checkout
+-Captcha bug fixed
+
+1.0.10b
+- Quick fix for not being able to type in captcha window
+
+1.0.11b
+-Some slight design alterations
+-Supreme ATC Bypass (Needs Testing By Users)
+-Supreme Captcha Bypass (Needs Testing By Users)
+-Duplicate button added for tasks
+-Added EU Sizing For Shoes

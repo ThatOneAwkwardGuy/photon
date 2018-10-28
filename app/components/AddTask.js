@@ -22,13 +22,15 @@ class AddTask extends Component {
         modeInput: '',
         keywords: '',
         proxy: '',
-        size: Sizes.Shoes[0],
+        size: Sizes['Shoes(UK/US)'][0],
         quantity: '1',
         profile: this.profileNames[0],
         tasks: '1',
         color: '',
         category: 'Accessories',
-        scheduledTime: ''
+        scheduledTime: '',
+        atcBypass: false,
+        captchaBypass: false
       }
     };
   }
@@ -52,7 +54,7 @@ class AddTask extends Component {
 
   handleSubmit() {
     if (this.state.formdata.size === 'Random Shoe Size') {
-      this.state.formdata.size = Sizes.Shoes.slice(1)[Math.floor(Math.random() * Sizes.Shoes.slice(1).length)];
+      this.state.formdata.size = Sizes['Shoes(UK/US)'].slice(1)[Math.floor(Math.random() * Sizes['Shoes(UK/US)'].slice(1).length)];
     }
     const task = {
       task: this.state.formdata,
@@ -66,7 +68,6 @@ class AddTask extends Component {
   returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
 
   setScheduledTime = date => {
-    console.log(date);
     this.setState({
       formdata: {
         ...this.state.formdata,
@@ -266,6 +267,8 @@ class AddTask extends Component {
                         <option>9</option>
                       </Input>
                     </Col>
+                  </FormGroup>
+                  <FormGroup row>
                     <Col xs="6">
                       <Label for="scheduledTime">Schedule Time</Label>
                       <Datetime
@@ -340,6 +343,59 @@ class AddTask extends Component {
                       />
                     </Col>
                   </FormGroup>
+                  <FormGroup row style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+                    {this.state.formdata.store.includes('Supreme') ? (
+                      <Col xs="3" className="text-center">
+                        <Label for="tasks" className="align-items-center" check>
+                          ATC Bypass
+                          <Input
+                            type="checkbox"
+                            name="atcBypass"
+                            id="atcBypass"
+                            style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                            value={this.state.formdata.atcBypass}
+                            checked={this.state.formdata.atcBypass === true}
+                            onChange={() => {
+                              this.setState({
+                                formdata: {
+                                  ...this.state.formdata,
+                                  atcBypass: !this.state.formdata.atcBypass
+                                }
+                              });
+                            }}
+                          />
+                        </Label>
+                      </Col>
+                    ) : (
+                      ''
+                    )}
+
+                    {this.state.formdata.store.includes('Supreme') ? (
+                      <Col xs="3" className="text-center">
+                        <Label for="tasks" className="align-items-center" check>
+                          Captcha Bypass
+                          <Input
+                            type="checkbox"
+                            name="captchaBypass"
+                            id="captchaBypass"
+                            style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                            value={this.state.formdata.captchaBypass}
+                            checked={this.state.formdata.captchaBypass === true}
+                            onChange={() => {
+                              this.setState({
+                                formdata: {
+                                  ...this.state.formdata,
+                                  captchaBypass: !this.state.formdata.captchaBypass
+                                }
+                              });
+                            }}
+                          />
+                        </Label>
+                      </Col>
+                    ) : (
+                      ''
+                    )}
+                  </FormGroup>
                   <FormGroup row>
                     <Col xs="3">
                       <Button
@@ -354,7 +410,7 @@ class AddTask extends Component {
                               modeInput: '',
                               keywords: '',
                               proxy: '',
-                              size: Sizes.Shoes[0],
+                              size: Sizes['Shoes(UK/US)'][0],
                               quantity: '1',
                               profile: this.profileNames[0],
                               tasks: 1

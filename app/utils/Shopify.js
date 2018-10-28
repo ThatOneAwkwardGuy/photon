@@ -3,6 +3,7 @@ import captchaNeeded from '../store/captcha';
 import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
+const moment = require('moment');
 var tough = require('tough-cookie');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
@@ -19,7 +20,7 @@ export default class Shopify {
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : this.options.task.proxy
+      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : `http://${this.options.task.proxy}`) : `http://${this.options.task.proxy}`
     });
   }
 
@@ -108,6 +109,10 @@ export default class Shopify {
         resolveWithFullResponse: true,
         followAllRedirects: true
       });
+      const $ = cheerio.load(response.body);
+      // console.log(response.body);
+      // console.log($('#g-recaptcha iframe').attr('src'));
+
       return response.request.href;
     } catch (e) {
       console.error(e);
@@ -139,7 +144,6 @@ export default class Shopify {
       'checkout[client_details][javascript_enabled]': '1',
       button: ''
     };
-    console.log(this.options);
     if (captchaToken !== undefined) {
       payload['g-recaptcha-response'] = captchaToken;
     }
@@ -158,9 +162,6 @@ export default class Shopify {
       resolveWithFullResponse: true,
       form: payload
     });
-    console.log('sendCustomerInfo Response');
-    console.log(payload);
-    console.log(response);
     return response;
   };
 
@@ -202,7 +203,6 @@ export default class Shopify {
       uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
       body: payload
     });
-    console.log(response);
     for (const shippingRates of response.shipping_rates) {
       if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
         const shipOpt = shippingRates.name.replace(/ /g, '%20');
@@ -214,7 +214,6 @@ export default class Shopify {
           token: shippingOption,
           price: shipPrc
         };
-        console.log(shippingInfo);
         return shippingInfo;
       }
     }
@@ -240,9 +239,6 @@ export default class Shopify {
       resolveWithFullResponse: true,
       form: payload
     });
-    console.log('sendShippingMethod Response');
-    console.log(payload);
-    console.log(response);
     return response;
   };
 
@@ -266,7 +262,6 @@ export default class Shopify {
       'checkout[billing_address][province]': `${this.options.profile.billingProvince}`,
       'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
       'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
-      // 'checkout[shipping_rate][id]': `${shippingToken}`,
       complete: '1',
       'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
       'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
@@ -280,9 +275,6 @@ export default class Shopify {
       resolveWithFullResponse: true,
       followAllRedirects: true
     });
-    console.log('sendCheckoutInfo Response');
-    console.log(payload);
-    console.log(response);
     return response;
   };
 
@@ -295,7 +287,6 @@ export default class Shopify {
   };
 
   checkoutWithVariant = async variantID => {
-    const start = Date.now();
     try {
       await this.addToCart(variantID, this.options.task.quantity);
       const [paymentToken, checkoutURL, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
@@ -309,6 +300,7 @@ export default class Shopify {
 
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+          console.log(captchaToken);
           this.handleChangeStatus('Checking Out');
           const checkoutBody = await this.getCheckoutBody(checkoutURL);
           const bodyInfo = this.returnBodyInfo(checkoutBody);
@@ -319,7 +311,7 @@ export default class Shopify {
           const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
           const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
           const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
-          console.log(Date.now() - start);
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
           const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
           if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
             this.handleChangeStatus('Error Processing Payment');
@@ -342,7 +334,7 @@ export default class Shopify {
         const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
         const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
         const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
-        console.log(Date.now() - start);
+        console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
         const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
         if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
           this.handleChangeStatus('Error Processing Payment');
@@ -356,6 +348,7 @@ export default class Shopify {
       }
       this.stop(true);
     } catch (e) {
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout - Error`);
       console.log(e);
       if (_.get(e, 'options.uri').includes('stock_problems')) {
         this.handleChangeStatus('Item Out Of Stock');

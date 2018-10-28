@@ -25,6 +25,7 @@ export default class CaptchaFooter extends Component {
       <Row className="captchaFooter">
         <Col xs="4" className="text-center footerRightSection">
           <Button
+            style={{ fontSize: '10px' }}
             onClick={() => {
               this.props.clearCookies();
             }}
@@ -34,6 +35,7 @@ export default class CaptchaFooter extends Component {
         </Col>
         <Col xs="4" className="text-left footerLeftSection">
           <Button
+            style={{ fontSize: '10px' }}
             onClick={() => {
               this.props.goToYoutube();
             }}
@@ -43,6 +45,7 @@ export default class CaptchaFooter extends Component {
         </Col>
         <Col xs="4" className="text-left footerLeftSection">
           <Button
+            style={{ fontSize: '10px' }}
             onClick={() => {
               this.props.goToGoogleLogin();
             }}

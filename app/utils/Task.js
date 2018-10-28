@@ -5,6 +5,7 @@ import Supreme from './Supreme';
 import { processKeywords, getSitemapJSON, getSitemapXML, checkSitemapJSONForKeywords, checkSitemapXMLForKeywords, convertProductNameIntoArray } from './helpers.js';
 const rp = require('request-promise');
 const cheerio = require('cheerio');
+const moment = require('moment');
 const _ = require('lodash');
 const convert = require('xml-js');
 const sizeSynonymns = {
@@ -74,6 +75,7 @@ export default class Task {
   };
 
   run = () => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Checkout`);
     if (this.options.task.scheduledTime !== '' && this.options.task.scheduledTime !== undefined && this.alreadySetTimeout === false) {
       if (Date(this.options.task.scheduledTime) <= Date.now()) {
         this.handleChangeStatus('Time has already passed');
@@ -207,7 +209,6 @@ export default class Task {
 
   getVariantIDOfSize = (variants, size) => {
     const variantsArray = variants;
-    console.log(variantsArray);
     const found = [];
     if (this.options.task.store.includes('DSM')) {
       for (const variant in variantsArray) {
@@ -226,7 +227,6 @@ export default class Task {
         }
       });
     }
-    console.log(found);
     return found[0];
   };
 

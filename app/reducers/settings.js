@@ -1,8 +1,8 @@
 import { UPDATE_SETTINGS } from '../actions/settings';
 
 const initialState = {
-  monitorTime: 60000,
-  errorTime: 60000,
+  monitorTime: 1000,
+  errorTime: 3000,
   checkoutTime: 2500,
   monitorProxies: []
 };

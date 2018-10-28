@@ -70,7 +70,7 @@ class Captchav2 extends Component {
   };
 
   processCaptcha = args => {
-    console.log(args);
+    console.log(this.jobsQueue);
     this.active = true;
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
@@ -87,15 +87,6 @@ class Captchav2 extends Component {
       win.openDevTools();
       webview.openDevTools();
     }
-    // const proxySplit = args.proxy
-    //   .slice(7)
-    //   .replace('@', ':')
-    //   .split(':');
-    // this.proxyUsername = proxySplit[0];
-    // this.proxyUsername = proxySplit[1];
-
-    // console.log(args.proxy);
-    // console.log(`http=${proxySplit[2]}:${proxySplit[3]};https=${proxySplit[2]}:${proxySplit[3]}`);
 
     // webview.addEventListener('did-finish-load', e => {
     //   // win.webContents.session.cookies.get({}, (error, cookies) => {
@@ -112,38 +103,16 @@ class Captchav2 extends Component {
     //   }
     // });
 
-    // console.log(args.proxy);
-
-    // if (args.proxy !== '') {
-    //   session.fromPartition('captchaWebview').setProxy(
-    //     {
-    //       // proxyRules: `http=http://${proxySplit[2]}:${proxySplit[3]};https=https://${proxySplit[2]}:${proxySplit[3]}`
-    //       proxyRules: `http=http://${args.proxy.slice(7)};https=https://${args.proxy.slice(7)};socks=socks://${args.proxy.slice(7)}`
-    //     },
-    //     () => {
-    //       webview.loadURL(args.checkoutURL);
-    //     }
-    //   );
-    // win.webContents.session.setProxy(
-    //   {
-    //     // proxyRules: `http=http://${proxySplit[2]}:${proxySplit[3]};https=https://${proxySplit[2]}:${proxySplit[3]}`
-    //     proxyRules: `http=http://${args.proxy.slice(7)};https=https://${args.proxy.slice(7)};socks=socks://${args.proxy.slice(7)}`
-    //   },
-    //   () => {
-    //     webview.loadURL(args.checkoutURL);
-    //   }
-    // );
-    // }
     const sendGlobalID = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args.id);
     webview.loadURL(args.checkoutURL);
-    ipcRenderer.on(FINISH_SENDING_CAPTCHA_TOKEN, () => {
+    ipcRenderer.once(FINISH_SENDING_CAPTCHA_TOKEN, () => {
+      // ipcRenderer.removeAllListeners(FINISH_SENDING_CAPTCHA_TOKEN);
       if (this.jobsQueue.length > 0) {
         this.processCaptcha(this.jobsQueue.shift());
       } else {
-        ipcRenderer.removeAllListeners(FINISH_SENDING_CAPTCHA_TOKEN);
         this.setState({ waiting: true });
         this.active = false;
-        // webview.loadURL('https://accounts.google.com/Login');
+        webview.loadURL('https://accounts.google.com/Login');
       }
     });
   };

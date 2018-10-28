@@ -221,6 +221,15 @@ export default class Tasks extends Component {
         </Button>
         <Button
           onClick={() => {
+            console.log(task);
+            this.props.onAddTask(task.options);
+          }}
+          className="taskButton"
+        >
+          <FontAwesome name="copy" />
+        </Button>
+        <Button
+          onClick={() => {
             this.props.taskClasses[index].stopTask();
             this.props.onRemoveTask(this.props.tasks[index]);
             this.props.deleteFromState(index);
@@ -255,8 +264,9 @@ export default class Tasks extends Component {
             </Table>
             <Container className="taskTableButtonsContainer">
               <Row>
-                <Col xs="2">
+                <Col xs="2" className="text-center">
                   <Button
+                    style={{ width: '100%' }}
                     onClick={() => {
                       this.startAllTasks();
                     }}
@@ -264,8 +274,9 @@ export default class Tasks extends Component {
                     start all
                   </Button>
                 </Col>
-                <Col xs="2">
+                <Col xs="2" className="text-center">
                   <Button
+                    style={{ width: '100%' }}
                     onClick={() => {
                       ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
                       this.stopAllTasks();
@@ -274,8 +285,9 @@ export default class Tasks extends Component {
                     stop all
                   </Button>
                 </Col>
-                <Col xs="2">
+                <Col xs="2" className="text-center">
                   <Button
+                    style={{ width: '100%' }}
                     onClick={() => {
                       this.exportTasks();
                     }}
@@ -283,8 +295,9 @@ export default class Tasks extends Component {
                     export tasks
                   </Button>
                 </Col>
-                <Col xs="2">
+                <Col xs="2" className="text-center">
                   <Button
+                    style={{ width: '100%' }}
                     onClick={() => {
                       this.importTasks();
                     }}
@@ -413,7 +426,7 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
-                {this.state.modalFormData.task.store === 'Supreme' ? (
+                {this.state.modalFormData.task.store.includes('Supreme') ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                     <Col xs="6">
                       <Label for="category">category</Label>
@@ -513,7 +526,7 @@ export default class Tasks extends Component {
                     {this.profileNames.map(this.returnProfileName)}
                   </Input>
                 </Col>
-                {this.state.modalFormData.task.store === 'Supreme' ? (
+                {this.state.modalFormData.task.store.includes('Supreme') ? (
                   <Col xs="6">
                     <Label for="profile">color</Label>
                     <Input
@@ -525,6 +538,65 @@ export default class Tasks extends Component {
                         this.handleChange(event);
                       }}
                     />
+                  </Col>
+                ) : (
+                  ''
+                )}
+              </FormGroup>
+              <FormGroup row style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+                {this.state.modalFormData.task.store.includes('Supreme') ? (
+                  <Col xs="3" className="text-center">
+                    <Label for="tasks" className="align-items-center" check>
+                      ATC Bypass
+                      <Input
+                        type="checkbox"
+                        name="atcBypass"
+                        id="atcBypass"
+                        style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                        value={this.state.modalFormData.task.atcBypass}
+                        checked={this.state.modalFormData.task.atcBypass === true}
+                        onChange={() => {
+                          this.setState({
+                            modalFormData: {
+                              ...this.state.modalFormData,
+                              task: {
+                                ...this.state.modalFormData.task,
+                                atcBypass: !this.state.modalFormData.task.atcBypass
+                              }
+                            }
+                          });
+                        }}
+                      />
+                    </Label>
+                  </Col>
+                ) : (
+                  ''
+                )}
+
+                {this.state.modalFormData.task.store.includes('Supreme') ? (
+                  <Col xs="3" className="text-center">
+                    <Label for="tasks" className="align-items-center" check>
+                      Captcha Bypass
+                      <Input
+                        type="checkbox"
+                        name="captchaBypass"
+                        id="captchaBypass"
+                        style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                        value={this.state.modalFormData.task.captchaBypass}
+                        checked={this.state.modalFormData.task.captchaBypass === true}
+                        onChange={() => {
+                          this.setState({
+                            modalFormData: {
+                              ...this.state.modalFormData,
+                              task: {
+                                ...this.state.modalFormData.task,
+                                captchaBypass: !this.state.modalFormData.task.captchaBypass
+                              }
+                            }
+                          });
+                        }}
+                      />
+                    </Label>
                   </Col>
                 ) : (
                   ''
