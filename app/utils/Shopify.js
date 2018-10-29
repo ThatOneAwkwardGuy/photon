@@ -20,7 +20,7 @@ export default class Shopify {
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : `http://${this.options.task.proxy}`) : `http://${this.options.task.proxy}`
+      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : '') : `http://${this.options.task.proxy}`
     });
   }
 
