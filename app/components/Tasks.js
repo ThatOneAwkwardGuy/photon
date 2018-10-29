@@ -21,6 +21,7 @@ export default class Tasks extends Component {
     this.taskClasses = this.props.taskClasses;
     this.state = {
       taskEditModal: false,
+      deleteAllTasksModal: false,
       taskExportSuccess: false,
       taskExportFailure: false,
       taskImportFailure: false,
@@ -98,8 +99,13 @@ export default class Tasks extends Component {
 
   toggle = () => {
     this.setState({
-      ...this.state,
       taskEditModal: !this.state.taskEditModal
+    });
+  };
+
+  toggleDeleteAllModal = () => {
+    this.setState({
+      deleteAllTasksModal: !this.state.deleteAllTasksModal
     });
   };
 
@@ -242,6 +248,10 @@ export default class Tasks extends Component {
     </tr>
   );
 
+  deleteAllTasks = () => {
+    this.props.onRemoveAllTasks();
+  };
+
   render() {
     return (
       <div>
@@ -264,7 +274,7 @@ export default class Tasks extends Component {
             </Table>
             <Container className="taskTableButtonsContainer">
               <Row>
-                <Col xs="2" className="text-center">
+                <Col className="text-center">
                   <Button
                     style={{ width: '100%' }}
                     onClick={() => {
@@ -274,7 +284,7 @@ export default class Tasks extends Component {
                     start all
                   </Button>
                 </Col>
-                <Col xs="2" className="text-center">
+                <Col className="text-center">
                   <Button
                     style={{ width: '100%' }}
                     onClick={() => {
@@ -285,7 +295,7 @@ export default class Tasks extends Component {
                     stop all
                   </Button>
                 </Col>
-                <Col xs="2" className="text-center">
+                <Col className="text-center">
                   <Button
                     style={{ width: '100%' }}
                     onClick={() => {
@@ -295,7 +305,7 @@ export default class Tasks extends Component {
                     export tasks
                   </Button>
                 </Col>
-                <Col xs="2" className="text-center">
+                <Col className="text-center">
                   <Button
                     style={{ width: '100%' }}
                     onClick={() => {
@@ -303,6 +313,16 @@ export default class Tasks extends Component {
                     }}
                   >
                     import tasks
+                  </Button>
+                </Col>
+                <Col className="text-center">
+                  <Button
+                    style={{ width: '100%' }}
+                    onClick={() => {
+                      this.setState({ deleteAllTasksModal: true });
+                    }}
+                  >
+                    delete all tasks
                   </Button>
                 </Col>
               </Row>
@@ -620,6 +640,27 @@ export default class Tasks extends Component {
               save
             </Button>
             <Button color="danger" onClick={this.toggle}>
+              cancel
+            </Button>
+          </ModalFooter>
+        </Modal>
+        <Modal size="md" toggle={this.toggleDeleteAllModal} isOpen={this.state.deleteAllTasksModal} centered={true}>
+          <ModalBody>Are you sure you want to delete all of your current tasks?</ModalBody>
+          <ModalFooter>
+            <Button
+              onClick={() => {
+                this.setState({ deleteAllTasksModal: false });
+                this.deleteAllTasks();
+              }}
+            >
+              yes
+            </Button>
+            <Button
+              onClick={() => {
+                this.deleteAllTasks();
+              }}
+              className="btn-danger"
+            >
               cancel
             </Button>
           </ModalFooter>

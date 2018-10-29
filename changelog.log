@@ -62,3 +62,7 @@
 -Supreme Captcha Bypass (Needs Testing By Users)
 -Duplicate button added for tasks
 -Added EU Sizing For Shoes
+-Delete All Tasks Button
+
+1.0.12b
+-Fixed bug where first product of category would be selected if no keywords.

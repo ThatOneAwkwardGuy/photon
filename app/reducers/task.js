@@ -1,4 +1,5 @@
-import { ADD_TASK, REMOVE_TASK, UPDATE_TASK } from "../actions/task";
+import { ADD_TASK, REMOVE_TASK, UPDATE_TASK, REMOVE_ALL_TASKS } from '../actions/task';
+import { stat } from 'fs';
 
 const initialState = { tasks: [] };
 
@@ -18,6 +19,11 @@ export default function taskReducer(state = initialState, action) {
       return {
         ...state,
         tasks: state.tasks.map(task => (state.tasks.indexOf(task) === action.id ? action.payload : task))
+      };
+    case REMOVE_ALL_TASKS:
+      return {
+        ...state,
+        tasks: []
       };
     default:
       return state;

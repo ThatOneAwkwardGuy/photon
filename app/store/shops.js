@@ -31,7 +31,7 @@ export default {
   'Lapstone & Hammer': 'https://www.lapstoneandhammer.com',
   Livestock: 'https://www.deadstock.ca',
   Machus: 'https://www.machusonline.com',
-  MarathonSports: 'https://www.marathonsports.com',
+  // MarathonSports: 'https://www.marathonsports.com',
   MiniShopMadrid: 'https://www.minishopmadrid.com',
   NRML: 'https://nrml.ca',
   Noirfonce: 'https://www.noirfonce.eu',

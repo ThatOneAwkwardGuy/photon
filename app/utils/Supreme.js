@@ -147,6 +147,7 @@ export default class Supreme {
       } else {
         this.handleChangeStatus('Check Email');
       }
+      this.stopTask(true);
       return response;
     } catch (e) {
       this.handleChangeStatus(e.message);
@@ -287,12 +288,16 @@ export default class Supreme {
   };
 
   findProductWithKeyword = (productArray, keywords) => {
-    for (const product of productArray) {
-      const productName = product.name;
-      if (productName !== undefined) {
-        const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
-        if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
-          return product;
+    if (keywords.positiveKeywords.length === 0 && keywords.negativeKeywords.length === 0) {
+      return undefined;
+    } else {
+      for (const product of productArray) {
+        const productName = product.name;
+        if (productName !== undefined) {
+          const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
+          if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
+            return product;
+          }
         }
       }
     }
@@ -372,7 +377,9 @@ export default class Supreme {
       if (this.options.task.captchaBypass) {
         this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
         await this.sleep(this.settings.checkoutTime);
-        this.checkoutWithCapctcha('', authToken);
+        if (this.active) {
+          this.checkoutWithCapctcha('', authToken);
+        }
       } else {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {

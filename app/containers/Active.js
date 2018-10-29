@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { Container, Row, Col, Modal, ModalBody, ModalFooter } from 'reactstrap';
 import { connect } from 'react-redux';
-import { addTask, removeTask, updateTask } from '../actions/task';
+import { addTask, removeTask, updateTask, removeAllTasks } from '../actions/task';
 import { addProfile, removeProfile } from '../actions/profile';
 import { addProxies } from '../actions/proxy';
 import { updateSettings } from '../actions/settings';
@@ -96,6 +96,7 @@ class Active extends Component {
             getCaptchaWindow={this.props.getCaptchaWindow}
             settings={this.props.settings}
             proxies={this.props.proxies}
+            onRemoveAllTasks={this.props.onRemoveAllTasks}
           />
         );
       case 'Proxies':
@@ -151,6 +152,9 @@ const mapActionsToProps = dispatch => ({
   },
   onUpdateSettings: content => {
     dispatch(updateSettings(content));
+  },
+  onRemoveAllTasks: content => {
+    dispatch(removeAllTasks(content));
   }
 });
 
