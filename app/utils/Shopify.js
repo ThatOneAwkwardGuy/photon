@@ -288,7 +288,9 @@ export default class Shopify {
 
   checkoutWithVariant = async variantID => {
     try {
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Adding To Cart`);
       await this.addToCart(variantID, this.options.task.quantity);
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting  Shipping and Payment Tokens`);
       const [paymentToken, checkoutURL, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
       if (captchaNeeded[this.options.task.store]) {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
@@ -307,8 +309,10 @@ export default class Shopify {
           const paymentID = bodyInfo.paymentID;
           const authToken = bodyInfo.authToken;
           const orderTotal = bodyInfo.orderTotal;
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
           const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
           const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
           const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
           const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
@@ -330,8 +334,10 @@ export default class Shopify {
         const paymentID = bodyInfo.paymentID;
         const authToken = bodyInfo.authToken;
         const orderTotal = bodyInfo.orderTotal;
+        console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
         const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
         const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+        console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
         const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
         const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);

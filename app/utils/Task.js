@@ -75,7 +75,7 @@ export default class Task {
   };
 
   run = () => {
-    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Checkout`);
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started`);
     if (this.options.task.scheduledTime !== '' && this.options.task.scheduledTime !== undefined && this.alreadySetTimeout === false) {
       if (Date(this.options.task.scheduledTime) <= Date.now()) {
         this.handleChangeStatus('Time has already passed');
@@ -158,6 +158,7 @@ export default class Task {
   };
 
   checkoutWithGroupOfVariants = async variantIDs => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
     const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
     if (variantID !== undefined) {
       const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask);
@@ -174,6 +175,7 @@ export default class Task {
   };
 
   keywordsMode = async () => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Searching For Product`);
     const variantIDs = await this.getVariantsFromKeywords(stores[this.options.task.store]);
     const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(variantIDs);
   };
