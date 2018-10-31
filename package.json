@@ -19,7 +19,15 @@
     },
     "win": {
       "icon": "./webpack-pack/icon.png",
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64",
+            "ia32"
+          ]
+        }
+      ]
     },
     "files": "webpack-pack/",
     "publish": {
@@ -138,7 +146,7 @@
     "webpack:dist": "run-s webpack:prod:clean webpack:prod:pack webpack:prod:dist",
     "webpack:prod:clean": "rimraf webpack-pack dist",
     "webpack:prod:pack": "NODE_ENV=production webpack --mode production --config webpack.build.config.js",
-    "webpack:prod:build": "NODE_ENV=production electron-builder -mw --x64",
+    "webpack:prod:build": "NODE_ENV=production electron-builder -mw --x64 --ia32 -w",
     "webpack:prod:dist": "GH_TOKEN=912c34e85a9d67783b0edd1982f6e5d1bc6a124e NODE_ENV=production electron-builder -mw --x64 -p always",
     "dist": "GH_TOKEN=912c34e85a9d67783b0edd1982f6e5d1bc6a124e electron-builder -mw --x64 -p always",
     "pack:mac": "run-s private:clean private:compile private:build:mac",
