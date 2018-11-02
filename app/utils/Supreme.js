@@ -29,6 +29,7 @@ export default class Supreme {
     this.runOnce = false;
     this.cookieJar = request.jar();
     this.tokenID = uuidv4();
+    this.monitoringRefreshCount = 0;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
@@ -215,10 +216,11 @@ export default class Supreme {
         }
       } else {
         if (this.active) {
+          this.monitoringRefreshCount++;
           this.monitoring = true;
           this.monitoringTimeout = setTimeout(this.checkout, this.settings.monitorTime);
           console.error(`Monitoring - Product Not Currently Found - ${this.options.task.keywords}`);
-          this.handleChangeStatus('Monitoring - Product Not Currently Found');
+          this.handleChangeStatus(`Monitoring - Product Not Currently Found ${this.monitoringRefreshCount}`);
           return ['', '', ''];
         } else {
           clearTimeout(this.monitoringTimeout);

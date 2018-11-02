@@ -66,3 +66,6 @@
 
 1.0.12b
 -Fixed bug where first product of category would be selected if no keywords.
+
+1.0.13b
+-Fixed bug where edit task categories were not showing correct category

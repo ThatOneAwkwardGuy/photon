@@ -87,12 +87,17 @@ export default class Tasks extends Component {
   };
 
   editTask = (index, task) => {
-    this.setState({
-      ...this.state,
-      taskEditModal: true,
-      modalFormData: { task: task.options.task, profileID: task.options.profileID },
-      updateTaskID: index
-    });
+    this.setState(
+      {
+        modalFormData: { task: task.options.task, profileID: task.options.profileID },
+        updateTaskID: index
+      },
+      () => {
+        this.setState({
+          taskEditModal: true
+        });
+      }
+    );
   };
 
   returnProfileName = (name, index) => <option key={`profile-${index}`}>{name}</option>;
