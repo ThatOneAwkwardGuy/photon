@@ -42,7 +42,7 @@ class HomePage extends Component {
   };
 
   checkAccount() {
-    if (auth.authorise.currentUser === null && process.env.NODE_ENV !== "development") {
+    if (auth.authorise.currentUser === null && process.env.NODE_ENV !== 'development') {
       this.props.history.push('/');
     }
   }
@@ -74,7 +74,7 @@ class HomePage extends Component {
             Please wait while we install the update.
           </Alert>
           <Sidebar activeWindow={this.state.activeWindow} switchActiveComponent={this.switchActiveComponent} checkAccount={this.checkAccount} history={this.props.history} openCaptchaWindow={this.openCaptchaWindow} toggleFastModeModal={this.toggleFastModeModal} />
-          <Active activeWindow={this.state.activeWindow} getCaptchaWindow={this.getCaptchaWindowContents} fastModeModalVisible={this.state.fastModeModalVisible} toggleFastModeModal={this.toggleFastModeModal} />
+          <Active activeWindow={this.state.activeWindow} switchActiveComponent={this.switchActiveComponent} getCaptchaWindow={this.getCaptchaWindowContents} fastModeModalVisible={this.state.fastModeModalVisible} toggleFastModeModal={this.toggleFastModeModal} />
         </Row>
         <Footer type="homepage" />
       </Container>

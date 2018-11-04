@@ -7,13 +7,14 @@ var tough = require('tough-cookie');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Shopify {
-  constructor(options, handleChangeStatus, propertiesHash, proxy, stop) {
+  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar) {
     this.options = options;
     this.propertiesHash = propertiesHash;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
     this.stop = stop;
-    this.cookieJar = request.jar();
+    this.shopifyCheckoutURL = shopifyCheckoutURL;
+    this.cookieJar = cookieJar;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
@@ -280,7 +281,8 @@ export default class Shopify {
       uri: checkoutURL,
       form: payload,
       resolveWithFullResponse: true,
-      followAllRedirects: true
+      followAllRedirects: true,
+      followRedirect: true
     });
     console.log('sendCheckoutInfo Response');
     console.log(payload);
@@ -300,37 +302,39 @@ export default class Shopify {
     const start = Date.now();
     try {
       await this.addToCart(variantID, this.options.task.quantity);
-      const [paymentToken, checkoutURL, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
-      ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
-      ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-        cookies: this.cookieJar.getCookieString(checkoutURL),
-        checkoutURL: checkoutURL,
-        baseURL: stores[this.options.task.store]
-      });
+      // const [paymentToken, checkoutURL, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
+      const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
+      const checkoutURL = this.shopifyCheckoutURL;
+      // ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
+      // ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+      //   cookies: this.cookieJar.getCookieString(checkoutURL),
+      //   checkoutURL: checkoutURL,
+      //   baseURL: stores[this.options.task.store]
+      // });
       this.handleChangeStatus('Waiting For Captcha');
-      ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
-        this.handleChangeStatus('Checking Out');
-        const checkoutBody = await this.getCheckoutBody(checkoutURL);
-        const bodyInfo = this.returnBodyInfo(checkoutBody);
-        const paymentID = bodyInfo.paymentID;
-        const authToken = bodyInfo.authToken;
-        const orderTotal = bodyInfo.orderTotal;
-        const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
-        const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
-        const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
-        const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
-        console.log(Date.now() - start);
-        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-        if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
-          this.handleChangeStatus('Error Processing Payment');
-        } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
-          this.handleChangeStatus('Stuck On Customer Info Page');
-        } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
-          this.handleChangeStatus('Stuck On Shipping Method Page');
-        } else {
-          this.handleChangeStatus('Check Email');
-        }
-      });
+      // ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+      this.handleChangeStatus('Checking Out');
+      const checkoutBody = await this.getCheckoutBody(checkoutURL);
+      const bodyInfo = this.returnBodyInfo(checkoutBody);
+      const paymentID = bodyInfo.paymentID;
+      const authToken = bodyInfo.authToken;
+      const orderTotal = bodyInfo.orderTotal;
+      const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, undefined);
+      const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+      const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+      const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+      console.log(Date.now() - start);
+      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+      if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
+        this.handleChangeStatus('Error Processing Payment');
+      } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
+        this.handleChangeStatus('Stuck On Customer Info Page');
+      } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
+        this.handleChangeStatus('Stuck On Shipping Method Page');
+      } else {
+        this.handleChangeStatus('Check Email');
+      }
+      // });
       this.stop(true);
     } catch (e) {
       console.log(e);

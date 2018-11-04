@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { ListGroup, ListGroupItem, Container, Collapse, Row, Col, Card, CardImg, CardBody } from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
 import { firestore } from '../api/firebase';
+import Sizes from '../store/sizes';
 var moment = require('moment');
 
 export default class Home extends Component {
@@ -33,6 +34,27 @@ export default class Home extends Component {
         gettingLaunchDetails: false
       });
     }
+  };
+
+  addNewTask = store => {
+    let task = {
+      mode: 'url',
+      modeInput: '',
+      keywords: '',
+      proxy: '',
+      size: Sizes['Shoes(UK/US)'][0],
+      quantity: '1',
+      profile: this.props.profiles[Object.keys(this.props.profiles)[0]].profileID,
+      tasks: '1',
+      color: '',
+      category: 'Accessories',
+      scheduledTime: '',
+      atcBypass: false,
+      captchaBypass: false
+    };
+    let newTask = { ...task, ...store };
+    const profile = this.props.profiles[0];
+    this.props.onAddTask({ task: newTask, profileID: this.props.profiles[Object.keys(this.props.profiles)[0]].profileID });
   };
 
   toggle = index => {
@@ -71,9 +93,18 @@ export default class Home extends Component {
                             </Collapse>
                             <Collapse isOpen={this.state.launchArray[index]}>
                               <ListGroup className="releaseStoresList">
-                                {data.taskData !== undefined && Object.keys(data.taskData).keys().length > 0 ? (
+                                {data.taskData !== undefined && Object.keys(data.taskData).length > 0 ? (
                                   data.taskData.map((store, index) => {
-                                    return <ListGroupItem key={`store-${index}`}>{store.store}</ListGroupItem>;
+                                    return (
+                                      <ListGroupItem
+                                        onClick={() => {
+                                          this.addNewTask(store);
+                                        }}
+                                        key={`store-${index}`}
+                                      >
+                                        {store.store}
+                                      </ListGroupItem>
+                                    );
                                   })
                                 ) : (
                                   <ListGroupItem key={`store-${index}`}>No stores currently available</ListGroupItem>

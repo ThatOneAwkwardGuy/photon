@@ -27,7 +27,7 @@ export const getSitemapJSON = async siteurl => {
   try {
     const response = await rp({
       method: 'GET',
-      uri: `${siteurl}/products.json?limit=100000`,
+      uri: `${siteurl}/products.json?limit=25`,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
       }
@@ -35,7 +35,7 @@ export const getSitemapJSON = async siteurl => {
     return ['JSON', JSON.parse(response)];
   } catch (e) {
     try {
-      const XMLresponse = await getSitemapXML(siteurl);
+      const XMLresponse = await getAtomSitemapXML(siteurl);
       return ['XML', XMLresponse];
     } catch (e) {
       console.error(e);
@@ -67,17 +67,7 @@ export const checkSitemapXMLForKeywords = (sitemapObj, keywords) => {
     const productName = _.get(product, "['image:image']['image:title']._text");
     if (productName !== undefined) {
       const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
-      // const positiveKeywordsCount = _.difference(
-      //   keywords.positiveKeywords,
-      //   productNameArray
-      // );
-
-      // const negativeKeywordsCount = _.difference(
-      //   keywords.negativeKeywords,
-      //   productNameArray
-      // );
       if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
-        // Returns a product object however there is no variant object therefore, getVariantFromLink will need to be used
         return product;
       }
     }
@@ -106,6 +96,43 @@ export const getSitemapXML = async siteurl => {
     return productsXML2JSON;
   } catch (e) {
     console.error(e);
+  }
+};
+
+export const getAtomSitemapXML = async siteurl => {
+  try {
+    const response = await rp({
+      method: 'GET',
+      url: `${siteurl}/collections/all/products.atom`,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+      }
+    });
+    const productsXML2JSON = convert.xml2js(response, {
+      compact: true,
+      ignoreComment: true,
+      ignoreDeclaration: true,
+      ignoreInstruction: true,
+      ignoreAttributes: false,
+      ignoreCdata: true,
+      ignoreDoctype: true,
+      alwaysChildren: true
+    });
+    return productsXML2JSON;
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+export const checkAtomSitemapXMLForKeywords = (sitemapObj, keywords) => {
+  for (const product of sitemapObj.feed.entry) {
+    const productName = _.get(product, 'title._text');
+    if (productName !== undefined) {
+      const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
+      if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
+        return product;
+      }
+    }
   }
 };
 

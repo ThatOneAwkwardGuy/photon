@@ -26,7 +26,6 @@ export default class Supreme {
     this.active = true;
     this.monitoring = false;
     this.monitoringTimeout = '';
-    this.runOnce = false;
     this.cookieJar = request.jar();
     this.tokenID = uuidv4();
     this.monitoringRefreshCount = 0;

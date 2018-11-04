@@ -640,6 +640,7 @@ export default class Tasks extends Component {
                   this.state.updateTaskID
                 );
                 this.toggle();
+                this.props.reInitialize();
               }}
             >
               save

@@ -79,7 +79,7 @@ class Active extends Component {
   activeComponentCase(state) {
     switch (state) {
       case 'Home':
-        return <Home />;
+        return <Home onAddTask={this.props.onAddTask} profiles={this.props.profiles} switchActiveComponent={this.props.switchActiveComponent} />;
       case 'AddTask':
         return <AddTask profiles={this.props.profiles} onAddTask={this.props.onAddTask} />;
       case 'Tasks':

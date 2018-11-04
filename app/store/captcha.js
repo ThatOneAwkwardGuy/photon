@@ -45,7 +45,7 @@ export default {
   Oneness287: false,
   PackerShoes: false,
   PalaceUK: true,
-  PalaceUS: false,
+  PalaceUS: true,
   Par5MilanoYeezy: false,
   'Places+Faces': false,
   Premier: false,

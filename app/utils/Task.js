@@ -2,7 +2,7 @@ import stores from '../store/shops';
 import Shopify from './Shopify';
 import DSM from './DSM';
 import Supreme from './Supreme';
-import { processKeywords, getSitemapJSON, getSitemapXML, checkSitemapJSONForKeywords, checkSitemapXMLForKeywords, convertProductNameIntoArray } from './helpers.js';
+import { processKeywords, getSitemapJSON, getSitemapXML, getAtomSitemapXML, checkSitemapJSONForKeywords, checkSitemapXMLForKeywords, convertProductNameIntoArray, checkAtomSitemapXMLForKeywords } from './helpers.js';
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
@@ -34,6 +34,15 @@ export default class Task {
     this.alreadySetTimeout = false;
     this.scheduledTimeout = '';
     this.productName = '';
+    this.runOnce = false;
+    this.cookieJar = rp.jar();
+    this.rp = rp.defaults({
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
+      },
+      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : '') : `http://${this.options.task.proxy}`,
+      jar: this.cookieJar
+    });
   }
 
   handleChangeStatus = status => {
@@ -74,8 +83,9 @@ export default class Task {
     }
   };
 
-  run = () => {
+  run = async () => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started`);
+    this.active = true;
     if (this.options.task.scheduledTime !== '' && this.options.task.scheduledTime !== undefined && this.alreadySetTimeout === false) {
       if (Date(this.options.task.scheduledTime) <= Date.now()) {
         this.handleChangeStatus('Time has already passed');
@@ -88,7 +98,6 @@ export default class Task {
       if (!this.monitoring) {
         this.handleChangeStatus('Started');
       }
-      this.active = true;
       switch (this.options.task.store) {
         case 'Supreme-UK':
           this.Supreme();
@@ -103,6 +112,11 @@ export default class Task {
           this.DSM();
           break;
         default:
+          if (!this.runOnce) {
+            this.handleChangeStatus('Generating Checkout');
+            this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
+            this.runOnce = true;
+          }
           switch (this.options.task.mode) {
             case 'url':
               this.urlMode();
@@ -129,6 +143,22 @@ export default class Task {
     this.monitorProxy = monitorProxies[Math.floor(Math.random() * monitorProxies.length)];
   };
 
+  getQueueBypassCheckoutLink = async () => {
+    try {
+      const response = await this.rp({
+        method: 'GET',
+        uri: `${stores[this.options.task.store]}/checkout.js`,
+        resolveWithFullResponse: true,
+        followRedirect: false,
+        followAllRedirects: false
+        // maxRedirects: 1
+      });
+      return response.response.headers.location;
+    } catch (e) {
+      return e.response.headers.location;
+    }
+  };
+
   Supreme = () => {
     this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stopTask, this.handleChangeProductName);
     try {
@@ -145,11 +175,12 @@ export default class Task {
   };
 
   DSM = async () => {
+    this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
     const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
     const content = await this.getVariantsFromHomepage(pageURL);
     const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy, this.stopTask);
+      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar);
       const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -161,7 +192,7 @@ export default class Task {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
     const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask);
+      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar);
       const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -181,7 +212,7 @@ export default class Task {
   };
 
   variantMode = async variant => {
-    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask);
+    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar);
     const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(this.options.task.modeInput);
   };
 
@@ -303,8 +334,9 @@ export default class Task {
         this.handleChangeProductName(matchedProductJSON.title);
         return matchedProductJSON.variants;
       } else if (siteMap[0] === 'XML') {
-        const matchedProductXML = checkSitemapXMLForKeywords(siteMap[1], this.keywords);
-        const productVariant = await this.getVariantsFromLinkJSON(matchedProductXML.loc._text);
+        const matchedProductXML = checkAtomSitemapXMLForKeywords(siteMap[1], this.keywords);
+        this.handleChangeProductName(matchedProductXML.title._text);
+        const productVariant = await this.getVariantsFromLinkJSON(matchedProductXML.link._attributes.href);
         return productVariant;
       }
     } catch (e) {
