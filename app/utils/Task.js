@@ -149,11 +149,10 @@ export default class Task {
         method: 'GET',
         uri: `${stores[this.options.task.store]}/checkout.js`,
         resolveWithFullResponse: true,
-        followRedirect: false,
-        followAllRedirects: false
-        // maxRedirects: 1
+        followRedirect: true,
+        followAllRedirects: true
       });
-      return response.response.headers.location;
+      return response.request.headers.referer;
     } catch (e) {
       return e.response.headers.location;
     }

@@ -74,7 +74,7 @@ class Captchav2 extends Component {
     this.active = true;
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
-    const formattedCookies = this.convertCookieString(args.baseURL, args.cookies);
+    const formattedCookies = this.convertCookieString(args.checkoutURL, args.cookies);
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, error => {
         if (error !== null) {

@@ -115,7 +115,6 @@ export default class Shopify {
       'checkout[buyer_accepts_marketing]': '0',
       'checkout[shipping_address][first_name]': `${this.options.profile.deliveryFirstName}`,
       'checkout[shipping_address][last_name]': `${this.options.profile.deliveryLastName}`,
-      'checkout[shipping_address][company]': '',
       'checkout[shipping_address][address1]': `${this.options.profile.deliveryAddress}`,
       'checkout[shipping_address][address2]': `${this.options.profile.deliveryAptorSuite}`,
       'checkout[shipping_address][city]': `${this.options.profile.deliveryCity}`,
@@ -129,9 +128,11 @@ export default class Shopify {
       'checkout[client_details][javascript_enabled]': '1',
       button: ''
     };
-    console.log(captchaToken);
     if (captchaToken !== undefined) {
       payload['g-recaptcha-response'] = captchaToken;
+    }
+    if (!stores[this.options.task.store].includes('palace')) {
+      payload['checkout[shipping_address][company]'] = '';
     }
     const response = await this.rp({
       method: 'POST',
@@ -276,7 +277,10 @@ export default class Shopify {
           //   .filter(cookie => !cookie.includes('_landing_page'))
           //   .join(';'),
           cookies: '',
-          checkoutURL: this.shopifyCheckoutURL,
+          checkoutURL: `https://checkout.shopify.com/${this.shopifyCheckoutURL
+            .split('/')
+            .slice(-3)
+            .join('/')}`,
           id: this.tokenID,
           proxy: this.proxy,
           baseURL: stores[this.options.task.store]
@@ -285,13 +289,9 @@ export default class Shopify {
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
           this.handleChangeStatus('Checking Out');
           // const cookiesArray = captchaToken.cookies.split(';');
-          // console.log(cookiesArray[1]);
-          // this.cookieJar.setCookie(cookiesArray[1], checkoutURL);
           // for (const cookie of cookiesArray) {
-          //   if (!cookie.includes('cart')) {
-          //     console.log(cookie);
-          //     this.cookieJar.setCookie(cookie, checkoutURL);
-          //   }
+          //   console.log(cookie);
+          //   this.cookieJar.setCookie(cookie, checkoutURL);
           // }
           console.log(checkoutURL);
           const checkoutBody = await this.getCheckoutBody(checkoutURL);
