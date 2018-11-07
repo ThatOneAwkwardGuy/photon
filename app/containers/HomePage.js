@@ -18,16 +18,14 @@ class HomePage extends Component {
       updateBegun: false,
       fastModeModalVisible: false
     };
-    this.switchActiveComponent = this.switchActiveComponent.bind(this);
-    this.checkAccount = this.checkAccount.bind(this);
     // ipcRenderer.send(CHECK_FOR_UPDATE, true);
   }
 
-  async switchActiveComponent(windowName) {
+  switchActiveComponent = windowName => {
     this.setState({
       activeWindow: windowName
     });
-  }
+  };
 
   openFastModeModal = () => {
     this.setState({
@@ -41,11 +39,11 @@ class HomePage extends Component {
     });
   };
 
-  checkAccount() {
+  checkAccount = () => {
     if (auth.authorise.currentUser === null && process.env.NODE_ENV !== 'development') {
       this.props.history.push('/');
     }
-  }
+  };
 
   beginUpdate = () => {
     ipcRenderer.send(BEGIN_UPDATE, true);

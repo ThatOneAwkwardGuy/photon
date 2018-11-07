@@ -28,7 +28,6 @@ export default class Sidebar extends Component {
         <ListGroup>
           <ListGroupItem
             onClick={() => {
-              this.checkAccountSidebar();
               this.props.switchActiveComponent('Home');
             }}
             active={this.props.activeWindow === 'Home' ? true : undefined}
@@ -40,7 +39,6 @@ export default class Sidebar extends Component {
           </ListGroupItem>
           <ListGroupItem
             onClick={() => {
-              this.checkAccountSidebar();
               this.props.switchActiveComponent('Tasks');
             }}
             active={this.props.activeWindow === 'Tasks' ? true : undefined}
@@ -52,7 +50,6 @@ export default class Sidebar extends Component {
           </ListGroupItem>
           <ListGroupItem
             onClick={() => {
-              this.checkAccountSidebar();
               this.props.switchActiveComponent('AddTask');
             }}
             active={this.props.activeWindow === 'AddTask' ? true : undefined}
@@ -64,7 +61,6 @@ export default class Sidebar extends Component {
           </ListGroupItem>
           <ListGroupItem
             onClick={() => {
-              this.checkAccountSidebar();
               this.props.switchActiveComponent('Proxies');
             }}
             active={this.props.activeWindow === 'Proxies' ? true : undefined}
@@ -76,7 +72,6 @@ export default class Sidebar extends Component {
           </ListGroupItem>
           <ListGroupItem
             onClick={() => {
-              this.checkAccountSidebar();
               this.props.switchActiveComponent('Profiles');
             }}
             active={this.props.activeWindow === 'Profiles' ? true : undefined}
@@ -88,7 +83,6 @@ export default class Sidebar extends Component {
           </ListGroupItem>
           <ListGroupItem
             onClick={() => {
-              this.checkAccountSidebar();
               this.props.switchActiveComponent('Settings');
             }}
             active={this.props.activeWindow === 'Settings' ? true : undefined}
