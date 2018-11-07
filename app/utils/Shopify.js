@@ -267,7 +267,7 @@ export default class Shopify {
       // this.cookieJar.setCookie('hide_shopify_pay_for_checkout=false', stores[this.options.task.store]);
       // this.cookieJar.setCookie('shopify_pay_redirect=false', stores[this.options.task.store]);
       // this.cookieJar.setCookie('sig-shopify=true', stores[this.options.task.store]);
-      const checkoutURL = this.shopifyCheckoutURL;
+      let checkoutURL = this.shopifyCheckoutURL;
       if (captchaNeeded[this.options.task.store]) {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
         console.log(this.cookieJar.getCookieString(checkoutURL));
@@ -277,10 +277,11 @@ export default class Shopify {
           //   .filter(cookie => !cookie.includes('_landing_page'))
           //   .join(';'),
           cookies: '',
-          checkoutURL: `https://checkout.shopify.com/${this.shopifyCheckoutURL
-            .split('/')
-            .slice(-3)
-            .join('/')}`,
+          checkoutURL: checkoutURL,
+          // checkoutURL: `https://checkout.shopify.com/${this.shopifyCheckoutURL
+          //   .split('/')
+          //   .slice(-3)
+          //   .join('/')}`,
           id: this.tokenID,
           proxy: this.proxy,
           baseURL: stores[this.options.task.store]
@@ -294,6 +295,7 @@ export default class Shopify {
           //   this.cookieJar.setCookie(cookie, checkoutURL);
           // }
           console.log(checkoutURL);
+          console.log(captchaToken.checkoutURL);
           const checkoutBody = await this.getCheckoutBody(checkoutURL);
           const bodyInfo = this.returnBodyInfo(checkoutBody);
           const paymentID = bodyInfo.paymentID;

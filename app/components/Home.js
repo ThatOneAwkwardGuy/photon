@@ -46,6 +46,20 @@ export default class Home extends Component {
     }
   };
 
+  returnTaskButton = task => {
+    return (
+      <Button
+        onClick={() => {
+          this.addNewTask(task);
+        }}
+        style={{ marginBottom: '10px', marginRight: '10px' }}
+        key={`key-${task.store}`}
+      >
+        {task.store}
+      </Button>
+    );
+  };
+
   addNewTask = store => {
     let task = {
       mode: 'url',
@@ -151,6 +165,13 @@ export default class Home extends Component {
               {this.state.currentLaunchInfo.launchInfo.keywords ? (
                 <div className="launchInfoSection">
                   <h5>Recommended Keywords</h5> {this.state.currentLaunchInfo.launchInfo.keywords}
+                </div>
+              ) : (
+                ''
+              )}
+              {this.state.currentLaunchInfo.taskData ? (
+                <div className="launchInfoSection">
+                  <h5>Add Task</h5> {this.state.currentLaunchInfo.taskData.map(task => this.returnTaskButton(task))}
                 </div>
               ) : (
                 ''

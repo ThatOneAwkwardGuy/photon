@@ -39,19 +39,19 @@ checkCaptcha = () => {
       const captchaResponse3 = grecaptcha.getResponse();
       if (captchaResponse3 !== '') {
         clearInterval(captchaChecker);
-        ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse3, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
+        ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: captchaResponse3, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
         console.log(tokenID);
       }
     });
   } else if (captchaResponse !== '' && captchaResponse !== undefined) {
     clearInterval(captchaChecker);
-    ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
+    ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: captchaResponse, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
     console.log(tokenID);
   } else {
     let captchaResponse2 = document.querySelector('#recaptcha-token').value;
     if (captchaResponse2 !== '' && captchaResponse2 !== null) {
       clearInterval(captchaChecker);
-      ipcRenderer.send('send-captcha-token', { captchaResponse: captchaResponse, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
+      ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: captchaResponse, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
       console.log(tokenID);
     }
   }
