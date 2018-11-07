@@ -40,7 +40,7 @@ export default class Task {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
       },
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : '') : `http://${this.options.task.proxy}`,
+      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? this.returnFormattedProxy() : '') : `http://${this.options.task.proxy}`,
       jar: this.cookieJar
     });
   }
@@ -53,6 +53,14 @@ export default class Task {
   handleChangeProductName = newProductName => {
     this.productName = newProductName;
     this.forceUpdate();
+  };
+
+  returnFormattedProxy = () => {
+    if (this.proxy.user === 'none' && this.proxy.pass === 'none') {
+      return `http://${this.proxy.ip}:${this.proxy.port}`;
+    } else {
+      return `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`;
+    }
   };
 
   stopTask = (checkoutComplete = false) => {

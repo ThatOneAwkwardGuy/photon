@@ -232,7 +232,6 @@ export default class Tasks extends Component {
         </Button>
         <Button
           onClick={() => {
-            console.log(task);
             this.props.onAddTask(task.options);
           }}
           className="taskButton"
