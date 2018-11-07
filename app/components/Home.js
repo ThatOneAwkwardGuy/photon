@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ListGroup, ListGroupItem, Container, Collapse, Row, Col, Card, CardImg, CardBody } from 'reactstrap';
+import { ListGroup, ListGroupItem, Container, Button, Collapse, Row, Col, Card, CardImg, CardBody, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
 import { firestore } from '../api/firebase';
 import Sizes from '../store/sizes';
@@ -11,7 +11,17 @@ export default class Home extends Component {
     this.state = {
       launchDetails: [],
       launchArray: [],
-      gettingLaunchDetails: false
+      gettingLaunchDetails: false,
+      currentLaunchInfo: {
+        image: '',
+        launchInfo: {
+          description: '',
+          colors: '',
+          price: '',
+          keywords: ''
+        }
+      },
+      launchInfoModal: false
     };
   }
 
@@ -57,12 +67,10 @@ export default class Home extends Component {
     this.props.onAddTask({ task: newTask, profileID: this.props.profiles[Object.keys(this.props.profiles)[0]].profileID });
   };
 
-  toggle = index => {
-    this.setState({
-      ...this.state,
-      launchArray: this.state.launchArray.map((release, releaseIndex) => (releaseIndex === index ? !this.state.launchArray[releaseIndex] : this.state.launchArray[releaseIndex]))
-    });
+  toggle = () => {
+    this.setState({ launchInfoModal: !this.state.launchInfoModal });
   };
+
   render() {
     return (
       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
@@ -81,36 +89,21 @@ export default class Home extends Component {
                             key={`release-${index}`}
                             className="col-sm-4 releaseCard"
                             onClick={() => {
-                              this.toggle(index);
+                              this.setState(
+                                {
+                                  currentLaunchInfo: data
+                                },
+                                () => {
+                                  this.toggle();
+                                }
+                              );
                             }}
                           >
-                            <Collapse isOpen={!this.state.launchArray[index]}>
-                              <figure className="tint">
-                                <CardImg top width="100%" src={data.image} className="releaseCardImg" alt="Card image cap" />
-                              </figure>
-                              <CardBody>{data.name}</CardBody>
-                              <CardBody>{moment.unix(data.releaseDate.seconds).format('dddd, MMMM Do YYYY')}</CardBody>
-                            </Collapse>
-                            <Collapse isOpen={this.state.launchArray[index]}>
-                              <ListGroup className="releaseStoresList">
-                                {data.taskData !== undefined && Object.keys(data.taskData).length > 0 ? (
-                                  data.taskData.map((store, index) => {
-                                    return (
-                                      <ListGroupItem
-                                        onClick={() => {
-                                          this.addNewTask(store);
-                                        }}
-                                        key={`store-${index}`}
-                                      >
-                                        {store.store}
-                                      </ListGroupItem>
-                                    );
-                                  })
-                                ) : (
-                                  <ListGroupItem key={`store-${index}`}>No stores currently available</ListGroupItem>
-                                )}
-                              </ListGroup>
-                            </Collapse>
+                            <figure className="tint">
+                              <CardImg top width="100%" src={data.image} className="releaseCardImg" alt="Card image cap" />
+                            </figure>
+                            <CardBody>{data.name}</CardBody>
+                            <CardBody>{moment.unix(data.releaseDate.seconds).format('dddd, MMMM Do YYYY')}</CardBody>
                           </Card>
                         );
                       })
@@ -124,6 +117,54 @@ export default class Home extends Component {
               </Col>
             </Row>
           </Container>
+          <Modal isOpen={this.state.launchInfoModal} toggle={this.toggle} className={this.props.className} size="md">
+            <ModalHeader toggle={this.toggle}>{this.state.currentLaunchInfo.name}</ModalHeader>
+            <ModalBody>
+              {this.state.currentLaunchInfo.image ? (
+                <div>
+                  <CardImg top width="100%" src={this.state.currentLaunchInfo.image} className="releaseCardImg" alt="Card image cap" />
+                </div>
+              ) : (
+                ''
+              )}
+              {this.state.currentLaunchInfo.launchInfo.description ? (
+                <div className="launchInfoSection">
+                  <h5>Description</h5> {this.state.currentLaunchInfo.launchInfo.description}
+                </div>
+              ) : (
+                ''
+              )}
+              {this.state.currentLaunchInfo.launchInfo.colours ? (
+                <div className="launchInfoSection">
+                  <h5>Colors</h5> {this.state.currentLaunchInfo.launchInfo.colours}
+                </div>
+              ) : (
+                ''
+              )}
+              {this.state.currentLaunchInfo.launchInfo.price ? (
+                <div className="launchInfoSection">
+                  <h5>Price</h5> {this.state.currentLaunchInfo.launchInfo.price}
+                </div>
+              ) : (
+                ''
+              )}
+              {this.state.currentLaunchInfo.launchInfo.keywords ? (
+                <div className="launchInfoSection">
+                  <h5>Recommended Keywords</h5> {this.state.currentLaunchInfo.launchInfo.keywords}
+                </div>
+              ) : (
+                ''
+              )}
+            </ModalBody>
+            {/* <ModalFooter>
+              <Button color="primary" onClick={this.toggle}>
+                Do Something
+              </Button>{' '}
+              <Button color="secondary" onClick={this.toggle}>
+                Cancel
+              </Button>
+            </ModalFooter> */}
+          </Modal>
         </Col>
       </CSSTransition>
     );

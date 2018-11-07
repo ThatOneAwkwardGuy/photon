@@ -72,7 +72,7 @@
 
 1.0.14b
 -Fixed bug where if task was on waiting and you went to another page then went back, task would be stopped.
--Added hyped product support on homepage. Now when you click a product it will create a task for it using reccomended keywords.
+-Added hyped product support on homepage. Now when you click a product it will provide you info and buttons to create a task for it using reccomended keywords.
 -Sped up finding products on shopify sites
 
 

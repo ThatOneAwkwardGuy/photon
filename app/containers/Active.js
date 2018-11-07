@@ -3,7 +3,7 @@ import { Container, Row, Col, Modal, ModalBody, ModalFooter } from 'reactstrap';
 import { connect } from 'react-redux';
 import { addTask, removeTask, updateTask, removeAllTasks } from '../actions/task';
 import { addProfile, removeProfile } from '../actions/profile';
-import { addProxies } from '../actions/proxy';
+import { addProxies, deleteAllProxies } from '../actions/proxy';
 import { updateSettings } from '../actions/settings';
 import Home from '../components/Home';
 import AddTask from '../components/AddTask';
@@ -100,7 +100,7 @@ class Active extends Component {
           />
         );
       case 'Proxies':
-        return <Proxies onAddProxies={this.props.onAddProxies} proxies={this.props.proxies} />;
+        return <Proxies onAddProxies={this.props.onAddProxies} proxies={this.props.proxies} onDeleteAllProxies={this.props.onDeleteAllProxies} />;
       case 'Profiles':
         return <Profiles profiles={this.props.profiles} onAddProfile={this.props.onAddProfile} onRemoveProfile={this.props.onRemoveProfile} />;
       case 'Settings':
@@ -146,6 +146,9 @@ const mapActionsToProps = dispatch => ({
   },
   onAddProxies: content => {
     dispatch(addProxies(content));
+  },
+  onDeleteAllProxies: content => {
+    dispatch(deleteAllProxies(content));
   },
   onUpdateTask: content => {
     dispatch(updateTask(content));

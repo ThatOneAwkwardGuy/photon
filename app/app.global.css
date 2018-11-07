@@ -575,3 +575,14 @@ canvas {
 #waitingWindow div div {
   margin: 0 auto;
 }
+
+.launchInfoSection {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.modal-header .close {
+  color: #ef4744;
+  text-shadow: none;
+  opacity: 1;
+}
