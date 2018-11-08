@@ -18,7 +18,9 @@ window.onload = () => {
 checkCaptcha = () => {
   console.log('Checking For Captcha');
   // console.log(isRecaptchaFrame());
-
+  if (document.location.href.includes('stock_problems')) {
+    ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: '', id: '', supremeAuthToken: '', cookies: '' });
+  }
   const tokenID = remote.getGlobal('captcaTokenID');
   try {
     document.getElementsByClassName('recaptcha-checkbox-checkmark')[0].click();
@@ -39,7 +41,13 @@ checkCaptcha = () => {
       const captchaResponse3 = grecaptcha.getResponse();
       if (captchaResponse3 !== '') {
         clearInterval(captchaChecker);
-        ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: captchaResponse3, id: tokenID, supremeAuthToken: getSupremeAuthToken(), cookies: document.cookie });
+        ipcRenderer.send('send-captcha-token', {
+          checkoutURL: document.location.href,
+          captchaResponse: captchaResponse3,
+          id: tokenID,
+          supremeAuthToken: getSupremeAuthToken(),
+          cookies: document.cookie
+        });
         console.log(tokenID);
       }
     });
