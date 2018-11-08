@@ -7,12 +7,14 @@ var tough = require('tough-cookie');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Shopify {
-  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar) {
+  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
     this.options = options;
     this.propertiesHash = propertiesHash;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
     this.stop = stop;
+    this.settings = settings;
+    this.run = run;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
     this.cookieJar = cookieJar;
     this.rp = request.defaults({
@@ -21,7 +23,12 @@ export default class Shopify {
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : this.options.task.proxy
+      proxy:
+        this.options.task.proxy === ''
+          ? this.proxy !== undefined
+            ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`
+            : this.options.task.proxy
+          : this.options.task.proxy
     });
   }
 

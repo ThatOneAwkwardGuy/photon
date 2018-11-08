@@ -74,6 +74,8 @@
 -Fixed bug where if task was on waiting and you went to another page then went back, task would be stopped.
 -Added hyped product support on homepage. Now when you click a product it will provide you info and buttons to create a task for it using reccomended keywords.
 -Sped up finding products on shopify sites
-
-
 -Added Shopify Queue Bypass (Needs testing, may be buggy)
+(because of this ^, the next line is happening)
+---Shopify checkout is currently screwed, will try and fix before Palace drop, if not, ill revert to watch worked before and add waiting in queue functionality
+
+

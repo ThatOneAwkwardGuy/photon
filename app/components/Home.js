@@ -82,7 +82,7 @@ export default class Home extends Component {
   };
 
   toggle = () => {
-    this.setState({ launchInfoModal: !this.state.launchInfoModal });
+    this.setState({ launchInfoModal: !this.state.launchInfoModal }, () => {});
   };
 
   render() {

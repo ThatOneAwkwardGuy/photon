@@ -112,10 +112,10 @@ class AddTask extends Component {
                       </Input>
                     </Col>
                   </FormGroup>
-                  {this.state.formdata.store.includes('Supreme') ? (
-                    ''
-                  ) : (
-                    <FormGroup row>
+                  <FormGroup row>
+                    {this.state.formdata.store.includes('Supreme') ? (
+                      ''
+                    ) : (
                       <Col xs="3">
                         <Label for="mode">mode</Label>
                         <Input
@@ -133,47 +133,46 @@ class AddTask extends Component {
                           <option>homepage</option>
                         </Input>
                       </Col>
-                      {this.state.formdata.mode !== 'keywords' ? (
-                        <Col xs="9">
-                          <Label for="modeInput">{this.state.formdata.mode === 'url' ? 'url' : this.state.formdata.mode === 'keywords' ? 'keywords' : this.state.formdata.mode === 'variant' ? 'variant' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}</Label>
+                    )}
+                    {this.state.formdata.mode !== 'keywords' ? (
+                      <Col xs="9">
+                        <Label for="modeInput">{this.state.formdata.mode === 'url' ? 'url' : this.state.formdata.mode === 'keywords' ? 'keywords' : this.state.formdata.mode === 'variant' ? 'variant' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}</Label>
+                        <Input
+                          type="text"
+                          name="modeInput"
+                          id="modeInput"
+                          value={this.state.formdata.modeInput}
+                          // placeholder="e.g +yeezy or http://example.com or variantID"
+                          placeholder={this.state.formdata.mode === 'url' ? 'http://example.com' : this.state.formdata.mode === 'keywords' ? '+yeezy -nike' : this.state.formdata.mode === 'variant' ? 'variantID' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}
+                          onChange={event => {
+                            this.handleChange(event);
+                          }}
+                        />
+                      </Col>
+                    ) : (
+                      ''
+                    )}
+                    {this.state.formdata.mode === 'homepage' || this.state.formdata.mode === 'keywords' ? (
+                      <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                        <Col xs="9" style={{ marginTop: this.state.formdata.mode === 'homepage' ? '1rem' : '' }}>
+                          <Label for="keywords">keywords</Label>
                           <Input
                             type="text"
-                            name="modeInput"
-                            id="modeInput"
-                            value={this.state.formdata.modeInput}
-                            // placeholder="e.g +yeezy or http://example.com or variantID"
-                            placeholder={this.state.formdata.mode === 'url' ? 'http://example.com' : this.state.formdata.mode === 'keywords' ? '+yeezy -nike' : this.state.formdata.mode === 'variant' ? 'variantID' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}
+                            name="keywords"
+                            id="keywords"
+                            value={this.state.formdata.keywords}
+                            placeholder="+nikeBoyzWeDontDo3Stripes -adidas"
                             onChange={event => {
+                              event.target.value = event.target.value.toLowerCase();
                               this.handleChange(event);
                             }}
                           />
                         </Col>
-                      ) : (
-                        ''
-                      )}
-                      {this.state.formdata.mode === 'homepage' || this.state.formdata.mode === 'keywords' ? (
-                        <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                          <Col xs="9" style={{ marginTop: this.state.formdata.mode === 'homepage' ? '1rem' : '' }}>
-                            <Label for="keywords">keywords</Label>
-                            <Input
-                              type="text"
-                              name="keywords"
-                              id="keywords"
-                              value={this.state.formdata.keywords}
-                              placeholder="+nikeBoyzWeDontDo3Stripes -adidas"
-                              onChange={event => {
-                                event.target.value = event.target.value.toLowerCase();
-                                this.handleChange(event);
-                              }}
-                            />
-                          </Col>
-                        </CSSTransition>
-                      ) : (
-                        ''
-                      )}
-                    </FormGroup>
-                  )}
-
+                      </CSSTransition>
+                    ) : (
+                      ''
+                    )}
+                  </FormGroup>
                   <FormGroup row>
                     <Col xs="12">
                       <Label for="proxy">proxy (optional)</Label>
@@ -367,7 +366,7 @@ class AddTask extends Component {
                       ''
                     )}
 
-                    {this.state.formdata.store.includes('Supreme') ? (
+                    {/* {this.state.formdata.store.includes('Supreme') ? (
                       <Col xs="3" className="text-center">
                         <Label for="tasks" className="align-items-center" check>
                           Captcha Bypass
@@ -391,7 +390,7 @@ class AddTask extends Component {
                       </Col>
                     ) : (
                       ''
-                    )}
+                    )} */}
                     {/* {!this.state.formdata.store.includes('Supreme') ? (
                       <Col xs="3" className="text-center">
                         <Label for="tasks" className="align-items-center" check>

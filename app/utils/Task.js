@@ -2,7 +2,16 @@ import stores from '../store/shops';
 import Shopify from './Shopify';
 import DSM from './DSM';
 import Supreme from './Supreme';
-import { processKeywords, getSitemapJSON, getSitemapXML, getAtomSitemapXML, checkSitemapJSONForKeywords, checkSitemapXMLForKeywords, convertProductNameIntoArray, checkAtomSitemapXMLForKeywords } from './helpers.js';
+import {
+  processKeywords,
+  getSitemapJSON,
+  getSitemapXML,
+  getAtomSitemapXML,
+  checkSitemapJSONForKeywords,
+  checkSitemapXMLForKeywords,
+  convertProductNameIntoArray,
+  checkAtomSitemapXMLForKeywords
+} from './helpers.js';
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
@@ -68,6 +77,7 @@ export default class Task {
       case 'Supreme-UK':
         if (this.supremeInstance !== '') {
           this.supremeInstance.stop();
+          this.supremeInstance.stopMonitoring();
           this.active = false;
           if ((checkoutComplete !== undefined) & !checkoutComplete) {
             this.handleChangeStatus('Stopped');
@@ -76,6 +86,7 @@ export default class Task {
       case 'Supreme-US':
         if (this.supremeInstance !== '') {
           this.supremeInstance.stop();
+          this.supremeInstance.stopMonitoring();
           this.active = false;
           if ((checkoutComplete !== undefined) & !checkoutComplete) {
             this.handleChangeStatus('Stopped');
@@ -167,7 +178,7 @@ export default class Task {
   };
 
   Supreme = () => {
-    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stopTask, this.handleChangeProductName);
+    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stopTask, this.handleChangeProductName, this.run);
     try {
       this.supremeInstance.checkout();
     } catch (e) {
@@ -187,7 +198,7 @@ export default class Task {
     const content = await this.getVariantsFromHomepage(pageURL);
     const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar);
+      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar, this.settings, this.run);
       const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -199,7 +210,7 @@ export default class Task {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
     const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar);
+      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar, this.settings, this.run);
       const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -219,7 +230,7 @@ export default class Task {
   };
 
   variantMode = async variant => {
-    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar);
+    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar, this.settings, this.run);
     const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(this.options.task.modeInput);
   };
 
@@ -262,7 +273,11 @@ export default class Task {
       }
     } else {
       variantsArray.forEach(variant => {
-        if ((_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1'), size)) || (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2'), size)) || (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size))) {
+        if (
+          (_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1'), size)) ||
+          (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2'), size)) ||
+          (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size))
+        ) {
           found.push(variant.id);
         }
       });
@@ -370,7 +385,11 @@ export default class Task {
       const page = cheerio.load(response);
       const pageURLs = page('a').map((i, element) => {
         const textArray = convertProductNameIntoArray(page(element).text());
-        if (textArray.length > 0 && _.difference(this.keywords.positiveKeywords, textArray).length === 0 && _.difference(this.keywords.negativeKeywords, textArray).length === this.keywords.negativeKeywords.length) {
+        if (
+          textArray.length > 0 &&
+          _.difference(this.keywords.positiveKeywords, textArray).length === 0 &&
+          _.difference(this.keywords.negativeKeywords, textArray).length === this.keywords.negativeKeywords.length
+        ) {
           return `${siteUrl}${element.attribs.href}`;
         }
       });

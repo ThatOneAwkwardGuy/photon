@@ -10,7 +10,8 @@ export default class Settings extends Component {
         monitorTime: 0,
         errorTime: 0,
         checkoutTime: 0,
-        monitorProxies: ''
+        monitorProxies: '',
+        monitorForRestock: false
       }
     };
   }
@@ -70,8 +71,6 @@ export default class Settings extends Component {
                         }}
                       />
                     </Col>
-                  </FormGroup>
-                  <FormGroup row>
                     <Col xs="3">
                       <Label for="errorTime">error delay(ms)</Label>
                       <Input
@@ -84,8 +83,6 @@ export default class Settings extends Component {
                         }}
                       />
                     </Col>
-                  </FormGroup>
-                  <FormGroup row>
                     <Col xs="3">
                       <Label for="checkoutTime">checkout delay(ms)</Label>
                       <Input
@@ -110,6 +107,22 @@ export default class Settings extends Component {
                         placeholder="http://user:pass@ip:port"
                         onChange={event => {
                           this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                  </FormGroup>
+                  <FormGroup row>
+                    <Col xs="12">
+                      Retry For Restocks
+                      <Input
+                        type="checkbox"
+                        name="monitorForRestock"
+                        id="monitorForRestock"
+                        style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                        value={this.state.settings.monitorForRestock}
+                        checked={this.state.settings.monitorForRestock === true}
+                        onChange={event => {
+                          this.setState({ settings: { ...this.state.settings, monitorForRestock: !this.state.settings.monitorForRestock } });
                         }}
                       />
                     </Col>

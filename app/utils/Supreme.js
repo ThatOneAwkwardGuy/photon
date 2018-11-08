@@ -11,7 +11,7 @@ import states from '../store/states';
 import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, FINISH_SENDING_CAPTCHA_TOKEN, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 import { start } from 'repl';
 export default class Supreme {
-  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName) {
+  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run) {
     this.startTime = '';
     this.price = '';
     this.currency = '';
@@ -21,7 +21,13 @@ export default class Supreme {
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
-    this.proxy = this.options.task.proxy === '' ? (proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : this.options.task.proxy) : `http://${this.options.task.proxy}`;
+    this.run;
+    this.proxy =
+      this.options.task.proxy === ''
+        ? proxy !== undefined
+          ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`
+          : this.options.task.proxy
+        : `http://${this.options.task.proxy}`;
     this.monitorProxy = monitorProxy;
     this.active = true;
     this.monitoring = false;
@@ -40,6 +46,7 @@ export default class Supreme {
   }
 
   sleep = ms => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sleeping For ${ms}ms`);
     return new Promise(resolve => setTimeout(resolve, ms));
   };
 
@@ -50,6 +57,10 @@ export default class Supreme {
   stop = () => {
     clearTimeout(this.monitoringTimeout);
     this.active = false;
+  };
+
+  stopMonitoring = () => {
+    this.monitoring = false;
   };
 
   getCardType = number => {
@@ -129,6 +140,7 @@ export default class Supreme {
     if (!this.options.task.captchaBypass) {
       payload['g-recaptcha-response'] = captchaToken;
     }
+    console.log(payload);
     try {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
@@ -211,7 +223,7 @@ export default class Supreme {
         if (styleID !== '') {
           return [product.id, styleID, sizeID];
         } else {
-          throw error;
+          throw 'error';
         }
       } else {
         if (this.active) {
@@ -281,6 +293,7 @@ export default class Supreme {
           resolveWithFullResponse: true,
           followAllRedirects: true
         });
+        console.log(response);
         return this.getAuthToken(response.body);
       } catch (e) {
         console.error(e);
@@ -304,6 +317,26 @@ export default class Supreme {
     }
   };
 
+  monitorForRestock = async (productID, styleID, sizeID) => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Monitoring For Restock`);
+    const response = await this.rp({
+      method: 'GET',
+      uri: `https://www.supremenewyork.com/shop/${productID}.json`,
+      gzip: true,
+      json: true,
+      followAllRedirects: true
+    });
+    const matchingStyle = response.styles.filter(element => element.id === styleID);
+    const matchingSize = matchingStyle[0].sizes.filter(element => element.id === sizeID);
+    const stockLevel = matchingSize[0].stock_level;
+    if (stockLevel > 0) {
+      this.checkout(productID, styleID, sizeID);
+    } else if (this.monitoring) {
+      await this.sleep(this.settings.monitorTime);
+      await this.monitorForRestock(productID, styleID, sizeID);
+    }
+  };
+
   checkStock = async (productID, styleID, sizeID) => {
     const response = await this.rp({
       method: 'GET',
@@ -316,17 +349,11 @@ export default class Supreme {
     const matchingSize = matchingStyle[0].sizes.filter(element => element.id === sizeID);
     const stockLevel = matchingSize[0].stock_level;
     if (stockLevel === 0) {
-      this.stopTask(true);
-      this.handleChangeStatus('Out Of Stock');
+      throw 'Out Of Stock';
     }
   };
 
   getSupremeSessionCookie = async () => {
-    // this.cookieJar.setCookie('pooky=d91e2252-a9fc-4162-8aa1-d2332a101d25', 'https://www.supremenewyork.com');
-    // this.cookieJar.setCookie(
-    //   'pooky_pro=165eb23ee352930063191cfc2223b16570d1a3ce73074b7b01df514832a96abc6870bb27ad29489eecba1c3e6137c8070701c63ab203b3198702951a269af668b3c3912104adb468e9069ae02fda56911c5cbd546c975d47846e888aa86d5bbaa33e567aa759ab8bd7fa2caa6d6bd1da',
-    //   'https://www.supremenewyork.com'
-    // );
     try {
       const response = await this.rp({
         method: 'GET',
@@ -350,61 +377,57 @@ export default class Supreme {
     return Array.from(arr, this.dec2hex).join('');
   };
 
-  checkout = async () => {
+  checkout = async (productID, styleID, sizeID) => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
-    const [productID, styleID, sizeID] = await this.getProduct();
+    if (productID === undefined) {
+      [productID, styleID, sizeID] = await this.getProduct();
+    }
     if (productID !== '') {
-      this.checkStock(productID, styleID, sizeID);
-      const authToken = await this.addToCart(productID, styleID, sizeID);
-      // const sessionCookie = await this.getSupremeSessionCookie();
-      // this.cookieJar.setCookie(sessionCookie.split(';')[0], 'https://www.supremenewyork.com');
-      // this.cookieJar.setCookie(`_supreme_sess=${this.generateId(920)}--${this.generateId(40)}`, 'https://www.supremenewyork.com');
-
-      // let cart1Cookie = new tough.Cookie({
-      //   key: '_supreme_sess',
-      //   value: `1+item--${sizeID}%2C${styleID}`,
-      //   domain: 'www.supremenewyork.com',
-      //   path: '/'
-      // });
-      // this.cookieJar.setCookie(cart1Cookie.toString(), stores[this.options.task.store]);
-
-      // this.cookieJar.setCookie(
-      //   '_supreme_sess=WDc3RnNaQ3VIMzJjc1EvV1FiUHdKVVJJZ1RUZEJ1U1FqQlZBMjFPQldUZVBwa3B6WE1HMVg5cnhON29ObjlBanllUW9vd0ZDM1VJZ0QzbmlPcHNpNTJ4M25TekFtSzIySWxXejM1TThWTlFDbStjd0FpM1ppMkJFU2k4RXdPUEF6RnQ2SGdOWDI1U0YyWGxDTnZDcm1HektEdVFEV1FyQlJBY1cyN28vU1VvVmoveWpia1dkVW10QU15d2xlU1Y5Y016NG9paVY2MEJUTUR4MUJoR1lCSnQxdnQ1ckp3YkY5S0g2YXdGZWk3OG02ZThLZE9RZFRzd0Q5anBnU2sxSHd0RXdhdXkwVVN1TEc1TzVuNHM3dFR4OTNDQUxkRHhXT3lJVFNDYlFxd1FuUzBWOVovbFRCbTNrdWRrdHlMV1czMzVsaU95SWxTUXBSQjhhVHFPajdjYkhpWlFqSHkwTVdDb3NUVW52a2pMOC9ZVXc4YnJtdUxJcEoyOUpDbHhnNkZBYW1MMm9QUllPRllyWjVKTGUxUWNpSTZCYVdXZlJRSzBSYk1SS2N3SG4xU25saWtWa2JCMjdKRXNoWXlKS1lrWDhxcm5nOVNTcjRwTTM0UVE1S1RLYW1ndjlrR0tTNkxBQkZwcTV2dDlyczlsN3pmMzhDaENhbHBJT3lsclhrazNDbCsrU2FYdWYvT2NLdkUybkxvQmxLWW4zY1dtVUxWLzEyVWFMK0lyRDdkaDE3akE5YmZMdkxIVkxOWThTc3dtL3dwUkdkeTEyWEx1Q2llVk1jNlp0d3NqbUtPL2hWT2REM1Vsa2lBRlVqTm5XVWR3d1BoZysvenNRZTM3ZTY3ci9mcXlGSjdYNkZHekEwU2FpZXc9PS0teHZXV1NUMDNYbDRsWmNZRTc1MEFDdz09--dd9e7d311232d86e836d67ed714695d25250cf95',
-      //   'https://www.supremenewyork.com'
-      // );
-
-      // this.cookieJar.setCookie('__utmt=1', 'https://www.supremenewyork.com');
-      // this.cookieJar.setCookie('hasShownCookieNotice=1', 'https://www.supremenewyork.com');
-      if (this.options.task.captchaBypass) {
-        this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
-        await this.sleep(this.settings.checkoutTime);
-        if (this.active) {
-          this.checkoutWithCapctcha('', authToken);
-        }
-      } else {
-        ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
-        ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-          cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
-          checkoutURL: 'https://supremenewyork.com/checkout',
-          baseURL: stores[this.options.task.store],
-          id: this.tokenID,
-          proxy: this.proxy
-        });
-        this.handleChangeStatus('Waiting For Captcha');
-        ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-          // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
-          if (this.tokenID === args.id) {
-            this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
-            await this.sleep(this.settings.checkoutTime);
-            // this.handleChangeStatus('Fake Checkout');
-            ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
-            // this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);
+      try {
+        await this.checkStock(productID, styleID, sizeID);
+        const authToken = await this.addToCart(productID, styleID, sizeID);
+        if (this.options.task.captchaBypass) {
+          this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
+          await this.sleep(this.settings.checkoutTime);
+          if (this.active) {
+            this.checkoutWithCapctcha('', authToken);
           }
-        });
+        } else {
+          ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
+          ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+            cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
+            checkoutURL: 'https://supremenewyork.com/checkout',
+            baseURL: stores[this.options.task.store],
+            id: this.tokenID,
+            proxy: this.proxy
+          });
+          this.handleChangeStatus('Waiting For Captcha');
+          ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+            // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+            if (this.tokenID === args.id) {
+              this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
+              await this.sleep(this.settings.checkoutTime);
+              // this.handleChangeStatus('Fake Checkout');
+              ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
+              this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);
+            }
+          });
+        }
+      } catch (e) {
+        console.log(e);
+        if (e === 'Out Of Stock') {
+          this.handleChangeStatus('Out Of Stock');
+          if (this.settings.monitorForRestock) {
+            this.handleChangeStatus('Monitoring For Restock');
+            this.monitoring = true;
+            while (this.monitoring) {
+              await this.monitorForRestock(productID, styleID, sizeID);
+            }
+          } else {
+            this.stopTask(true);
+          }
+        }
       }
-    } else {
-      // this.handleChangeStatus('Monitoring - Product Not Currently Found');
-      // this.stop();
     }
   };
 }

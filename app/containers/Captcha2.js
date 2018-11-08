@@ -56,12 +56,13 @@ class Captchav2 extends Component {
     let formattedCookieArray = [];
     const operatingSystem = os.platform();
     for (const cookie of cookieArray) {
+      console.log(cookie);
       const nameValuePair = cookie.replace(/\s+/g, '').split('=');
       formattedCookieArray.push({
-        url: baseURL,
+        url: baseURL.includes('supreme') ? `https://www.${baseURL.split('//')[1]}` : baseURL,
         // url: operatingSystem === 'darwin' ? baseURL.split('//')[1] : baseURL,
         value: nameValuePair[1],
-        domain: baseURL.split('//')[1],
+        domain: baseURL.split('//')[1].split('/')[0],
         path: '/',
         name: nameValuePair[0]
       });
@@ -76,6 +77,7 @@ class Captchav2 extends Component {
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.checkoutURL, args.cookies);
     for (const cookie of formattedCookies) {
+      console.log(cookie);
       win.webContents.session.cookies.set(cookie, error => {
         if (error !== null) {
           console.log(error);

@@ -201,8 +201,9 @@ export default class Tasks extends Component {
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
       <td>{task.productName === '' ? (task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput) : task.productName}</td>
-      <td>{task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined ? 'manual' : moment.unix(task.options.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}</td>
+      <td>{task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined ? 'manual' : moment.unix(task.options.task.scheduledTime).format('HH:mm:ss A dddd, D/MM/YY')}</td>
       <td>{task.options.task.size}</td>
+      <td>{task.options.task.color === '' ? 'n/a' : task.options.task.color}</td>
       <td>{task.status}</td>
       <td>
         <Button
@@ -270,6 +271,7 @@ export default class Tasks extends Component {
                   <th>product</th>
                   <th>timing</th>
                   <th>size</th>
+                  <th>color</th>
                   <th>status</th>
                   <th>actions</th>
                 </tr>
@@ -510,7 +512,7 @@ export default class Tasks extends Component {
                     value={this.state.modalFormData.task.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.modalFormData.task.scheduledTime)}
                     // value={this.state.modalFormData.task.scheduledTime}
                     dateFormat="dddd, MMMM Do YYYY"
-                    timeFormat="HH:mm A"
+                    timeFormat="HH:mm:ss A"
                     isValidDate={(currentDate, selectedDate) => {
                       if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
                         return true;

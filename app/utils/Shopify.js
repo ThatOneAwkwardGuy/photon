@@ -9,14 +9,16 @@ const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class Shopify {
-  constructor(options, handleChangeStatus, proxy, stop, shopifyCheckoutURL, cookieJar) {
+  constructor(options, handleChangeStatus, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
     this.options = options;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
     this.stop = stop;
+    this.settings = settings;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
+    this.run = run;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
@@ -58,6 +60,7 @@ export default class Shopify {
       uri: `${stores[this.options.task.store]}/cart/add.js`,
       form: payload
     });
+    console.log(response);
   };
 
   generatePaymentToken = async () => {
@@ -88,6 +91,55 @@ export default class Shopify {
       followRedirect: true
     });
     return response.body;
+  };
+
+  pollQueueOrCheckout = async url => {
+    console.log(url);
+    if (url.includes('processing')) {
+      this.handleChangeStatus('Processing');
+    } else if (url.includes('throttle') || url.includes('queue')) {
+      this.handleChangeStatus('Waiting In Queue');
+    } else if (url.includes('stock_problems' && this.settings.monitorForRestock)) {
+      this.handleChangeStatus('Monitoring For Restock');
+    }
+    try {
+      const response = await this.rp({
+        method: 'GET',
+        uri: url,
+        resolveWithFullResponse: true
+      });
+      if (response.request.href.includes('processing')) {
+        await this.pollQueueOrCheckout(response.request.href);
+      } else if (response.request.href.includes('validate=true')) {
+        const $ = cheerio.load(response.body);
+        if (
+          response.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`) ||
+          response.body.includes('There was an error processing your payment. Please try again.')
+        ) {
+          this.handleChangeStatus('Error Processing Payment');
+          this.stop(true);
+        } else if (response.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
+          this.handleChangeStatus('Stuck On Customer Info Page');
+          this.stop(true);
+        } else if (response.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
+          this.handleChangeStatus('Stuck On Shipping Method Page');
+          this.stop(true);
+        } else {
+          this.handleChangeStatus('Check Email');
+          this.stop(true);
+        }
+      } else if (url.includes('throttle') || url.includes('queue')) {
+        await this.pollQueueOrCheckout(response.request.href);
+      } else if (url.includes('stock_problems') && this.settings.monitorForRestock) {
+        this.handleChangeStatus('Monitoring For Restock');
+        await this.pollQueueOrCheckout(response.request.href);
+      } else if (url.includes('stock_problems') && !this.settings.monitorForRestock) {
+        this.handleChangeStatus('Out Of Stock');
+      }
+    } catch (e) {
+      this.stop(false);
+      console.error(e);
+    }
   };
 
   getCheckoutUrl = async () => {
@@ -260,28 +312,14 @@ export default class Shopify {
       await this.addToCart(variantID, this.options.task.quantity);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting  Shipping and Payment Tokens`);
       this.handleChangeStatus('Getting Shipping and Payment Tokens');
-      // const [paymentToken, checkoutURL, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
       const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
-      // this.cookieJar.setCookie('_shopify_sa_p=', stores[this.options.task.store]);
-      // this.cookieJar.setCookie('__olAlertsForShop=[]', stores[this.options.task.store]);
-      // this.cookieJar.setCookie('hide_shopify_pay_for_checkout=false', stores[this.options.task.store]);
-      // this.cookieJar.setCookie('shopify_pay_redirect=false', stores[this.options.task.store]);
-      // this.cookieJar.setCookie('sig-shopify=true', stores[this.options.task.store]);
       let checkoutURL = this.shopifyCheckoutURL;
       if (captchaNeeded[this.options.task.store]) {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
         console.log(this.cookieJar.getCookieString(checkoutURL));
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-          // cookies: `${this.cookieJar.getCookieString(checkoutURL)};${this.cookieJar.getCookieString(stores[this.options.task.store])}`
-          //   .split(';')
-          //   .filter(cookie => !cookie.includes('_landing_page'))
-          //   .join(';'),
-          cookies: '',
+          cookies: `${this.cookieJar.getCookieString(checkoutURL)}`,
           checkoutURL: checkoutURL,
-          // checkoutURL: `https://checkout.shopify.com/${this.shopifyCheckoutURL
-          //   .split('/')
-          //   .slice(-3)
-          //   .join('/')}`,
           id: this.tokenID,
           proxy: this.proxy,
           baseURL: stores[this.options.task.store]
@@ -289,11 +327,6 @@ export default class Shopify {
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
           this.handleChangeStatus('Checking Out');
-          // const cookiesArray = captchaToken.cookies.split(';');
-          // for (const cookie of cookiesArray) {
-          //   console.log(cookie);
-          //   this.cookieJar.setCookie(cookie, checkoutURL);
-          // }
           console.log(checkoutURL);
           console.log(captchaToken.checkoutURL);
           const checkoutBody = await this.getCheckoutBody(checkoutURL);
@@ -310,16 +343,9 @@ export default class Shopify {
           const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
           const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
+          this.handleChangeStatus('Sending Payment Info');
           const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-          if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
-            this.handleChangeStatus('Error Processing Payment');
-          } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
-            this.handleChangeStatus('Stuck On Customer Info Page');
-          } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
-            this.handleChangeStatus('Stuck On Shipping Method Page');
-          } else {
-            this.handleChangeStatus('Check Email');
-          }
+          await this.pollQueueOrCheckout(checkoutResponse.request.href);
         });
       } else {
         this.handleChangeStatus('Checking Out');
@@ -336,17 +362,8 @@ export default class Shopify {
         const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
         const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-        if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
-          this.handleChangeStatus('Error Processing Payment');
-        } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
-          this.handleChangeStatus('Stuck On Customer Info Page');
-        } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
-          this.handleChangeStatus('Stuck On Shipping Method Page');
-        } else {
-          this.handleChangeStatus('Check Email');
-        }
+        await this.pollQueueOrCheckout(checkoutResponse.request.href);
       }
-      this.stop(true);
     } catch (e) {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout - Error`);
       console.log(e);
@@ -357,7 +374,7 @@ export default class Shopify {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
-      // this.stop(false);
+      this.stop(false);
     }
   };
 }
