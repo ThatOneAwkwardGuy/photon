@@ -64,12 +64,12 @@ const installExtensions = async () => {
   }
 };
 
-crashReporter.start({
-  productName: 'YourName',
-  companyName: 'YourCompany',
-  submitURL: 'https://your-domain.com/url-to-submit',
-  uploadToServer: false
-});
+// crashReporter.start({
+//   productName: 'YourName',
+//   companyName: 'YourCompany',
+//   submitURL: 'https://your-domain.com/url-to-submit',
+//   uploadToServer: false
+// });
 
 app.on('window-all-closed', () => {
   // On OS X it is common for applications and their menu bar
@@ -83,6 +83,7 @@ app.on('ready', async () => {
   if (isDevelopment) {
     await installExtensions();
   }
+  createMenu();
 
   mainWindow = new BrowserWindow({
     height: 600,
@@ -198,6 +199,64 @@ app.on('ready', async () => {
     mainWindow.send(ALERT_UPDATE_AVAILABLE, info);
   });
 });
+
+function createMenu() {
+  const application = {
+    label: 'Photon',
+    submenu: [
+      {
+        label: 'Quit',
+        accelerator: 'Command+Q',
+        click: () => {
+          app.quit();
+        }
+      }
+    ]
+  };
+
+  const edit = {
+    label: 'Edit',
+    submenu: [
+      {
+        label: 'Undo',
+        accelerator: 'CmdOrCtrl+Z',
+        selector: 'undo:'
+      },
+      {
+        label: 'Redo',
+        accelerator: 'Shift+CmdOrCtrl+Z',
+        selector: 'redo:'
+      },
+      {
+        type: 'separator'
+      },
+      {
+        label: 'Cut',
+        accelerator: 'CmdOrCtrl+X',
+        selector: 'cut:'
+      },
+      {
+        label: 'Copy',
+        accelerator: 'CmdOrCtrl+C',
+        selector: 'copy:'
+      },
+      {
+        label: 'Paste',
+        accelerator: 'CmdOrCtrl+V',
+        selector: 'paste:'
+      },
+      {
+        label: 'Select All',
+        accelerator: 'CmdOrCtrl+A',
+        selector: 'selectAll:'
+      }
+    ]
+  };
+
+  const template = [application, edit];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
 
 // app.on('login', (event, webContents, request, authInfo, callback) => {
 //   event.preventDefault();

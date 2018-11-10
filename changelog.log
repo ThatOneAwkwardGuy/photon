@@ -79,3 +79,16 @@
 ---Shopify checkout is currently screwed, will try and fix before Palace drop, if not, ill revert to watch worked before and add waiting in queue functionality
 
 
+1.0.15b
+-Fixed Shopify queue Bypass
+-Fixed Shopify Checkout
+-Added Queue waiting
+-Added Check for Restocks Option In Settings (Shopify and Supreme excluding DSM)
+-Added processing status to reduce change of getting false Check Email status
+
+1.0.16b
+-Colour for Keywords 
+-Schedule Time Default Manual (Timer Optional)
+-Add Tasks for All Profiles
+-Limit on Characters for Card Number / Month / Expiry
+-Copy and Paste into Fields

@@ -4,6 +4,8 @@ import { CSSTransition } from 'react-transition-group';
 import stores from '../store/shops';
 import Sizes from '../store/sizes';
 import Datetime from 'react-datetime';
+import Toggle from 'react-toggle';
+import 'react-toggle/style.css';
 const _ = require('lodash');
 const moment = require('moment');
 const Shops = _.keys(stores);
@@ -16,6 +18,7 @@ class AddTask extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.returnProfileName = this.returnProfileName.bind(this);
     this.state = {
+      scheduledTimeFlag: false,
       formdata: {
         store: Shops[0],
         mode: 'url',
@@ -27,6 +30,7 @@ class AddTask extends Component {
         profile: this.profileNames[0],
         tasks: '1',
         color: '',
+        keywordColor: '',
         category: 'Accessories',
         scheduledTime: '',
         atcBypass: false,
@@ -34,6 +38,24 @@ class AddTask extends Component {
       }
     };
   }
+
+  addTaskForProfile = profileID => {
+    if (this.state.formdata.size === 'Random Shoe Size') {
+      this.state.formdata.size = Sizes['Shoes(UK/US)'].slice(1)[Math.floor(Math.random() * Sizes['Shoes(UK/US)'].slice(1).length)];
+    }
+    const task = {
+      task: this.state.formdata,
+      profileID: profileID
+    };
+    this.props.onAddTask(task);
+  };
+
+  toggleScheduledTime = () => {
+    this.setState({
+      scheduledTimeFlag: !this.state.scheduledTimeFlag,
+      formdata: { ...this.state.formdata, scheduledTime: '' }
+    });
+  };
 
   handleChange(e) {
     if (e.target.value.includes('Supreme')) {
@@ -136,14 +158,34 @@ class AddTask extends Component {
                     )}
                     {this.state.formdata.mode !== 'keywords' ? (
                       <Col xs="9">
-                        <Label for="modeInput">{this.state.formdata.mode === 'url' ? 'url' : this.state.formdata.mode === 'keywords' ? 'keywords' : this.state.formdata.mode === 'variant' ? 'variant' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}</Label>
+                        <Label for="modeInput">
+                          {this.state.formdata.mode === 'url'
+                            ? 'url'
+                            : this.state.formdata.mode === 'keywords'
+                            ? 'keywords'
+                            : this.state.formdata.mode === 'variant'
+                            ? 'variant'
+                            : this.state.formdata.mode === 'homepage'
+                            ? 'homepage url'
+                            : ''}
+                        </Label>
                         <Input
                           type="text"
                           name="modeInput"
                           id="modeInput"
                           value={this.state.formdata.modeInput}
                           // placeholder="e.g +yeezy or http://example.com or variantID"
-                          placeholder={this.state.formdata.mode === 'url' ? 'http://example.com' : this.state.formdata.mode === 'keywords' ? '+yeezy -nike' : this.state.formdata.mode === 'variant' ? 'variantID' : this.state.formdata.mode === 'homepage' ? 'homepage url' : ''}
+                          placeholder={
+                            this.state.formdata.mode === 'url'
+                              ? 'http://example.com'
+                              : this.state.formdata.mode === 'keywords'
+                              ? '+yeezy -nike'
+                              : this.state.formdata.mode === 'variant'
+                              ? 'variantID'
+                              : this.state.formdata.mode === 'homepage'
+                              ? 'homepage url'
+                              : ''
+                          }
                           onChange={event => {
                             this.handleChange(event);
                           }}
@@ -209,6 +251,24 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )}
+                    {this.state.formdata.mode !== 'variant' && !this.state.formdata.store.includes('Supreme') ? (
+                      <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                        <Col xs="3">
+                          <Label for="keywordColor">color</Label>
+                          <Input
+                            type="text"
+                            name="keywordColor"
+                            id="keywordColor"
+                            value={this.state.formdata.keywordColor}
+                            onChange={event => {
+                              this.handleChange(event);
+                            }}
+                          />
+                        </Col>
+                      </CSSTransition>
+                    ) : (
+                      ''
+                    )}
                     {this.state.formdata.store.includes('Supreme') ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
@@ -266,33 +326,49 @@ class AddTask extends Component {
                   </FormGroup>
                   <FormGroup row>
                     <Col xs="6">
-                      <Label for="scheduledTime">Schedule Time</Label>
-                      <Datetime
-                        value={this.state.formdata.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.formdata.scheduledTime)}
-                        dateFormat="dddd, MMMM Do YYYY"
-                        timeFormat="HH:mm:ss A"
-                        isValidDate={(currentDate, selectedDate) => {
-                          if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
-                            return true;
-                          }
-                        }}
-                        onChange={date => {
-                          this.setScheduledTime(date.unix());
-                        }}
-                      />
-                      <Button
-                        style={{ marginTop: '30px', float: 'right' }}
-                        onClick={() => {
-                          this.setState({
-                            formdata: {
-                              ...this.state.formdata,
-                              scheduledTime: ''
-                            }
-                          });
-                        }}
-                      >
-                        Clear Time
-                      </Button>
+                      <Label>
+                        <span>Schedule Time (Optional)</span>
+                        <Toggle checked={this.state.scheduledTimeFlag} onChange={this.toggleScheduledTime} />
+                      </Label>
+                      {this.state.scheduledTimeFlag ? (
+                        <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                          <Datetime
+                            value={this.state.formdata.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.formdata.scheduledTime)}
+                            dateFormat="dddd, MMMM Do YYYY"
+                            timeFormat="HH:mm:ss A"
+                            isValidDate={(currentDate, selectedDate) => {
+                              if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
+                                return true;
+                              }
+                            }}
+                            onChange={date => {
+                              this.setScheduledTime(date.unix());
+                            }}
+                          />
+                        </CSSTransition>
+                      ) : (
+                        ''
+                      )}
+
+                      {this.state.scheduledTimeFlag ? (
+                        <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                          <Button
+                            style={{ marginTop: '30px', float: 'right' }}
+                            onClick={() => {
+                              this.setState({
+                                formdata: {
+                                  ...this.state.formdata,
+                                  scheduledTime: ''
+                                }
+                              });
+                            }}
+                          >
+                            Clear Time
+                          </Button>
+                        </CSSTransition>
+                      ) : (
+                        ''
+                      )}
                     </Col>
                   </FormGroup>
                   <FormGroup row>
@@ -418,7 +494,7 @@ class AddTask extends Component {
                     )} */}
                   </FormGroup>
                   <FormGroup row>
-                    <Col xs="3">
+                    <Col xs="2">
                       <Button
                         onClick={() => {
                           for (let i = 0; i < parseInt(this.state.formdata.tasks); i++) {
@@ -434,12 +510,49 @@ class AddTask extends Component {
                               size: Sizes['Shoes(UK/US)'][0],
                               quantity: '1',
                               profile: this.profileNames[0],
-                              tasks: 1
+                              tasks: '1',
+                              color: '',
+                              keywordColor: '',
+                              category: 'Accessories',
+                              scheduledTime: '',
+                              atcBypass: false,
+                              captchaBypass: false
                             }
                           });
                         }}
                       >
                         add task(s)
+                      </Button>
+                    </Col>
+                    <Col xs="3">
+                      {' '}
+                      <Button
+                        onClick={() => {
+                          for (const profile in this.props.profiles) {
+                            this.addTaskForProfile(profile);
+                          }
+                          this.setState({
+                            formdata: {
+                              store: Shops[0],
+                              mode: 'url',
+                              modeInput: '',
+                              keywords: '',
+                              proxy: '',
+                              size: Sizes['Shoes(UK/US)'][0],
+                              quantity: '1',
+                              profile: this.profileNames[0],
+                              tasks: '1',
+                              color: '',
+                              keywordColor: '',
+                              category: 'Accessories',
+                              scheduledTime: '',
+                              atcBypass: false,
+                              captchaBypass: false
+                            }
+                          });
+                        }}
+                      >
+                        add task(s) for all profiles
                       </Button>
                     </Col>
                   </FormGroup>

@@ -8,6 +8,8 @@ import Sizes from '../store/sizes';
 import { ipcRenderer } from 'electron';
 import { RESET_CAPTCHA_TOKENS_ARRAY, RESET_CAPTCHA_WINDOW } from '../utils/constants';
 import Datetime from 'react-datetime';
+import Toggle from 'react-toggle';
+import 'react-toggle/style.css';
 var fs = require('fs');
 var moment = require('moment');
 const _ = require('lodash');
@@ -20,6 +22,7 @@ export default class Tasks extends Component {
     this.profileNames = _.keys(this.props.profiles);
     this.taskClasses = this.props.taskClasses;
     this.state = {
+      scheduledTimeFlag: false,
       taskEditModal: false,
       deleteAllTasksModal: false,
       taskExportSuccess: false,
@@ -50,6 +53,13 @@ export default class Tasks extends Component {
 
   forceUpdateHandler = () => {
     this.forceUpdate();
+  };
+
+  toggleScheduledTime = () => {
+    this.setState({
+      scheduledTimeFlag: !this.state.scheduledTimeFlag,
+      modalFormData: { ...this.state.modalFormData, task: { ...this.state.modalFormData.task, scheduledTime: '' } }
+    });
   };
 
   returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
@@ -89,6 +99,7 @@ export default class Tasks extends Component {
   editTask = (index, task) => {
     this.setState(
       {
+        scheduledTimeFlag: task.options.task.scheduledTime === '' ? false : true,
         modalFormData: { task: task.options.task, profileID: task.options.profileID },
         updateTaskID: index
       },
@@ -203,7 +214,7 @@ export default class Tasks extends Component {
       <td>{task.productName === '' ? (task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput) : task.productName}</td>
       <td>{task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined ? 'manual' : moment.unix(task.options.task.scheduledTime).format('HH:mm:ss A dddd, D/MM/YY')}</td>
       <td>{task.options.task.size}</td>
-      <td>{task.options.task.color === '' ? 'n/a' : task.options.task.color}</td>
+      <td>{task.options.task.color === '' ? (task.options.task.keywordColor === '' ? 'n/a' : task.options.task.keywordColor) : task.options.task.color}</td>
       <td>{task.status}</td>
       <td>
         <Button
@@ -377,7 +388,15 @@ export default class Tasks extends Component {
                 <FormGroup row>
                   <Col xs="12">
                     <Label for="modeInput">
-                      {this.state.modalFormData.task.mode === 'url' ? 'url' : this.state.modalFormData.task.mode === 'keywords' ? 'keywords' : this.state.modalFormData.task.mode === 'variant' ? 'variant' : this.state.modalFormData.task.mode === 'homepage' ? 'homepage url' : ''}
+                      {this.state.modalFormData.task.mode === 'url'
+                        ? 'url'
+                        : this.state.modalFormData.task.mode === 'keywords'
+                        ? 'keywords'
+                        : this.state.modalFormData.task.mode === 'variant'
+                        ? 'variant'
+                        : this.state.modalFormData.task.mode === 'homepage'
+                        ? 'homepage url'
+                        : ''}
                     </Label>
                     <Input
                       type="text"
@@ -434,7 +453,7 @@ export default class Tasks extends Component {
               <FormGroup row>
                 {this.state.modalFormData.task.mode !== 'variant' ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="6">
+                    <Col xs="4">
                       <Label for="size">size</Label>
                       <Input
                         type="select"
@@ -452,9 +471,27 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
+                {this.state.modalFormData.task.mode !== 'variant' && !this.state.modalFormData.task.store.includes('Supreme') ? (
+                  <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                    <Col xs="4">
+                      <Label for="keywordColor">color</Label>
+                      <Input
+                        type="text"
+                        name="keywordColor"
+                        id="keywordColor"
+                        value={this.state.modalFormData.task.keywordColor}
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                  </CSSTransition>
+                ) : (
+                  ''
+                )}
                 {this.state.modalFormData.task.store.includes('Supreme') ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="6">
+                    <Col xs="4">
                       <Label for="category">category</Label>
                       <Input
                         type="select"
@@ -483,7 +520,7 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
-                <Col xs="6">
+                <Col xs="4">
                   <Label for="quantity">quantity</Label>
                   <Input
                     type="select"
@@ -506,35 +543,50 @@ export default class Tasks extends Component {
                   </Input>
                 </Col>
                 <Col xs="6" style={{ marginTop: '20px' }}>
-                  <Label for="scheduledTime">Schedule Time</Label>
-                  <Datetime
-                    // value={moment.unix(this.state.modalFormData.task.scheduledTime).format('HH:mm A dddd, MMMM Do YYYY')}
-                    value={this.state.modalFormData.task.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.modalFormData.task.scheduledTime)}
-                    // value={this.state.modalFormData.task.scheduledTime}
-                    dateFormat="dddd, MMMM Do YYYY"
-                    timeFormat="HH:mm:ss A"
-                    isValidDate={(currentDate, selectedDate) => {
-                      if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
-                        return true;
-                      }
-                    }}
-                    onChange={date => {
-                      this.setScheduledTime(date.unix());
-                    }}
-                  />
-                  <Button
-                    style={{ marginTop: '20px' }}
-                    onClick={() => {
-                      this.setState({
-                        modalFormData: {
-                          ...this.state.modalFormData,
-                          task: { ...this.state.modalFormData.task, scheduledTime: '' }
-                        }
-                      });
-                    }}
-                  >
-                    Clear Time
-                  </Button>
+                  <Label>
+                    <span>Schedule Time (Optional)</span>
+                    <Toggle checked={this.state.scheduledTimeFlag} onChange={this.toggleScheduledTime} />
+                  </Label>
+
+                  {this.state.scheduledTimeFlag ? (
+                    <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                      <Datetime
+                        value={this.state.modalFormData.task.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.modalFormData.task.scheduledTime)}
+                        dateFormat="dddd, MMMM Do YYYY"
+                        timeFormat="HH:mm:ss A"
+                        isValidDate={(currentDate, selectedDate) => {
+                          if (currentDate >= Date.now() - 24 * 60 * 60 * 1000) {
+                            return true;
+                          }
+                        }}
+                        onChange={date => {
+                          this.setScheduledTime(date.unix());
+                        }}
+                      />
+                    </CSSTransition>
+                  ) : (
+                    ''
+                  )}
+
+                  {this.state.scheduledTimeFlag ? (
+                    <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                      <Button
+                        style={{ marginTop: '20px' }}
+                        onClick={() => {
+                          this.setState({
+                            modalFormData: {
+                              ...this.state.modalFormData,
+                              task: { ...this.state.modalFormData.task, scheduledTime: '' }
+                            }
+                          });
+                        }}
+                      >
+                        Clear Time
+                      </Button>
+                    </CSSTransition>
+                  ) : (
+                    ''
+                  )}
                 </Col>
               </FormGroup>
               <FormGroup row>
@@ -599,7 +651,7 @@ export default class Tasks extends Component {
                   ''
                 )}
 
-                {this.state.modalFormData.task.store.includes('Supreme') ? (
+                {/* {this.state.modalFormData.task.store.includes('Supreme') ? (
                   <Col xs="3" className="text-center">
                     <Label for="tasks" className="align-items-center" check>
                       Captcha Bypass
@@ -626,7 +678,7 @@ export default class Tasks extends Component {
                   </Col>
                 ) : (
                   ''
-                )}
+                )} */}
               </FormGroup>
             </Form>
           </ModalBody>

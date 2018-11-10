@@ -33,7 +33,7 @@ export default class Task {
     this.options = options;
     this.status = 'Not Started';
     this.active = false;
-    this.keywords = processKeywords(this.options.task.keywords);
+    this.keywords = processKeywords(this.options.task.keywords, options.task.keywordColor);
     this.settings = settings;
     this.proxy = checkoutProxy;
     this.monitorProxy = monitorProxies[Math.floor(Math.random() * monitorProxies.length)];

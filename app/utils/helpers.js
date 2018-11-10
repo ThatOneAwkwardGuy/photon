@@ -4,11 +4,12 @@ const cheerio = require('cheerio');
 const _ = require('lodash');
 const convert = require('xml-js');
 
-export const processKeywords = keywordsString => {
-  if (keywordsString !== '') {
+export const processKeywords = (keywordsString, colorString) => {
+  if (keywordsString !== '' || colorString !== '') {
     const keywordsArray = keywordsString.split(' ');
     const positiveKeywords = [];
     const negativeKeywords = [];
+    positiveKeywords.push(colorString.split(' '));
     keywordsArray.forEach(element => {
       if (element[0] === '+') {
         positiveKeywords.push(element.substr(1));

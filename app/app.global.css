@@ -524,6 +524,7 @@ canvas {
 /* width */
 ::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 
 /* Track */
@@ -585,4 +586,18 @@ canvas {
   color: #ef4744;
   text-shadow: none;
   opacity: 1;
+}
+
+.react-toggle--checked .react-toggle-track {
+  background: #03a9f4;
+}
+
+.react-toggle--checked .react-toggle-track,
+.react-toggle--checked:hover:not(.react-toggle--disabled) .react-toggle-track {
+  background: #03a9f4;
+}
+
+.react-toggle {
+  vertical-align: middle;
+  margin-left: 10px;
 }

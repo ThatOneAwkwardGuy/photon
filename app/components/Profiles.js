@@ -643,6 +643,7 @@ export default class Profiles extends Component {
                       type="text"
                       name="paymentCardnumber"
                       id="paymentCardnumber"
+                      maxLength="16"
                       value={this.state.formdata.paymentCardnumber}
                       onChange={event => {
                         this.handleChangeShippingOrBilling(event);
@@ -655,6 +656,7 @@ export default class Profiles extends Component {
                       type="text"
                       name="paymentCardExpiryMonth"
                       id="paymentCardExpiryMonth"
+                      maxLength="2"
                       value={this.state.formdata.paymentCardExpiryMonth}
                       onChange={event => {
                         this.handleChangeShippingOrBilling(event);
@@ -667,6 +669,7 @@ export default class Profiles extends Component {
                       type="text"
                       name="paymentCardExpiryYear"
                       id="paymentCardExpiryYear"
+                      maxLength="4"
                       value={this.state.formdata.paymentCardExpiryYear}
                       onChange={event => {
                         this.handleChangeShippingOrBilling(event);
@@ -679,6 +682,7 @@ export default class Profiles extends Component {
                       type="text"
                       name="paymentCVV"
                       id="paymentCVV"
+                      maxLength="3"
                       value={this.state.formdata.paymentCVV}
                       onChange={event => {
                         this.handleChangeShippingOrBilling(event);
