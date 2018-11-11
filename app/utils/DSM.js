@@ -3,10 +3,12 @@ import captchaNeeded from '../store/captcha';
 import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
+const moment = require('moment');
 var tough = require('tough-cookie');
+const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
-export default class Shopify {
+export default class DSM {
   constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
     this.options = options;
     this.propertiesHash = propertiesHash;
@@ -14,21 +16,17 @@ export default class Shopify {
     this.proxy = proxy;
     this.stop = stop;
     this.settings = settings;
-    this.run = run;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
     this.cookieJar = cookieJar;
+    this.tokenID = uuidv4();
+    this.run = run;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy:
-        this.options.task.proxy === ''
-          ? this.proxy !== undefined
-            ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`
-            : this.options.task.proxy
-          : this.options.task.proxy
+      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : '') : `http://${this.options.task.proxy}`
     });
   }
 
@@ -37,17 +35,50 @@ export default class Shopify {
     return domainArray[1];
   }
 
+  getQueueBypassCheckoutLink = async () => {
+    try {
+      const response = await this.rp({
+        method: 'GET',
+        uri: `${stores[this.options.task.store]}/checkout.js`,
+        resolveWithFullResponse: true,
+        followRedirect: false,
+        followAllRedirects: false
+        // maxRedirects: 1
+      });
+      return response.response.headers.location;
+    } catch (e) {
+      return e.response.headers.location;
+    }
+  };
+
+  sleep = ms => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sleeping For ${ms}ms`);
+    return new Promise(resolve => setTimeout(resolve, ms));
+  };
+
   addToCart = async (variantID, amount) => {
     const payload = {
       id: variantID,
-      quantity: amount,
-      'properties[_hash]': this.propertiesHash
+      add: '',
+      'properties[_HASH]': this.propertiesHash.replace(/['"]+/g, '')
     };
+    console.log(payload);
+    // const payload = {
+    //   id: variantID,
+    //   // add: ''
+    //   // quantity: amount,
+    //   'properties[_hash]': this.propertiesHash
+    // };
+    console.log(variantID);
     const response = await this.rp({
       method: 'POST',
-      uri: `${stores[this.options.task.store]}/cart/add.js`,
-      form: payload
+      uri: `${stores[this.options.task.store]}/cart/add`,
+      form: payload,
+      resolveWithFullResponse: true,
+      followAllRedirects: true,
+      followRedirect: true
     });
+    console.log(response);
   };
 
   generatePaymentToken = async () => {
@@ -73,41 +104,63 @@ export default class Shopify {
     const response = await this.rp({
       method: 'GET',
       uri: `${checkoutURL}?step=payment_method`,
-      resolveWithFullResponse: true
+      resolveWithFullResponse: true,
+      followAllRedirects: true,
+      followRedirect: true
     });
-    // response.headers['set-cookie'].forEach(cookie => {
-    //   if (cookie.includes('_shopify_s')) {
-    //     const replacedCookie = cookie.replace('_shopify_s', '_s');
-    //     const splitCookie = replacedCookie.split(';');
-    //     this.cookieJar.setCookie(splitCookie[0], stores[this.options.task.store]);
-    //   } else if (cookie.includes('_shopify_y')) {
-    //     const replacedCookie = cookie.replace('_shopify_y', '_y');
-    //     const splitCookie = replacedCookie.split(';');
-    //     this.cookieJar.setCookie(splitCookie[0], stores[this.options.task.store]);
-    //   }
-    // });
-    // this.cookieJar.setCookie('_shopify_fs=2018-10-12T17%3A56%3A06.398Z', stores[this.options.task.store]);
-    // this.cookieJar.setCookie('_shopify_sa_t=2018-10-12T17%3A56%3A06.411Z', stores[this.options.task.store]);
-
-    // if (cookie.includes('_shopify_s')) {
-    //   const splitCookie = cookie.split(/[\s,;=]+/);
-    //   let newCookie = new tough.Cookie({
-    //     key: '_s',
-    //     value: splitCookie[1],
-    //     domain: stores[this.options.task.store].slice(8)
-    //   });
-    //   this.cookieJar.setCookie(newCookie, stores[this.options.task.store]);
-    // } else if (cookie.includes('_shopify_y')) {
-    //   const splitCookie = cookie.split(/[\s,;=]+/);
-    //   let newCookie = new tough.Cookie({
-    //     key: '_y',
-    //     value: splitCookie[1],
-    //     domain: stores[this.options.task.store].slice(8)
-    //   });
-    //   this.cookieJar.setCookie(newCookie, stores[this.options.task.store]);
-    // }
-    // });
     return response.body;
+  };
+
+  pollQueueOrCheckout = async url => {
+    console.log(url);
+    if (url.includes('processing')) {
+      this.handleChangeStatus('Processing');
+    } else if (url.includes('throttle') || url.includes('queue')) {
+      this.handleChangeStatus('Waiting In Queue');
+    } else if (url.includes('stock_problems' && this.settings.monitorForRestock)) {
+      this.handleChangeStatus('Monitoring For Restock');
+    }
+    try {
+      const response = await this.rp({
+        method: 'GET',
+        uri: url,
+        resolveWithFullResponse: true
+      });
+      if (response.request.href.includes('processing')) {
+        await this.pollQueueOrCheckout(response.request.href);
+      } else if (response.request.href.includes('validate=true')) {
+        const $ = cheerio.load(response.body);
+        if (
+          response.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`) ||
+          response.body.includes('There was an error processing your payment. Please try again.')
+        ) {
+          this.handleChangeStatus('Error Processing Payment');
+          this.stop(true);
+        } else if (response.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
+          this.handleChangeStatus('Stuck On Customer Info Page');
+          this.stop(true);
+        } else if (response.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
+          this.handleChangeStatus('Stuck On Shipping Method Page');
+          this.stop(true);
+        } else {
+          this.handleChangeStatus('Check Email');
+          this.stop(true);
+        }
+      } else if (url.includes('throttle') || url.includes('queue')) {
+        await this.pollQueueOrCheckout(response.request.href);
+      } else if (url.includes('stock_problems') && this.settings.monitorForRestock) {
+        this.handleChangeStatus('Monitoring For Restock');
+        await this.sleep(this.settings.monitorTime);
+        await this.pollQueueOrCheckout(response.request.href);
+      } else if (url.includes('stock_problems') && !this.settings.monitorForRestock) {
+        this.handleChangeStatus('Out Of Stock');
+      } else {
+        this.checkoutWithCheckoutURL(url);
+      }
+    } catch (e) {
+      this.stop(false);
+      console.error(e);
+    }
   };
 
   getCheckoutUrl = async () => {
@@ -135,7 +188,6 @@ export default class Shopify {
       'checkout[buyer_accepts_marketing]': '0',
       'checkout[shipping_address][first_name]': `${this.options.profile.deliveryFirstName}`,
       'checkout[shipping_address][last_name]': `${this.options.profile.deliveryLastName}`,
-      'checkout[shipping_address][company]': '',
       'checkout[shipping_address][address1]': `${this.options.profile.deliveryAddress}`,
       'checkout[shipping_address][address2]': `${this.options.profile.deliveryAptorSuite}`,
       'checkout[shipping_address][city]': `${this.options.profile.deliveryCity}`,
@@ -149,18 +201,12 @@ export default class Shopify {
       'checkout[client_details][javascript_enabled]': '1',
       button: ''
     };
-    console.log(this.options);
     if (captchaToken !== undefined) {
       payload['g-recaptcha-response'] = captchaToken;
     }
-    // console.log(checkoutURL);
-    // console.log(payload);
-    // this.cookieJar.setCookie('_shopify_sa_p=', stores[this.options.task.store]);
-    // this.cookieJar.setCookie('__olAlertsForShop=[]', stores[this.options.task.store]);
-    // this.cookieJar.setCookie('hide_shopify_pay_for_checkout=false', stores[this.options.task.store]);
-    // this.cookieJar.setCookie('shopify_pay_redirect=false', stores[this.options.task.store]);
-    // this.cookieJar.setCookie('sig-shopify=true', stores[this.options.task.store]);
-
+    if (!stores[this.options.task.store].includes('palace')) {
+      payload['checkout[shipping_address][company]'] = '';
+    }
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
@@ -168,25 +214,9 @@ export default class Shopify {
       resolveWithFullResponse: true,
       form: payload
     });
-    console.log('sendCustomerInfo Response');
     console.log(payload);
     console.log(response);
     return response;
-  };
-
-  returnPaymentID = paymentBody => {
-    const $ = cheerio.load(paymentBody);
-    return $('div.section.section--payment-method input').attr('value');
-  };
-
-  returnAuthToken = paymentBody => {
-    const $ = cheerio.load(paymentBody);
-    return $('input[name="authenticity_token"]').attr('value');
-  };
-
-  returnOrderTotal = paymentBody => {
-    const $ = cheerio.load(paymentBody);
-    return $('span[data-checkout-subtotal-price-target]')['0'].attribs['data-checkout-subtotal-price-target'];
   };
 
   returnBodyInfo = body => {
@@ -212,7 +242,6 @@ export default class Shopify {
       uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
       body: payload
     });
-    console.log(response);
     for (const shippingRates of response.shipping_rates) {
       if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
         const shipOpt = shippingRates.name.replace(/ /g, '%20');
@@ -224,7 +253,6 @@ export default class Shopify {
           token: shippingOption,
           price: shipPrc
         };
-        console.log(shippingInfo);
         return shippingInfo;
       }
     }
@@ -237,7 +265,7 @@ export default class Shopify {
       authenticity_token: `${authToken}`,
       previous_step: 'shipping_method',
       step: 'payment_method',
-      'checkout[shipping_rate][id]': `${encodeURIComponent(shippingToken).replace('%3A', ':')}`,
+      'checkout[shipping_rate][id]': `${encodeURIComponent(shippingToken)}`,
       button: '',
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
@@ -250,13 +278,10 @@ export default class Shopify {
       resolveWithFullResponse: true,
       form: payload
     });
-    console.log('sendShippingMethod Response');
-    console.log(payload);
-    console.log(response);
     return response;
   };
 
-  sendCheckoutInfo = async (paymentToken, shippingToken, shippingPrice, paymentID, authToken, checkoutURL, orderTotal) => {
+  sendCheckoutInfo = async (paymentToken, shippingPrice, paymentID, authToken, checkoutURL, orderTotal) => {
     const payload = {
       utf8: '✓',
       _method: 'patch',
@@ -276,7 +301,6 @@ export default class Shopify {
       'checkout[billing_address][province]': `${this.options.profile.billingProvince}`,
       'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
       'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
-      // 'checkout[shipping_rate][id]': `${shippingToken}`,
       complete: '1',
       'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
       'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
@@ -288,11 +312,8 @@ export default class Shopify {
       uri: checkoutURL,
       form: payload,
       resolveWithFullResponse: true,
-      followAllRedirects: true,
-      followRedirect: true
+      followAllRedirects: true
     });
-    console.log('sendCheckoutInfo Response');
-    console.log(payload);
     console.log(response);
     return response;
   };
@@ -305,45 +326,137 @@ export default class Shopify {
     });
   };
 
-  checkoutWithVariant = async variantID => {
-    const start = Date.now();
-    try {
-      await this.addToCart(variantID, this.options.task.quantity);
-      // const [paymentToken, checkoutURL, shipping] = await Promise.all([this.generatePaymentToken(), this.getCheckoutUrl(), this.getShippingToken()]);
-      const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
-      const checkoutURL = this.shopifyCheckoutURL;
-      // ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
-      // ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
-      //   cookies: this.cookieJar.getCookieString(checkoutURL),
-      //   checkoutURL: checkoutURL,
-      //   baseURL: stores[this.options.task.store]
-      // });
+  checkoutWithCheckoutURL = async checkoutURL => {
+    if (captchaNeeded[this.options.task.store]) {
+      ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
+      ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+        cookies: `${this.cookieJar.getCookieString(checkoutURL)}`,
+        checkoutURL: checkoutURL,
+        id: this.tokenID,
+        proxy: this.proxy,
+        baseURL: stores[this.options.task.store]
+      });
       this.handleChangeStatus('Waiting For Captcha');
-      // ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+      ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+        console.log(captchaToken);
+        if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
+          this.handleChangeStatus('Monitoring For Restock');
+          await this.pollQueueOrCheckout(captchaToken.checkoutURL);
+        } else if (captchaToken.checkoutURL.includes('stock_problems') && !this.settings.monitorForRestock) {
+          this.handleChangeStatus('Out Of Stock');
+        } else {
+          this.handleChangeStatus('Checking Out');
+          const checkoutBody = await this.getCheckoutBody(checkoutURL);
+          const bodyInfo = this.returnBodyInfo(checkoutBody);
+          const paymentID = bodyInfo.paymentID;
+          const authToken = bodyInfo.authToken;
+          const orderTotal = bodyInfo.orderTotal;
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
+          this.handleChangeStatus('Sending Customer Info');
+          const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
+          const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
+          this.handleChangeStatus('Sending Shipping Info');
+          const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+          const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
+          this.handleChangeStatus('Sending Payment Info');
+          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+          await this.pollQueueOrCheckout(checkoutResponse.request.href);
+        }
+      });
+    } else {
       this.handleChangeStatus('Checking Out');
       const checkoutBody = await this.getCheckoutBody(checkoutURL);
       const bodyInfo = this.returnBodyInfo(checkoutBody);
       const paymentID = bodyInfo.paymentID;
       const authToken = bodyInfo.authToken;
       const orderTotal = bodyInfo.orderTotal;
-      const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, undefined);
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
+      const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
       const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
       const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
       const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
-      console.log(Date.now() - start);
-      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-      if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
-        this.handleChangeStatus('Error Processing Payment');
-      } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
-        this.handleChangeStatus('Stuck On Customer Info Page');
-      } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
-        this.handleChangeStatus('Stuck On Shipping Method Page');
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
+      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+      await this.pollQueueOrCheckout(checkoutResponse.request.href);
+    }
+  };
+
+  checkoutWithVariant = async variantID => {
+    try {
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Adding To Cart`);
+      this.handleChangeStatus('Adding To Cart');
+      await this.addToCart(variantID, this.options.task.quantity);
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting  Shipping and Payment Tokens`);
+      this.handleChangeStatus('Getting Shipping and Payment Tokens');
+      const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
+      let checkoutURL = this.shopifyCheckoutURL;
+      if (captchaNeeded[this.options.task.store]) {
+        ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
+        console.log(this.cookieJar.getCookieString(checkoutURL));
+        ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
+          cookies: `${this.cookieJar.getCookieString(checkoutURL)}`,
+          checkoutURL: checkoutURL,
+          id: this.tokenID,
+          proxy: this.proxy,
+          baseURL: stores[this.options.task.store]
+        });
+        this.handleChangeStatus('Waiting For Captcha');
+        ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+          try {
+            if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
+              console.log('TEST1');
+              this.handleChangeStatus('Monitoring For Restock');
+              await this.pollQueueOrCheckout(captchaToken.checkoutURL);
+            } else if (captchaToken.checkoutURL.includes('stock_problems') && !this.settings.monitorForRestock) {
+              console.log('TEST2');
+              this.handleChangeStatus('Out Of Stock');
+            } else {
+              console.log('TEST3');
+              this.handleChangeStatus('Checking Out');
+              const checkoutBody = await this.getCheckoutBody(checkoutURL);
+              const bodyInfo = this.returnBodyInfo(checkoutBody);
+              const paymentID = bodyInfo.paymentID;
+              const authToken = bodyInfo.authToken;
+              const orderTotal = bodyInfo.orderTotal;
+              console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
+              this.handleChangeStatus('Sending Customer Info');
+              const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
+              const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+              console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
+              this.handleChangeStatus('Sending Shipping Info');
+              const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+              const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+              console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
+              this.handleChangeStatus('Sending Payment Info');
+              const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+              await this.pollQueueOrCheckout(checkoutResponse.request.href);
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        });
       } else {
-        this.handleChangeStatus('Check Email');
+        this.handleChangeStatus('Checking Out');
+        const checkoutBody = await this.getCheckoutBody(checkoutURL);
+        const bodyInfo = this.returnBodyInfo(checkoutBody);
+        const paymentID = bodyInfo.paymentID;
+        const authToken = bodyInfo.authToken;
+        const orderTotal = bodyInfo.orderTotal;
+        console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
+        const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
+        const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+        console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
+        const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+        const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+        console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
+        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+        await this.pollQueueOrCheckout(checkoutResponse.request.href);
       }
-      // });
-      this.stop(true);
     } catch (e) {
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout - Error`);
       console.log(e);
       if (_.get(e, 'options.uri').includes('stock_problems')) {
         this.handleChangeStatus('Item Out Of Stock');
@@ -352,7 +465,7 @@ export default class Shopify {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
-      // this.stop(false);
+      this.stop(false);
     }
   };
 }

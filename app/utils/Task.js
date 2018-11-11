@@ -322,7 +322,7 @@ export default class Task {
           return VariantIds;
         }
       });
-      if (link.includes('doverstreetmarket')) {
+      if (!link.includes('eflash-us') && link.includes('doverstreetmarket')) {
         try {
           const response = await rp({
             method: 'GET',
@@ -332,6 +332,8 @@ export default class Task {
         } catch (e) {
           console.error(e);
         }
+      } else if (link.includes('eflash-us') && link.includes('doverstreetmarket')) {
+        propertiesHash = response.match(/.val\((.*?)\)/)[1];
       }
       return { variantIDs: variantsObj, propertiesHash: propertiesHash };
     } catch (e) {
@@ -374,6 +376,7 @@ export default class Task {
   };
 
   getVariantsFromHomepage = async siteUrl => {
+    console.log(this.keywords);
     try {
       const response = await rp({
         method: 'GET',
@@ -384,7 +387,7 @@ export default class Task {
       });
       const page = cheerio.load(response);
       const pageURLs = page('a').map((i, element) => {
-        const textArray = convertProductNameIntoArray(page(element).text());
+        let textArray = convertProductNameIntoArray(page(element).text()).filter(elem => elem !== '');
         if (
           textArray.length > 0 &&
           _.difference(this.keywords.positiveKeywords, textArray).length === 0 &&

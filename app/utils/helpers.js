@@ -7,9 +7,11 @@ const convert = require('xml-js');
 export const processKeywords = (keywordsString, colorString) => {
   if (keywordsString !== '' || colorString !== '') {
     const keywordsArray = keywordsString.split(' ');
-    const positiveKeywords = [];
+    let positiveKeywords = [];
     const negativeKeywords = [];
-    positiveKeywords.push(colorString.split(' '));
+    if (colorString !== '') {
+      positiveKeywords = positiveKeywords.concat(colorString.toLowerCase().split(/[^a-zA-Z0-9']/));
+    }
     keywordsArray.forEach(element => {
       if (element[0] === '+') {
         positiveKeywords.push(element.substr(1));
@@ -53,8 +55,8 @@ export const convertProductNameIntoArray = name => {
 export const checkSitemapJSONForKeywords = (sitemapObj, keywords) => {
   for (const product of sitemapObj.products) {
     const productNameArray = product.title.toLowerCase().split(/[^a-zA-Z0-9']/);
-    const positiveKeywordsCount = _.difference(keywords.positiveKeywords, productNameArray);
-    const negativeKeywordsCount = _.difference(keywords.negativeKeywords, productNameArray);
+    // const positiveKeywordsCount = _.difference(keywords.positiveKeywords, productNameArray);
+    // const negativeKeywordsCount = _.difference(keywords.negativeKeywords, productNameArray);
     if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
       // Returns product object with variants array already there
       return product;

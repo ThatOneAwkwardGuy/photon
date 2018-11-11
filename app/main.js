@@ -184,7 +184,6 @@ app.on('ready', async () => {
   });
 
   ipcMain.on(RESET_CAPTCHA_WINDOW, (event, arg) => {
-    // captchaWindow.reload();
     captchaWindow.loadURL(
       url.format({
         pathname: path.join(__dirname, 'index.html'),

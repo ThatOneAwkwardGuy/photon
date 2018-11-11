@@ -18,7 +18,7 @@ export default {
   Concepts: false,
   CrtsdSnkrs: false,
   'DSM-EU': false,
-  'DSM-US': false,
+  'DSM-US': true,
   Exclucity: false,
   ExtraButter: false,
   Feature: false,
