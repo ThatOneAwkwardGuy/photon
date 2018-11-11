@@ -40,7 +40,9 @@ export default class Tasks extends Component {
           profile: '',
           tasks: '1',
           color: '',
-          scheduledTime: ''
+          scheduledTime: '',
+          monitorDelay: '',
+          checkoutDelay: ''
         },
         profileID: ''
       }
@@ -212,7 +214,11 @@ export default class Tasks extends Component {
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
       <td>{task.productName === '' ? (task.options.task.modeInput === '' ? task.options.task.keywords : task.options.task.modeInput) : task.productName}</td>
-      <td>{task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined ? 'manual' : moment.unix(task.options.task.scheduledTime).format('HH:mm:ss A dddd, D/MM/YY')}</td>
+      <td>
+        {task.options.task.scheduledTime === '' || task.options.task.scheduledTime === undefined
+          ? 'manual'
+          : moment.unix(task.options.task.scheduledTime).format('HH:mm:ss A dddd, D/MM/YY')}
+      </td>
       <td>{task.options.task.size}</td>
       <td>{task.options.task.color === '' ? (task.options.task.keywordColor === '' ? 'n/a' : task.options.task.keywordColor) : task.options.task.color}</td>
       <td>{task.status}</td>
@@ -436,7 +442,7 @@ export default class Tasks extends Component {
                 ''
               )}
               <FormGroup row>
-                <Col xs="12">
+                <Col>
                   <Label for="proxy">proxy (optional)</Label>
                   <Input
                     type="text"
@@ -449,6 +455,38 @@ export default class Tasks extends Component {
                     }}
                   />
                 </Col>
+                <Col>
+                  <Label for="monitorDelay">monitor delay (ms)(optional)</Label>
+                  <Input
+                    type="number"
+                    name="monitorDelay"
+                    id="monitorDelay"
+                    value={this.state.modalFormData.task.monitorDelay}
+                    placeholder=""
+                    onChange={event => {
+                      this.handleChange(event);
+                    }}
+                  />
+                </Col>
+                {this.state.modalFormData.task.store.includes('Supreme') ? (
+                  <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                    <Col>
+                      <Label for="checkoutDelay">checkout delay (ms)(optional)</Label>
+                      <Input
+                        type="number"
+                        name="checkoutDelay"
+                        id="checkoutDelay"
+                        value={this.state.modalFormData.task.checkoutDelay}
+                        placeholder=""
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                  </CSSTransition>
+                ) : (
+                  ''
+                )}
               </FormGroup>
               <FormGroup row>
                 {this.state.modalFormData.task.mode !== 'variant' ? (
@@ -551,7 +589,11 @@ export default class Tasks extends Component {
                   {this.state.scheduledTimeFlag ? (
                     <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                       <Datetime
-                        value={this.state.modalFormData.task.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.modalFormData.task.scheduledTime)}
+                        value={
+                          this.state.modalFormData.task.scheduledTime === ''
+                            ? moment.unix((Date.now() / 1000) | 0)
+                            : moment.unix(this.state.modalFormData.task.scheduledTime)
+                        }
                         dateFormat="dddd, MMMM Do YYYY"
                         timeFormat="HH:mm:ss A"
                         isValidDate={(currentDate, selectedDate) => {

@@ -9,14 +9,17 @@ const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
 export default class DSM {
-  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
+  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run, handleChangeProductName) {
     this.options = options;
     this.propertiesHash = propertiesHash;
     this.handleChangeStatus = handleChangeStatus;
+    this.handleChangeProductName = handleChangeProductName;
     this.proxy = proxy;
     this.stop = stop;
     this.settings = settings;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
+    this.monitorDelay = options.task.monitorDelay === '' ? this.settings.monitorTime : options.task.monitorDelay;
+    this.checkoutDelay = options.task.checkoutDelay === '' ? this.settings.checkoutTime : options.task.checkoutDelay;
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
@@ -26,7 +29,12 @@ export default class DSM {
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : '') : `http://${this.options.task.proxy}`
+      proxy:
+        this.options.task.proxy === ''
+          ? this.proxy !== undefined
+            ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`
+            : ''
+          : `http://${this.options.task.proxy}`
     });
   }
 
@@ -57,28 +65,37 @@ export default class DSM {
   };
 
   addToCart = async (variantID, amount) => {
-    const payload = {
-      id: variantID,
-      add: '',
-      'properties[_HASH]': this.propertiesHash.replace(/['"]+/g, '')
-    };
-    console.log(payload);
-    // const payload = {
-    //   id: variantID,
-    //   // add: ''
-    //   // quantity: amount,
-    //   'properties[_hash]': this.propertiesHash
-    // };
-    console.log(variantID);
-    const response = await this.rp({
-      method: 'POST',
-      uri: `${stores[this.options.task.store]}/cart/add`,
-      form: payload,
-      resolveWithFullResponse: true,
-      followAllRedirects: true,
-      followRedirect: true
-    });
-    console.log(response);
+    let payload;
+
+    if (this.options.task.store === 'DSM-US') {
+      payload = {
+        id: variantID,
+        add: '',
+        'properties[_HASH]': this.propertiesHash.replace(/['"]+/g, '')
+      };
+    } else if (this.options.task.store === 'DSM-EU') {
+      payload = {
+        id: variantID,
+        quantity: amount,
+        'properties[_hash]': this.propertiesHash
+      };
+    }
+
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: `${stores[this.options.task.store]}/cart/add.js`,
+        form: payload,
+        resolveWithFullResponse: true,
+        followAllRedirects: true,
+        followRedirect: true
+      });
+      const productInfo = JSON.parse(response.body);
+      console.log(productInfo);
+      this.handleChangeProductName(productInfo.title);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   generatePaymentToken = async () => {
@@ -112,7 +129,6 @@ export default class DSM {
   };
 
   pollQueueOrCheckout = async url => {
-    console.log(url);
     if (url.includes('processing')) {
       this.handleChangeStatus('Processing');
     } else if (url.includes('throttle') || url.includes('queue')) {
@@ -131,7 +147,9 @@ export default class DSM {
       } else if (response.request.href.includes('validate=true')) {
         const $ = cheerio.load(response.body);
         if (
-          response.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`) ||
+          response.body.includes(
+            `<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`
+          ) ||
           response.body.includes('There was an error processing your payment. Please try again.')
         ) {
           this.handleChangeStatus('Error Processing Payment');
@@ -150,7 +168,7 @@ export default class DSM {
         await this.pollQueueOrCheckout(response.request.href);
       } else if (url.includes('stock_problems') && this.settings.monitorForRestock) {
         this.handleChangeStatus('Monitoring For Restock');
-        await this.sleep(this.settings.monitorTime);
+        await this.sleep(this.monitorDelay);
         await this.pollQueueOrCheckout(response.request.href);
       } else if (url.includes('stock_problems') && !this.settings.monitorForRestock) {
         this.handleChangeStatus('Out Of Stock');
@@ -214,8 +232,6 @@ export default class DSM {
       resolveWithFullResponse: true,
       form: payload
     });
-    console.log(payload);
-    console.log(response);
     return response;
   };
 
@@ -314,7 +330,6 @@ export default class DSM {
       resolveWithFullResponse: true,
       followAllRedirects: true
     });
-    console.log(response);
     return response;
   };
 
@@ -338,7 +353,6 @@ export default class DSM {
       });
       this.handleChangeStatus('Waiting For Captcha');
       ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
-        console.log(captchaToken);
         if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
           this.handleChangeStatus('Monitoring For Restock');
           await this.pollQueueOrCheckout(captchaToken.checkoutURL);
@@ -395,7 +409,6 @@ export default class DSM {
       let checkoutURL = this.shopifyCheckoutURL;
       if (captchaNeeded[this.options.task.store]) {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
-        console.log(this.cookieJar.getCookieString(checkoutURL));
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
           cookies: `${this.cookieJar.getCookieString(checkoutURL)}`,
           checkoutURL: checkoutURL,
@@ -406,15 +419,19 @@ export default class DSM {
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
           try {
-            if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
-              console.log('TEST1');
+            if ((captchaToken.checkoutURL.includes('stock_problems') || captchaToken.checkoutURL.includes('chrome-error')) && this.settings.monitorForRestock) {
               this.handleChangeStatus('Monitoring For Restock');
-              await this.pollQueueOrCheckout(captchaToken.checkoutURL);
-            } else if (captchaToken.checkoutURL.includes('stock_problems') && !this.settings.monitorForRestock) {
-              console.log('TEST2');
+              if (captchaToken.checkoutURL.includes('chrome-error')) {
+                this.handleChangeStatus('Error Trying To Monitor Product');
+              } else {
+                await this.pollQueueOrCheckout(captchaToken.checkoutURL);
+              }
+            } else if (
+              (captchaToken.checkoutURL.includes('stock_problems') || captchaToken.checkoutURL.includes('chrome-error')) &&
+              !this.settings.monitorForRestock
+            ) {
               this.handleChangeStatus('Out Of Stock');
             } else {
-              console.log('TEST3');
               this.handleChangeStatus('Checking Out');
               const checkoutBody = await this.getCheckoutBody(checkoutURL);
               const bodyInfo = this.returnBodyInfo(checkoutBody);
@@ -431,7 +448,14 @@ export default class DSM {
               const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
               console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
               this.handleChangeStatus('Sending Payment Info');
-              const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+              const checkoutResponse = await this.sendCheckoutInfo(
+                paymentToken,
+                shipping.price,
+                paymentID,
+                checkoutBodyInfo.authToken,
+                checkoutURL,
+                orderTotal
+              );
               await this.pollQueueOrCheckout(checkoutResponse.request.href);
             }
           } catch (error) {

@@ -178,7 +178,17 @@ export default class Task {
   };
 
   Supreme = () => {
-    this.supremeInstance = new Supreme(this.options, this.keywords, this.handleChangeStatus, this.settings, this.proxy, this.monitorProxy, this.stopTask, this.handleChangeProductName, this.run);
+    this.supremeInstance = new Supreme(
+      this.options,
+      this.keywords,
+      this.handleChangeStatus,
+      this.settings,
+      this.proxy,
+      this.monitorProxy,
+      this.stopTask,
+      this.handleChangeProductName,
+      this.run
+    );
     try {
       this.supremeInstance.checkout();
     } catch (e) {
@@ -193,12 +203,24 @@ export default class Task {
   };
 
   DSM = async () => {
+    this.handleChangeStatus('Generating Checkout');
     this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
     const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
     const content = await this.getVariantsFromHomepage(pageURL);
     const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const DSMInstance = new DSM(this.options, this.handleChangeStatus, content.propertiesHash, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar, this.settings, this.run);
+      const DSMInstance = new DSM(
+        this.options,
+        this.handleChangeStatus,
+        content.propertiesHash,
+        this.proxy,
+        this.stopTask,
+        this.shopifyCheckoutURL,
+        this.cookieJar,
+        this.settings,
+        this.run,
+        this.handleChangeProductName
+      );
       const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -210,7 +232,16 @@ export default class Task {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
     const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
     if (variantID !== undefined) {
-      const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar, this.settings, this.run);
+      const shopifyCheckoutClass = new Shopify(
+        this.options,
+        this.handleChangeStatus,
+        this.proxy,
+        this.stopTask,
+        this.shopifyCheckoutURL,
+        this.cookieJar,
+        this.settings,
+        this.run
+      );
       const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
       return checkoutResponse;
     } else {
@@ -230,7 +261,16 @@ export default class Task {
   };
 
   variantMode = async variant => {
-    const shopifyCheckoutClass = new Shopify(this.options, this.handleChangeStatus, this.proxy, this.stopTask, this.shopifyCheckoutURL, this.cookieJar, this.settings, this.run);
+    const shopifyCheckoutClass = new Shopify(
+      this.options,
+      this.handleChangeStatus,
+      this.proxy,
+      this.stopTask,
+      this.shopifyCheckoutURL,
+      this.cookieJar,
+      this.settings,
+      this.run
+    );
     const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(this.options.task.modeInput);
   };
 
@@ -328,7 +368,10 @@ export default class Task {
             method: 'GET',
             uri: 'https://cdn.shopify.com/s/files/1/1940/4611/t/1/assets/custom.js'
           });
-          propertiesHash = response.slice(response.indexOf(`<input type="hidden" value="`) + `<input type="hidden" value="`.length, response.indexOf(`" name="properties[_hash]"`));
+          propertiesHash = response.slice(
+            response.indexOf(`<input type="hidden" value="`) + `<input type="hidden" value="`.length,
+            response.indexOf(`" name="properties[_hash]"`)
+          );
         } catch (e) {
           console.error(e);
         }
@@ -376,7 +419,6 @@ export default class Task {
   };
 
   getVariantsFromHomepage = async siteUrl => {
-    console.log(this.keywords);
     try {
       const response = await rp({
         method: 'GET',

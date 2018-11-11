@@ -4,7 +4,6 @@ import { undefeatedAccountLogin } from './helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
-var tough = require('tough-cookie');
 const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
@@ -16,6 +15,8 @@ export default class Shopify {
     this.stop = stop;
     this.settings = settings;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
+    this.monitorDelay = options.task.monitorDelay === '' ? this.settings.monitorTime : options.task.monitorDelay;
+    this.checkoutDelay = options.task.checkoutDelay === '' ? this.settings.checkoutTime : options.task.checkoutDelay;
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
@@ -25,7 +26,12 @@ export default class Shopify {
         Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
       },
       jar: this.cookieJar,
-      proxy: this.options.task.proxy === '' ? (this.proxy !== undefined ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}` : '') : `http://${this.options.task.proxy}`
+      proxy:
+        this.options.task.proxy === ''
+          ? this.proxy !== undefined
+            ? `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`
+            : ''
+          : `http://${this.options.task.proxy}`
     });
   }
 
@@ -116,7 +122,9 @@ export default class Shopify {
       } else if (response.request.href.includes('validate=true')) {
         const $ = cheerio.load(response.body);
         if (
-          response.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`) ||
+          response.body.includes(
+            `<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`
+          ) ||
           response.body.includes('There was an error processing your payment. Please try again.')
         ) {
           this.handleChangeStatus('Error Processing Payment');
@@ -135,7 +143,7 @@ export default class Shopify {
         await this.pollQueueOrCheckout(response.request.href);
       } else if (url.includes('stock_problems') && this.settings.monitorForRestock) {
         this.handleChangeStatus('Monitoring For Restock');
-        await this.sleep(this.settings.monitorTime);
+        await this.sleep(this.monitorDelay);
         await this.pollQueueOrCheckout(response.request.href);
       } else if (url.includes('stock_problems') && !this.settings.monitorForRestock) {
         this.handleChangeStatus('Out Of Stock');
@@ -413,7 +421,14 @@ export default class Shopify {
               const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
               console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
               this.handleChangeStatus('Sending Payment Info');
-              const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
+              const checkoutResponse = await this.sendCheckoutInfo(
+                paymentToken,
+                shipping.price,
+                paymentID,
+                checkoutBodyInfo.authToken,
+                checkoutURL,
+                orderTotal
+              );
               await this.pollQueueOrCheckout(checkoutResponse.request.href);
             }
           } catch (error) {

@@ -6,19 +6,11 @@ let isRecaptchaFrame = () => {
   return /https:\/\/www.google.com\/recaptcha\/api2\/anchor/.test(window.location.href);
 };
 
-window.onload = () => {
-  document.querySelector('body').style.height = '200px';
-  document.querySelector('html').style.visibility = 'hidden';
-  document.querySelector('.g-recaptcha').style.visibility = 'visible';
-  document.querySelector('.g-recaptcha').style.position = 'fixed';
-  document.querySelector('.g-recaptcha').style.top = '10px';
-  document.querySelector('.g-recaptcha').style.marginTop = '0px';
-};
-
 checkCaptcha = () => {
   console.log('Checking For Captcha');
   // console.log(isRecaptchaFrame());
-  if (document.location.href.includes('stock_problems')) {
+  console.log(document.location.href);
+  if (document.location.href.includes('stock_problems') || document.location.href.includes('chrome-error')) {
     ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: '', id: '', supremeAuthToken: '', cookies: '' });
   }
   const tokenID = remote.getGlobal('captcaTokenID');
@@ -71,8 +63,16 @@ getSupremeAuthToken = () => {
 };
 
 if (!window.location.href.includes('google.com')) {
-  captchaChecker = setInterval(checkCaptcha, 500);
+  captchaChecker = setInterval(checkCaptcha, 300);
 }
+window.onload = () => {
+  document.querySelector('body').style.height = '200px';
+  document.querySelector('html').style.visibility = 'hidden';
+  document.querySelector('.g-recaptcha').style.visibility = 'visible';
+  document.querySelector('.g-recaptcha').style.position = 'fixed';
+  document.querySelector('.g-recaptcha').style.top = '10px';
+  document.querySelector('.g-recaptcha').style.marginTop = '0px';
+};
 // ipcMain.on('send-captcha-token', (event, arg) => {
 //   clearInterval(captchaChecker);
 // });

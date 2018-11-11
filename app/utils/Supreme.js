@@ -8,8 +8,13 @@ const uuidv4 = require('uuid/v4');
 import stores from '../store/shops';
 import countryCodes from '../store/countryCodes';
 import states from '../store/states';
-import { SEND_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, FINISH_SENDING_CAPTCHA_TOKEN, BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
-import { start } from 'repl';
+import {
+  SEND_SUPREME_CHECKOUT_COOKIE,
+  OPEN_CAPTCHA_WINDOW,
+  FINISH_SENDING_CAPTCHA_TOKEN,
+  BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
+  RECEIVE_CAPTCHA_TOKEN
+} from '../utils/constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run) {
     this.startTime = '';
@@ -22,6 +27,8 @@ export default class Supreme {
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
     this.run;
+    this.monitorDelay = options.task.monitorDelay === '' ? this.settings.monitorTime : options.task.monitorDelay;
+    this.checkoutDelay = options.task.checkoutDelay === '' ? this.settings.checkoutTime : options.task.checkoutDelay;
     this.proxy =
       this.options.task.proxy === ''
         ? proxy !== undefined
@@ -125,7 +132,8 @@ export default class Supreme {
         'order[billing_zip]': this.options.profile.billingZip,
         'order[billing_city]': this.options.profile.billingCity,
         'order[billing_state]': states[this.options.profile.billingProvince],
-        'order[billing_country]': this.options.profile.billingCountry === 'United States' ? 'USA' : this.options.profile.billingCountry === 'Canada' ? 'CANADA' : '',
+        'order[billing_country]':
+          this.options.profile.billingCountry === 'United States' ? 'USA' : this.options.profile.billingCountry === 'Canada' ? 'CANADA' : '',
         asec: 'Rmasn',
         same_as_billing_address: '1',
         store_credit_id: '',
@@ -229,7 +237,7 @@ export default class Supreme {
         if (this.active) {
           this.monitoringRefreshCount++;
           this.monitoring = true;
-          this.monitoringTimeout = setTimeout(this.checkout, this.settings.monitorTime);
+          this.monitoringTimeout = setTimeout(this.checkout, this.monitorDelay);
           console.error(`Monitoring - Product Not Currently Found - ${this.options.task.keywords}`);
           this.handleChangeStatus(`Monitoring - Product Not Currently Found ${this.monitoringRefreshCount}`);
           return ['', '', ''];
@@ -243,7 +251,7 @@ export default class Supreme {
         console.error(`Monitoring - Size/Style Not Currently Found - ${this.options.task.keywords}`);
         this.monitoring = true;
         this.handleChangeStatus('Monitoring - Size/Style Not Currently Found');
-        this.monitoringTimeout = setTimeout(this.checkout, this.settings.monitorTime);
+        this.monitoringTimeout = setTimeout(this.checkout, this.monitorDelay);
         return ['', '', ''];
       } else {
         clearTimeout(this.monitoringTimeout);
@@ -309,7 +317,10 @@ export default class Supreme {
         const productName = product.name;
         if (productName !== undefined) {
           const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
-          if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
+          if (
+            _.difference(keywords.positiveKeywords, productNameArray).length === 0 &&
+            _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length
+          ) {
             return product;
           }
         }
@@ -332,7 +343,7 @@ export default class Supreme {
     if (stockLevel > 0) {
       this.checkout(productID, styleID, sizeID);
     } else if (this.monitoring) {
-      await this.sleep(this.settings.monitorTime);
+      await this.sleep(this.monitorDelay);
       await this.monitorForRestock(productID, styleID, sizeID);
     }
   };
@@ -387,8 +398,8 @@ export default class Supreme {
         await this.checkStock(productID, styleID, sizeID);
         const authToken = await this.addToCart(productID, styleID, sizeID);
         if (this.options.task.captchaBypass) {
-          this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
-          await this.sleep(this.settings.checkoutTime);
+          this.handleChangeStatus(`Waiting ${this.settings.checkoutDelay}ms`);
+          await this.sleep(this.settings.checkoutDelay);
           if (this.active) {
             this.checkoutWithCapctcha('', authToken);
           }
@@ -405,8 +416,8 @@ export default class Supreme {
           ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
             // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
             if (this.tokenID === args.id) {
-              this.handleChangeStatus(`Waiting ${this.settings.checkoutTime}ms`);
-              await this.sleep(this.settings.checkoutTime);
+              this.handleChangeStatus(`Waiting ${this.settings.checkoutDelay}ms`);
+              await this.sleep(this.settings.checkoutDelay);
               // this.handleChangeStatus('Fake Checkout');
               ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
               this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);

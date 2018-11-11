@@ -34,7 +34,9 @@ class AddTask extends Component {
         category: 'Accessories',
         scheduledTime: '',
         atcBypass: false,
-        captchaBypass: false
+        captchaBypass: false,
+        monitorDelay: '',
+        checkoutDelay: ''
       }
     };
   }
@@ -216,19 +218,51 @@ class AddTask extends Component {
                     )}
                   </FormGroup>
                   <FormGroup row>
-                    <Col xs="12">
+                    <Col xs="4">
                       <Label for="proxy">proxy (optional)</Label>
                       <Input
                         type="text"
                         name="proxy"
                         id="proxy"
                         value={this.state.formdata.proxy}
-                        placeholder="user:pass@0.0.0.0:port"
+                        placeholder="user:pass@0.0.0.0:port or 0.0.0.0:port"
                         onChange={event => {
                           this.handleChange(event);
                         }}
                       />
                     </Col>
+                    <Col xs="4">
+                      <Label for="monitorDelay">monitor delay (ms)(optional)</Label>
+                      <Input
+                        type="number"
+                        name="monitorDelay"
+                        id="monitorDelay"
+                        value={this.state.formdata.monitorDelay}
+                        placeholder=""
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                    {this.state.formdata.store.includes('Supreme') ? (
+                      <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                        <Col xs="4">
+                          <Label for="checkoutDelay">checkout delay (ms)(optional)</Label>
+                          <Input
+                            type="number"
+                            name="checkoutDelay"
+                            id="checkoutDelay"
+                            value={this.state.formdata.checkoutDelay}
+                            placeholder=""
+                            onChange={event => {
+                              this.handleChange(event);
+                            }}
+                          />
+                        </Col>
+                      </CSSTransition>
+                    ) : (
+                      ''
+                    )}
                   </FormGroup>
                   <FormGroup row>
                     {this.state.formdata.mode !== 'variant' ? (
@@ -333,7 +367,9 @@ class AddTask extends Component {
                       {this.state.scheduledTimeFlag ? (
                         <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                           <Datetime
-                            value={this.state.formdata.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.formdata.scheduledTime)}
+                            value={
+                              this.state.formdata.scheduledTime === '' ? moment.unix((Date.now() / 1000) | 0) : moment.unix(this.state.formdata.scheduledTime)
+                            }
                             dateFormat="dddd, MMMM Do YYYY"
                             timeFormat="HH:mm:ss A"
                             isValidDate={(currentDate, selectedDate) => {
@@ -441,7 +477,6 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )}
-
                     {/* {this.state.formdata.store.includes('Supreme') ? (
                       <Col xs="3" className="text-center">
                         <Label for="tasks" className="align-items-center" check>
@@ -458,31 +493,6 @@ class AddTask extends Component {
                                 formdata: {
                                   ...this.state.formdata,
                                   captchaBypass: !this.state.formdata.captchaBypass
-                                }
-                              });
-                            }}
-                          />
-                        </Label>
-                      </Col>
-                    ) : (
-                      ''
-                    )} */}
-                    {/* {!this.state.formdata.store.includes('Supreme') ? (
-                      <Col xs="3" className="text-center">
-                        <Label for="tasks" className="align-items-center" check>
-                          Checkout Queue Bypass
-                          <Input
-                            type="checkbox"
-                            name="checkoutQueueBypass"
-                            id="checkoutQueueBypass"
-                            style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
-                            value={this.state.formdata.checkoutQueueBypass}
-                            checked={this.state.formdata.checkoutQueueBypass === true}
-                            onChange={() => {
-                              this.setState({
-                                formdata: {
-                                  ...this.state.formdata,
-                                  checkoutQueueBypass: !this.state.formdata.checkoutQueueBypass
                                 }
                               });
                             }}
