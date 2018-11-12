@@ -93,3 +93,5 @@
 -Limit on Characters for Card Number / Month / Expiry
 -Copy and Paste into Fields
 -Monitor Delay / Checkout Delay PER TASK instead of overall
+
+1.0.17b

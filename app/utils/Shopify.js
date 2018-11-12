@@ -202,7 +202,7 @@ export default class Shopify {
     }
     const response = await this.rp({
       method: 'POST',
-      uri: checkoutURL,
+      uri: `${checkoutURL}?step=contact_information`,
       followAllRedirects: true,
       resolveWithFullResponse: true,
       form: payload
@@ -252,6 +252,7 @@ export default class Shopify {
   };
 
   sendShippingMethod = async (shippingToken, checkoutURL, authToken) => {
+    console.log(shippingToken);
     const payload = {
       utf8: '✓',
       _method: 'patch',
@@ -264,13 +265,15 @@ export default class Shopify {
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1'
     };
+    console.log(payload);
     const response = await this.rp({
       method: 'POST',
-      uri: checkoutURL,
+      uri: `${checkoutURL}?step=shipping_method`,
       followAllRedirects: true,
       resolveWithFullResponse: true,
       form: payload
     });
+    console.log(response);
     return response;
   };
 
@@ -302,7 +305,7 @@ export default class Shopify {
     };
     const response = await this.rp({
       method: 'POST',
-      uri: checkoutURL,
+      uri: `${checkoutURL}?previous_step=shipping_method&step=payment_method`,
       form: payload,
       resolveWithFullResponse: true,
       followAllRedirects: true
@@ -429,7 +432,11 @@ export default class Shopify {
                 checkoutURL,
                 orderTotal
               );
-              await this.pollQueueOrCheckout(checkoutResponse.request.href);
+              if (checkoutResponse.body.includes('<title>    Shipping method')) {
+                this.handleChangeStatus('Stuck On Shipping Method');
+              } else {
+                await this.pollQueueOrCheckout(checkoutResponse.request.href);
+              }
             }
           } catch (error) {
             console.error(error);
@@ -450,7 +457,11 @@ export default class Shopify {
         const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
         const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-        await this.pollQueueOrCheckout(checkoutResponse.request.href);
+        if (checkoutResponse.body.includes('<title>    Shipping method')) {
+          this.handleChangeStatus('Stuck On Shipping Method');
+        } else {
+          await this.pollQueueOrCheckout(checkoutResponse.request.href);
+        }
       }
     } catch (e) {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout - Error`);

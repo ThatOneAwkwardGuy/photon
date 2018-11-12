@@ -21,6 +21,7 @@ export default {
   'DSM-US': 'https://eflash-us.doverstreetmarket.com',
   Exclucity: 'https://shop.exclucitylife.com',
   ExtraButter: 'https://shop.extrabutterny.com',
+  'Fear Of God': 'https://fearofgod.com/',
   Feature: 'https://www.featuresneakerboutique.com',
   Haven: 'https://shop.havenshop.ca',
   HighsAndLows: 'https://www.highsandlows.net.au',
