@@ -72,6 +72,7 @@ export default {
   'Supreme-US': 'https://www.supremenewyork.com',
   TrophyRoom: 'https://www.trophyroomstore.com',
   Undefeated: 'https://undefeated.com',
+  'Union Jordan': 'https://unionjordan.com/',
   Unknwn: 'https://www.unknwn.com',
   Vlone: 'https://vlone.co',
   WishATL: 'https://wishatl.com',

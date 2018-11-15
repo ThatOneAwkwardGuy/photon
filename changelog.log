@@ -95,3 +95,5 @@
 -Monitor Delay / Checkout Delay PER TASK instead of overall
 
 1.0.17b
+- Faster Captcha (Supreme Works, need to fix Shopify)
+- Added FOG and Union Jordan (Untested, will test before they release)

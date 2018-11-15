@@ -5,7 +5,7 @@ const request = require('request-promise');
 const cheerio = require('cheerio');
 var tough = require('tough-cookie');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from './constants';
 export default class Shopify {
   constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
     this.options = options;
@@ -331,8 +331,20 @@ export default class Shopify {
       const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
       const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
       console.log(Date.now() - start);
-      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.token, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-      if (checkoutResponse.body.includes(`<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`)) {
+      const checkoutResponse = await this.sendCheckoutInfo(
+        paymentToken,
+        shipping.token,
+        shipping.price,
+        paymentID,
+        checkoutBodyInfo.authToken,
+        checkoutURL,
+        orderTotal
+      );
+      if (
+        checkoutResponse.body.includes(
+          `<p class="notice__text">The information you provided couldn't be verified. Please check your card details and try again.</p>`
+        )
+      ) {
         this.handleChangeStatus('Error Processing Payment');
       } else if (checkoutResponse.body.includes(`Shopify.Checkout.step = "contact_information";`)) {
         this.handleChangeStatus('Stuck On Customer Info Page');

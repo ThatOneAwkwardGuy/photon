@@ -27,8 +27,8 @@ export default class Supreme {
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
     this.run;
-    this.monitorDelay = options.task.monitorDelay === '' ? this.settings.monitorTime : options.task.monitorDelay;
-    this.checkoutDelay = options.task.checkoutDelay === '' ? this.settings.checkoutTime : options.task.checkoutDelay;
+    this.monitorDelay = options.task.monitorDelay === '' ? settings.monitorTime : options.task.monitorDelay;
+    this.checkoutDelay = options.task.checkoutDelay === '' ? settings.checkoutTime : options.task.checkoutDelay;
     this.proxy =
       this.options.task.proxy === ''
         ? proxy !== undefined
@@ -301,6 +301,8 @@ export default class Supreme {
           resolveWithFullResponse: true,
           followAllRedirects: true
         });
+        console.log(`https://www.supremenewyork.com/shop/${productID}/add`);
+        console.log(payload);
         console.log(response);
         return this.getAuthToken(response.body);
       } catch (e) {
@@ -398,8 +400,8 @@ export default class Supreme {
         await this.checkStock(productID, styleID, sizeID);
         const authToken = await this.addToCart(productID, styleID, sizeID);
         if (this.options.task.captchaBypass) {
-          this.handleChangeStatus(`Waiting ${this.settings.checkoutDelay}ms`);
-          await this.sleep(this.settings.checkoutDelay);
+          this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
+          await this.sleep(this.checkoutDelay);
           if (this.active) {
             this.checkoutWithCapctcha('', authToken);
           }
@@ -412,12 +414,13 @@ export default class Supreme {
             id: this.tokenID,
             proxy: this.proxy
           });
+
           this.handleChangeStatus('Waiting For Captcha');
-          ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+          ipcRenderer.once(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
             // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
             if (this.tokenID === args.id) {
-              this.handleChangeStatus(`Waiting ${this.settings.checkoutDelay}ms`);
-              await this.sleep(this.settings.checkoutDelay);
+              this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
+              await this.sleep(this.checkoutDelay);
               // this.handleChangeStatus('Fake Checkout');
               ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
               this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);

@@ -18,8 +18,8 @@ export default class DSM {
     this.stop = stop;
     this.settings = settings;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
-    this.monitorDelay = options.task.monitorDelay === '' ? this.settings.monitorTime : options.task.monitorDelay;
-    this.checkoutDelay = options.task.checkoutDelay === '' ? this.settings.checkoutTime : options.task.checkoutDelay;
+    this.monitorDelay = options.task.monitorDelay === '' ? settings.monitorTime : options.task.monitorDelay;
+    this.checkoutDelay = options.task.checkoutDelay === '' ? settings.checkoutTime : options.task.checkoutDelay;
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
