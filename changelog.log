@@ -97,3 +97,10 @@
 1.0.17b
 - Faster Captcha (Supreme Works, need to fix Shopify)
 - Added FOG and Union Jordan (Untested, will test before they release)
+
+1.0.18b
+- Faster Captcha For Shopify Fixed
+- Fix for Supreme captcha getting to checkout and stopping
+- Small bug fixes for improved reliability 
+
+1.0.19b

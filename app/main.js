@@ -179,8 +179,11 @@ app.on('ready', async () => {
 
   ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
     mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
-    captchaWindow.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
     console.log(arg.id);
+  });
+
+  ipcMain.on(FINISH_SENDING_CAPTCHA_TOKEN, (event, arg) => {
+    captchaWindow.send(FINISH_SENDING_CAPTCHA_TOKEN, arg);
   });
 
   ipcMain.on(RESET_CAPTCHA_WINDOW, (event, arg) => {

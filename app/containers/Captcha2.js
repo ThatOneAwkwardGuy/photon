@@ -107,8 +107,14 @@ class Captchav2 extends Component {
 
     const sendGlobalID = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args.id);
     webview.loadURL(args.checkoutURL);
-    ipcRenderer.once(FINISH_SENDING_CAPTCHA_TOKEN, () => {
-      // ipcRenderer.removeAllListeners(FINISH_SENDING_CAPTCHA_TOKEN);
+    ipcRenderer.once(FINISH_SENDING_CAPTCHA_TOKEN, (event, arg) => {
+      win.webContents.session.cookies.get({ url: arg.url }, cookiesArray => {
+        console.log(cookiesArray);
+        cookiesArray.forEach(elem => {
+          win.webContents.session.cookies.remove(elem.url, arg.url);
+        });
+      });
+
       if (this.jobsQueue.length > 0) {
         this.processCaptcha(this.jobsQueue.shift());
       } else {

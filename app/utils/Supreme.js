@@ -95,7 +95,7 @@ export default class Supreme {
       .join('&')}`;
   };
 
-  checkoutWithCapctcha = async (captchaToken, authToken) => {
+  checkoutWithCapctcha = async (captchaToken, authToken, cookies) => {
     let payload;
     if (this.options.task.store === 'Supreme-UK') {
       payload = {
@@ -301,9 +301,6 @@ export default class Supreme {
           resolveWithFullResponse: true,
           followAllRedirects: true
         });
-        console.log(`https://www.supremenewyork.com/shop/${productID}/add`);
-        console.log(payload);
-        console.log(response);
         return this.getAuthToken(response.body);
       } catch (e) {
         console.error(e);
@@ -414,7 +411,6 @@ export default class Supreme {
             id: this.tokenID,
             proxy: this.proxy
           });
-
           this.handleChangeStatus('Waiting For Captcha');
           ipcRenderer.once(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
             // ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
@@ -422,8 +418,8 @@ export default class Supreme {
               this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
               await this.sleep(this.checkoutDelay);
               // this.handleChangeStatus('Fake Checkout');
-              ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, 'finised');
-              this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken);
+              ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
+              this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken, args.cookies);
             }
           });
         }

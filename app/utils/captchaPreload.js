@@ -1,11 +1,6 @@
 const ipcRenderer = require('electron').ipcRenderer;
 const remote = require('electron').remote;
 let captchaChecker = null;
-
-// let isRecaptchaFrame = () => {
-//   return /https:\/\/www.google.com\/recaptcha\/api2\/anchor/.test(window.location.href);
-// };
-
 let authToken;
 
 checkCaptcha = () => {
@@ -14,26 +9,40 @@ checkCaptcha = () => {
   console.log(document.location.href);
   if (
     document.location.href.includes('stock_problems') ||
-    document.location.href.includes('chrome-error')
-    // ||
-    // document.location.href.includes('https://www.supremenewyork.com/shop')
+    document.location.href.includes('chrome-error') ||
+    document.location.href.includes('https://www.supremenewyork.com/shop')
   ) {
     ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: '', id: '', supremeAuthToken: '', cookies: '' });
   }
   const tokenID = remote.getGlobal('captcaTokenID');
-  // try {
-  //   document.getElementsByClassName('recaptcha-checkbox-checkmark')[0].click();
-  //   document.getElementsByClassName('recaptcha-checkbox')[0].click();
-  //   document.getElementsByClassName('rc-anchor-center-item rc-anchor-checkbox-holder')[0].click();
-  // } catch (e) {}
+
+  try {
+    document.getElementsByClassName('recaptcha-checkbox-checkmark')[0].click();
+  } catch (e) {
+    try {
+      document.getElementsByClassName('recaptcha-checkbox')[0].click();
+    } catch (error) {
+      console.log(e);
+      try {
+        document.getElementsByClassName('rc-anchor-center-item rc-anchor-checkbox-holder')[0].click();
+      } catch (error) {}
+    }
+  }
+
   let captchaResponse;
   let invisibleCaptcha;
 
   try {
-    captchaResponse = grecaptcha.getResponse();
+    invisibleCaptcha = document.querySelector('.g-recaptcha').getAttribute('data-size');
+    if (invisibleCaptcha === null) {
+      throw new Error();
+    }
   } catch (e) {
     try {
-      invisibleCaptcha = document.querySelector('.g-recaptcha').getAttribute('data-size');
+      captchaResponse = grecaptcha.getResponse();
+      if (captchaResponse === '') {
+        throw new Error();
+      }
     } catch (e) {
       try {
         captchaResponse = document.getElementById('recaptcha-token').value;
@@ -91,6 +100,7 @@ getSupremeAuthToken = () => {
 };
 
 if (window.location.href.includes('supremenewyork.com')) {
+  console.log('supreme here');
   document.addEventListener('DOMContentLoaded', function() {
     const siteKey = document.querySelector('.g-recaptcha').getAttribute('data-sitekey');
     authToken = document.querySelector('input[name=authenticity_token]').value;
@@ -101,34 +111,37 @@ if (window.location.href.includes('supremenewyork.com')) {
 <script type="text/javascript" src="https://www.google.com/recaptcha/api.js?render=explicit"></script>
 </head> 
 <body>
-<div id="example1" class="g-recaptcha" data-sitekey="${siteKey}" data-callback="sub">
+<div id="example1" class="g-recaptcha" data-sitekey="${siteKey}" data-callback="sub" data-size="invisible">
 </div>
 </body>
 </html>`;
   });
-} else if (!window.location.href.includes('google.com') && !window.location.href.includes('youtube.com')) {
+} else if (!document.location.href.includes('google.com') && !document.location.href.includes('youtube.com')) {
+  console.log('shopify here');
   document.addEventListener('DOMContentLoaded', function() {
     const body = document.body.innerHTML;
     const bodySiteKey = body.match(/.sitekey: "(.*)"/)[1];
     document.documentElement.innerHTML = `<!DOCTYPE html>
     <html>
-<head>
-<title>Captcha Harvester</title>
-</head> 
-<body>
-<div id="example1"></div>
-<script type="text/javascript" src="https://www.google.com/recaptcha/api.js?render=explicit"></script>
-<script>
-grecaptcha.render('example2', {
-  'sitekey' : '${bodySiteKey}'
-});
-</script>
-</body>
-</html>`;
+    <head>
+    <title>Captcha Harvester</title>
+    </head> 
+    <body>
+    <script type="text/javascript" src="https://www.recaptcha.net/recaptcha/api.js?onload=recaptchaCallback&amp;render=${bodySiteKey}&amp;hl=en"></script>
+    <script>
+    grecaptcha.render('g-recaptcha', {
+      sitekey: "${bodySiteKey}",
+      size: (window.innerWidth > 320) ? 'normal' : 'compact',
+      callback: 'onCaptchaSuccess',
+    });
+    </script>
+    <div id="g-recaptcha" class="g-recaptcha"></div>
+    </body>
+    </html>`;
   });
 }
 
-if (!window.location.href.includes('google.com')) {
+if (!window.location.href.includes('google.com') && !window.location.href.includes('youtube.com')) {
   captchaChecker = setInterval(checkCaptcha, 300);
 }
 // window.onload = () => {
