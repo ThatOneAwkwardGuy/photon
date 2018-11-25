@@ -2,11 +2,11 @@ const ipcRenderer = require('electron').ipcRenderer;
 const remote = require('electron').remote;
 let captchaChecker = null;
 let authToken;
-
+console.log(remote.getGlobal('captcaTokenID'));
 checkCaptcha = () => {
-  console.log('Checking For Captcha');
+  // console.log('Checking For Captcha');
   // console.log(isRecaptchaFrame());
-  console.log(document.location.href);
+  // console.log(document.location.href);
   if (
     document.location.href.includes('stock_problems') ||
     document.location.href.includes('chrome-error') ||
@@ -15,14 +15,13 @@ checkCaptcha = () => {
     ipcRenderer.send('send-captcha-token', { checkoutURL: document.location.href, captchaResponse: '', id: '', supremeAuthToken: '', cookies: '' });
   }
   const tokenID = remote.getGlobal('captcaTokenID');
-
   try {
     document.getElementsByClassName('recaptcha-checkbox-checkmark')[0].click();
   } catch (e) {
     try {
       document.getElementsByClassName('recaptcha-checkbox')[0].click();
     } catch (error) {
-      console.log(e);
+      // console.log(e);
       try {
         document.getElementsByClassName('rc-anchor-center-item rc-anchor-checkbox-holder')[0].click();
       } catch (error) {}

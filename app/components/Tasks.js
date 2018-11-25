@@ -209,7 +209,14 @@ export default class Tasks extends Component {
   };
 
   returnTasks = (task, index) => (
-    <tr key={`task-${index}`}>
+    <tr
+      className="taskTableRow"
+      key={`task-${index}`}
+      onClick={event => {
+        // console.log(index);
+        // console.log(event.target.screenX);
+      }}
+    >
       <td>{index + 1}</td>
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
@@ -223,49 +230,49 @@ export default class Tasks extends Component {
       <td>{task.options.task.color === '' ? (task.options.task.keywordColor === '' ? 'n/a' : task.options.task.keywordColor) : task.options.task.color}</td>
       <td>{task.status}</td>
       <td>
-        <Button
+        <span
           onClick={() => {
             task.run();
           }}
-          className="taskButton"
+          className="taskButton btn"
         >
           <FontAwesome name="play" />
-        </Button>
-        <Button
+        </span>
+        <span
           onClick={() => {
             ipcRenderer.send(RESET_CAPTCHA_WINDOW, 'reset');
             task.stopTask();
           }}
-          className="taskButton"
+          className="taskButton btn"
         >
           <FontAwesome name="stop" />
-        </Button>
-        <Button
+        </span>
+        <span
           onClick={() => {
             this.editTask(index, task);
           }}
-          className="taskButton"
+          className="taskButton btn"
         >
           <FontAwesome name="edit" />
-        </Button>
-        <Button
+        </span>
+        <span
           onClick={() => {
             this.props.onAddTask(task.options);
           }}
-          className="taskButton"
+          className="taskButton btn"
         >
           <FontAwesome name="copy" />
-        </Button>
-        <Button
+        </span>
+        <span
           onClick={() => {
             this.props.taskClasses[index].stopTask();
             this.props.onRemoveTask(this.props.tasks[index]);
             this.props.deleteFromState(index);
           }}
-          className="taskButton"
+          className="taskButton btn"
         >
           <FontAwesome name="trash" />
-        </Button>
+        </span>
       </td>
     </tr>
   );

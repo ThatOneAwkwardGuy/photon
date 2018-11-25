@@ -240,7 +240,7 @@ export default class Profiles extends Component {
         <Col>
           <Row className="activeContainerInner">
             <Col xs="6">
-              <h6>save profile</h6>
+              <h6 style={{ fontWeight: 600 }}>save profile</h6>
               <Form>
                 <FormGroup row>
                   <Col xs="9">
@@ -268,7 +268,7 @@ export default class Profiles extends Component {
               </Form>
             </Col>
             <Col xs="6">
-              <h6>load profile</h6>
+              <h6 style={{ fontWeight: 600 }}>load profile</h6>
               <Form>
                 <FormGroup row>
                   <Col xs="7">
@@ -333,7 +333,7 @@ export default class Profiles extends Component {
 
           <Row className="activeContainerInner">
             <Col xs="6">
-              <h6>delivery address</h6>
+              <h6 style={{ fontWeight: 600 }}>delivery address</h6>
               <Form>
                 <FormGroup row>
                   <Col xs="6">
@@ -455,7 +455,7 @@ export default class Profiles extends Component {
               </Form>
             </Col>
             <Col xs="6">
-              <h6>billing address</h6>
+              <h6 style={{ fontWeight: 600 }}>billing address</h6>
               <Form>
                 <FormGroup row>
                   <Col xs="6">
@@ -576,7 +576,7 @@ export default class Profiles extends Component {
                           this.setDeliveryToBilling();
                         }}
                       >
-                        Copy Delivery
+                        copy delivery
                       </Button>
                       {/* <Input
                       type="checkbox"
@@ -592,7 +592,7 @@ export default class Profiles extends Component {
           </Row>
           <Row className="activeContainerInner">
             <Col xs="8">
-              <h6>payment</h6>
+              <h6 style={{ fontWeight: 600 }}>payment</h6>
               <Form>
                 <FormGroup row>
                   <Col xs="12">

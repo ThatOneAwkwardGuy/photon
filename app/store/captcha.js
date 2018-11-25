@@ -15,7 +15,7 @@ export default {
   BowsAndArrows: false,
   BurnRubber: false,
   Commonwealth: false,
-  Concepts: false,
+  Concepts: true,
   CrtsdSnkrs: false,
   'DSM-EU': false,
   'DSM-US': true,

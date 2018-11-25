@@ -1,22 +1,44 @@
 import React, { Component } from 'react';
-import { Alert, Container, Row, Col, Button } from 'reactstrap';
-import Particles from 'react-particles-js';
+import { Container } from 'reactstrap';
 import CaptchaTopbar from '../components/CaptchaTopbar';
 import CaptchaFooter from '../components/CaptchaFooter';
-import { webview, remote, ipcRenderer } from 'electron';
-import { SEND_SUPREME_CHECKOUT_COOKIE, RECEIVE_SUPREME_CHECKOUT_COOKIE, OPEN_CAPTCHA_WINDOW, SEND_SUPREME_CAPTCHA_URL } from '../utils/constants';
+import Waiting from '../components/Waiting';
+import { remote, ipcRenderer, session } from 'electron';
+import { SET_GLOBAL_ID_VARIABLE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../utils/constants';
+var os = require('os');
+
 class Captcha extends Component {
   constructor(props) {
     super(props);
-    this.ranOnce = false;
-    this.checkoutCookies = [];
-    this.currentCaptchaID = '';
     this.active = false;
+    this.jobsQueue = [];
+    this.state = {
+      waiting: true
+    };
   }
 
   goToGoogleLogin = () => {
     const webviewWindow = document.querySelector('webview');
-    webviewWindow.loadURL('https://accounts.google.com/Login');
+    this.setState(
+      {
+        waiting: false
+      },
+      () => {
+        webviewWindow.loadURL('https://accounts.google.com/Login');
+      }
+    );
+  };
+
+  goToYoutube = () => {
+    const webviewWindow = document.querySelector('webview');
+    this.setState(
+      {
+        waiting: false
+      },
+      () => {
+        webviewWindow.loadURL('https://youtube.com');
+      }
+    );
   };
 
   clearCookies = () => {
@@ -26,15 +48,15 @@ class Captcha extends Component {
     });
   };
 
-  convertCookieString = cookieString => {
+  convertCookieString = (baseURL, cookieString) => {
     const cookieArray = cookieString.split(';');
     let formattedCookieArray = [];
     for (const cookie of cookieArray) {
       const nameValuePair = cookie.replace(/\s+/g, '').split('=');
       formattedCookieArray.push({
-        url: 'http://www.supremenewyork.com',
+        url: baseURL.includes('supreme') ? `https://www.${baseURL.split('//')[1].split('/')[0]}` : baseURL,
         value: nameValuePair[1],
-        domain: '.supremenewyork.com',
+        domain: baseURL.includes('supreme') ? 'www.' + baseURL.split('//')[1].split('/')[0] : baseURL.split('//')[1].split('/')[0],
         path: '/',
         name: nameValuePair[0]
       });
@@ -42,117 +64,74 @@ class Captcha extends Component {
     return formattedCookieArray;
   };
 
-  awaitCaptchaURL = webview => {
-    ipcRenderer.on(RECEIVE_SUPREME_CHECKOUT_COOKIE, (event, arg) => {
-      // console.log(arg);
-      // if (this.checkoutCookies.length <= 0) {
-      //   this.loadCheckoutWindow(arg, webview);
-      // } else {
-      //   this.checkoutCookies.push(arg);
-      //   console.log(this.checkoutCookies);
-      // }
-      if (!this.active) {
-        this.loadCheckoutWindow(arg, webview);
+  processCaptcha = args => {
+    this.active = true;
+    const webview = document.querySelector('webview');
+    const win = remote.getCurrentWindow();
+    const formattedCookies = this.convertCookieString(args.checkoutURL, args.cookies);
+    for (const cookie of formattedCookies) {
+      win.webContents.session.cookies.set(cookie, error => {
+        if (error !== null) {
+          console.log(error);
+        }
+      });
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      win.openDevTools();
+      webview.openDevTools();
+    }
+
+    const sendGlobalID = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args.id);
+
+    webview.loadURL(args.checkoutURL);
+    ipcRenderer.once(FINISH_SENDING_CAPTCHA_TOKEN, (event, arg) => {
+      if (this.jobsQueue.length > 0) {
+        this.processCaptcha(this.jobsQueue.shift());
       } else {
-        this.checkoutCookies.push(arg);
+        this.setState({ waiting: true });
+        this.active = false;
+        webview.loadURL('https://accounts.google.com/Login');
+        ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
       }
     });
   };
 
-  loadCheckoutWindow = (arg, webview) => {
-    this.active = true;
-    this.currentCaptchaID = arg.id;
-    const win = remote.getCurrentWindow();
-    const formattedCookies = this.convertCookieString(arg.cookies);
-    const windowProxy = arg.proxy !== undefined ? `http://${arg.proxy.user}:${arg.proxy.pass}@${arg.proxy.ip}:${arg.proxy.port}` : '';
-    for (const cookie of formattedCookies) {
-      win.webContents.session.cookies.set(cookie, () => {});
-    }
-    if (arg.store === 'Supreme') {
-      if (windowProxy !== '') {
-        win.webContents.session.setProxy(
-          {
-            proxyRules: windowProxy
-          },
-          () => {
-            webview.loadURL('http://supremenewyork.com/checkout');
-          }
-        );
-      } else {
-        webview.loadURL('http://supremenewyork.com/checkout');
-      }
-    } else {
-      console.log(arg.url);
-      if (windowProxy !== '') {
-        win.webContents.session.setProxy(
-          {
-            proxyRules: windowProxy
-          },
-          () => {
-            webview.loadURL(arg.url);
-          }
-        );
-      } else {
-        webview.loadURL(arg.url);
-      }
-    }
-    webview.executeJavaScript(`document.querySelector('html').style.visibility = "hidden";document.querySelector('.g-recaptcha').style.visibility = "visible"`);
-    this.checkoutCookies.shift();
-  };
+  resetCaptchaWindow = () => {};
 
-  awaitCheckoutLoad = webview => {
-    webview.addEventListener('did-finish-load', e => {
-      webview.executeJavaScript(`window.location.pathname`, pathname => {
-        if (pathname.includes('supreme')) {
-          if (pathname.includes('/checkout')) {
-            webview.executeJavaScript(`document.querySelector("iframe").src`, result => {
-              ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: result, id: this.currentCaptchaID });
-              this.active = false;
-              if (this.checkoutCookies.length > 0) {
-                this.loadCheckoutWindow(this.checkoutCookies[0], webview);
-              }
-            });
-          } else if (pathname.includes('/shop')) {
-            ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: 'Failed', id: this.currentCaptchaID });
-          }
-          if (this.checkoutCookies.length > 0) {
-            this.loadCheckoutWindow(this.checkoutCookies[0], webview);
-          }
-        } else {
-          webview.executeJavaScript(`document.querySelector("iframe").src`, result => {
-            console.log(result);
-            ipcRenderer.send(SEND_SUPREME_CAPTCHA_URL, { captchaURL: result, id: this.currentCaptchaID });
-            this.active = false;
-            if (this.checkoutCookies.length > 0) {
-              this.loadCheckoutWindow(this.checkoutCookies[0], webview);
-            }
-          });
-        }
-      });
+  awaitCookiesAndCaptchaURL = () => {
+    ipcRenderer.on(CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, (event, args) => {
+      if (!this.active) {
+        this.active = true;
+        this.setState({ waiting: false }, () => {
+          this.processCaptcha(args);
+        });
+      } else {
+        this.jobsQueue.push(args);
+      }
     });
   };
 
   componentDidMount() {
-    const webview = document.querySelector('webview');
-    this.awaitCaptchaURL(webview);
-    this.awaitCheckoutLoad(webview);
+    this.awaitCookiesAndCaptchaURL();
   }
 
   render() {
     return (
       <Container fluid>
         <CaptchaTopbar />
+        <Waiting visible={this.state.waiting} />
         <webview
           id="captchaWebview"
-          src="https://accounts.google.com/Login"
+          src="http://google.com"
           webpreferences="allowRunningInsecureContent, javascript=yes"
+          preload="../app/utils/captchaPreload.js"
           style={{
-            display: 'inline-flex',
             width: '100%',
-            height: 'calc(100% - 90px)'
+            height: this.state.waiting ? '0px' : 'calc(100% - 90px)'
           }}
         />
-        <CaptchaFooter clearCookies={this.clearCookies} goToGoogleLogin={this.goToGoogleLogin} />
+        <CaptchaFooter clearCookies={this.clearCookies} goToGoogleLogin={this.goToGoogleLogin} goToYoutube={this.goToYoutube} />
       </Container>
     );
   }

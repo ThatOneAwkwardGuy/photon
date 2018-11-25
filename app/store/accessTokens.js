@@ -64,7 +64,7 @@ export default {
   Solefly: { domain: 'www.solefly.com', accessToken: 'b51037e17cfc5e142a20ef01f0b44751' },
   Soleheaven: { domain: 'www.soleheaven.com', accessToken: 'ec56cdf3407c6f93ac50558c9003d282' },
   Suede: { domain: 'suede-store.com', accessToken: '71f164fa1c603d9d3da229312d52cc1d' },
-  'Supreme-UK': { domain: 'www.supremenewyork.com', accessToken: '' },
+  'Supreme-EU': { domain: 'www.supremenewyork.com', accessToken: '' },
   'Supreme-US': { domain: 'www.supremenewyork.com', accessToken: '' },
   TrophyRoom: { domain: 'www.trophyroomstore.com', accessToken: '1b124ca786ab5fc9065699f1a383a139' },
   Undefeated: { domain: 'undefeated.com', accessToken: 'a0faf54ad7ec6fbbab86cd3f949c3cb9' },

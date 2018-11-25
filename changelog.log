@@ -104,3 +104,7 @@
 - Small bug fixes for improved reliability 
 
 1.0.19b
+- Fixed captcha queue problem (Needs testing)
+- Added account support for sites like FOG and Undefeated
+- Added seperate restock monitor rate
+- Added option to use single captcha for multiple checkouts (needs testing to see if it works)

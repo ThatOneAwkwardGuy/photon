@@ -5,7 +5,6 @@ import stores from '../store/shops';
 import Sizes from '../store/sizes';
 import Datetime from 'react-datetime';
 import Toggle from 'react-toggle';
-import 'react-toggle/style.css';
 const _ = require('lodash');
 const moment = require('moment');
 const Shops = _.keys(stores);
@@ -36,7 +35,9 @@ class AddTask extends Component {
         atcBypass: false,
         captchaBypass: false,
         monitorDelay: '',
-        checkoutDelay: ''
+        checkoutDelay: '',
+        username: '',
+        password: ''
       }
     };
   }
@@ -135,6 +136,42 @@ class AddTask extends Component {
                         {Shops.map(this.returnOptions)}
                       </Input>
                     </Col>
+                    {this.state.formdata.store === 'Fear Of God' ? (
+                      <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                        <Col xs="3">
+                          <Label for="email">email</Label>
+                          <Input
+                            type="text"
+                            name="email"
+                            id="email"
+                            value={this.state.formdata.email}
+                            onChange={event => {
+                              this.handleChange(event);
+                            }}
+                          />
+                        </Col>
+                      </CSSTransition>
+                    ) : (
+                      ''
+                    )}
+                    {this.state.formdata.store === 'Fear Of God' ? (
+                      <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                        <Col xs="3">
+                          <Label for="password">password</Label>
+                          <Input
+                            type="password"
+                            name="password"
+                            id="password"
+                            value={this.state.formdata.password}
+                            onChange={event => {
+                              this.handleChange(event);
+                            }}
+                          />
+                        </Col>
+                      </CSSTransition>
+                    ) : (
+                      ''
+                    )}
                   </FormGroup>
                   <FormGroup row>
                     {this.state.formdata.store.includes('Supreme') ? (

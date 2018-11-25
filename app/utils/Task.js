@@ -74,7 +74,7 @@ export default class Task {
 
   stopTask = (checkoutComplete = false) => {
     switch (this.options.task.store) {
-      case 'Supreme-UK':
+      case 'Supreme-EU':
         if (this.supremeInstance !== '') {
           this.supremeInstance.stop();
           this.supremeInstance.stopMonitoring();
@@ -118,7 +118,7 @@ export default class Task {
         this.handleChangeStatus('Started');
       }
       switch (this.options.task.store) {
-        case 'Supreme-UK':
+        case 'Supreme-EU':
           this.Supreme();
           break;
         case 'Supreme-US':
@@ -132,6 +132,10 @@ export default class Task {
           break;
         default:
           if (!this.runOnce) {
+            if (this.options.task.store === 'Fear Of God') {
+              this.handleChangeStatus('Signing In');
+              await this.handleSignIn();
+            }
             this.handleChangeStatus('Generating Checkout');
             this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
             this.runOnce = true;
@@ -155,6 +159,27 @@ export default class Task {
               break;
           }
       }
+    }
+  };
+
+  handleSignIn = async () => {
+    const payload = {
+      form_type: 'customer_login',
+      utf8: '✓',
+      'customer[email]': this.options.task.email,
+      'customer[password]': this.options.task.password
+    };
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        form: payload,
+        uri: `${stores[this.options.task.store]}/account/login`,
+        resolveWithFullResponse: true,
+        followRedirect: true,
+        followAllRedirects: true
+      });
+    } catch (e) {
+      throw e;
     }
   };
 
@@ -284,7 +309,6 @@ export default class Task {
     const sizeNames = sizeSynonymns[size];
     if (sizeNames !== undefined) {
       for (const size of sizeNames) {
-        // if (size === option) {
         if (option.split(' ').includes(size) || option === size) {
           return true;
         }
@@ -298,31 +322,34 @@ export default class Task {
     }
   };
 
-  getVariantIDOfSize = (variants, size) => {
-    const variantsArray = variants;
-    const found = [];
-    if (this.options.task.store.includes('DSM')) {
-      for (const variant in variantsArray) {
-        if (
-          (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
-          (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2'), size)) ||
-          (_.get(variantsArray[variant], 'public_title') && this.checkSize(_.get(variantsArray[variant], 'public_title'), size))
-        ) {
-          found.push(variantsArray[variant].id);
+  getVariantIDOfSize = (variantsArray, size) => {
+    try {
+      const found = [];
+      if (this.options.task.store.includes('DSM')) {
+        for (const variant in variantsArray) {
+          if (
+            (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
+            (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2'), size)) ||
+            (_.get(variantsArray[variant], 'public_title') && this.checkSize(_.get(variantsArray[variant], 'public_title'), size))
+          ) {
+            found.push(variantsArray[variant].id);
+          }
         }
+      } else {
+        variantsArray.forEach(variant => {
+          if (
+            (_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1'), size)) ||
+            (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2'), size)) ||
+            (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size))
+          ) {
+            found.push(variant.id);
+          }
+        });
       }
-    } else {
-      variantsArray.forEach(variant => {
-        if (
-          (_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1'), size)) ||
-          (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2'), size)) ||
-          (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size))
-        ) {
-          found.push(variant.id);
-        }
-      });
+      return found[0];
+    } catch (error) {
+      console.log(error);
     }
-    return found[0];
   };
 
   getVariantsFromLinkJSON = async link => {
@@ -337,6 +364,7 @@ export default class Task {
       });
       return response.product.variants;
     } catch (e) {
+      console.log(e);
       const variantsSecondTry = await this.getVariantsFromLinkHTML(link);
       return variantsSecondTry;
     }

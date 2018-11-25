@@ -601,3 +601,16 @@ canvas {
   vertical-align: middle;
   margin-left: 10px;
 }
+
+.row .form-group {
+  margin-bottom: 40px;
+}
+
+.taskTableRow:hover td {
+  background-color: rgb(19, 24, 39) !important;
+  cursor: -webkit-grab;
+}
+
+.taskButton {
+  background: none;
+}

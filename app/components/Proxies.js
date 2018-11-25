@@ -196,7 +196,7 @@ export default class Proxies extends Component {
                         this.handleProxies();
                       }}
                     >
-                      Test Proxies
+                      test proxies
                     </Button>
                   </div>
                   <div className="col-sm-4 text-center">
@@ -205,7 +205,7 @@ export default class Proxies extends Component {
                         this.handleAddProxies(this.state.proxyPings);
                       }}
                     >
-                      Save Proxies
+                      save proxies
                     </Button>
                   </div>
                   <div className="col-sm-4 text-center">
@@ -219,7 +219,7 @@ export default class Proxies extends Component {
                         });
                       }}
                     >
-                      Clear Proxies
+                      clear proxies
                     </Button>
                   </div>
                 </FormGroup>

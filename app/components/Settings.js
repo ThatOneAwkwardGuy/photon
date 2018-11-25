@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
 import { auth } from '../api/firebase/index';
+import Toggle from 'react-toggle';
 export default class Settings extends Component {
   constructor(props) {
     super(props);
@@ -10,8 +11,10 @@ export default class Settings extends Component {
         monitorTime: 0,
         errorTime: 0,
         checkoutTime: 0,
+        restockMonitorTime: 0,
         monitorProxies: '',
-        monitorForRestock: false
+        monitorForRestock: false,
+        supremeSingleCaptcha: false
       }
     };
   }
@@ -56,8 +59,8 @@ export default class Settings extends Component {
           <Container>
             <Row>
               <Col xs="12">
-                <h6>delay times</h6>
                 <Form>
+                  <h6 style={{ fontWeight: 600 }}>delay times</h6>
                   <FormGroup row>
                     <Col xs="3">
                       <Label for="monitorTime">monitor delay(ms)</Label>
@@ -95,10 +98,22 @@ export default class Settings extends Component {
                         }}
                       />
                     </Col>
+                    <Col xs="3">
+                      <Label for="checkoutTime">restock monitor delay(ms)</Label>
+                      <Input
+                        type="number"
+                        name="restockMonitorTime"
+                        id="restockMonitorTime"
+                        value={this.state.settings.restockMonitorTime}
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
                   </FormGroup>
                   <FormGroup row>
                     <Col xs="12">
-                      <Label for="monitorProxies">monitor proxies</Label>
+                      <h6 style={{ fontWeight: 600 }}>monitor proxies</h6>
                       <Input
                         type="textarea"
                         name="monitorProxies"
@@ -113,28 +128,25 @@ export default class Settings extends Component {
                   </FormGroup>
                   <FormGroup row>
                     <Col xs="12">
-                      Retry For Restocks
-                      <Input
-                        type="checkbox"
-                        name="monitorForRestock"
-                        id="monitorForRestock"
-                        style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
-                        value={this.state.settings.monitorForRestock}
-                        checked={this.state.settings.monitorForRestock === true}
-                        onChange={event => {
+                      <h6 style={{ fontWeight: 600 }}>retry for restocks </h6>
+                      <Toggle
+                        defaultChecked={this.props.settings.monitorForRestock}
+                        onChange={() => {
                           this.setState({ settings: { ...this.state.settings, monitorForRestock: !this.state.settings.monitorForRestock } });
                         }}
                       />
                     </Col>
                   </FormGroup>
-                  <FormGroup>
-                    <Button
-                      onClick={() => {
-                        this.handleUpdateSettings();
-                      }}
-                    >
-                      save
-                    </Button>
+                  <FormGroup row>
+                    <Col xs="12">
+                      <h6 style={{ fontWeight: 600 }}>single captcha for checkout (supreme) </h6>
+                      <Toggle
+                        defaultChecked={this.props.settings.supremeSingleCaptcha}
+                        onChange={() => {
+                          this.setState({ settings: { ...this.state.settings, supremeSingleCaptcha: !this.state.settings.supremeSingleCaptcha } });
+                        }}
+                      />
+                    </Col>
                   </FormGroup>
                 </Form>
               </Col>
@@ -143,10 +155,19 @@ export default class Settings extends Component {
               <Col>
                 <Button
                   onClick={() => {
+                    this.handleUpdateSettings();
+                  }}
+                >
+                  save
+                </Button>
+              </Col>
+              <Col className="text-right">
+                <Button
+                  onClick={() => {
                     auth.authorise.signOut();
                   }}
                 >
-                  Sign Out
+                  sign out
                 </Button>
               </Col>
             </Row>

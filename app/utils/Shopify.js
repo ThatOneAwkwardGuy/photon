@@ -22,8 +22,8 @@ export default class Shopify {
     this.run = run;
     this.rp = request.defaults({
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36'
-        // Cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
+        Cookie: this.cookieJar.getCookieString(stores[options.task.store])
       },
       jar: this.cookieJar,
       proxy:
@@ -103,7 +103,7 @@ export default class Shopify {
     return response.body;
   };
 
-  pollQueueOrCheckout = async url => {
+  pollQueueOrCheckout = async (url, paymentToken, shipping) => {
     if (url.includes('processing')) {
       this.handleChangeStatus('Processing');
     } else if (url.includes('throttle') || url.includes('queue')) {
@@ -148,7 +148,7 @@ export default class Shopify {
       } else if (url.includes('stock_problems') && !this.settings.monitorForRestock) {
         this.handleChangeStatus('Out Of Stock');
       } else {
-        this.checkoutWithCheckoutURL(url);
+        this.checkoutWithCheckoutURL(url, paymentToken, shipping);
       }
     } catch (e) {
       this.stop(false);
@@ -200,6 +200,10 @@ export default class Shopify {
     if (!stores[this.options.task.store].includes('palace')) {
       payload['checkout[shipping_address][company]'] = '';
     }
+    if (this.options.task.store === 'Fear Of God') {
+      payload['checkout[shipping_address][id]'] = '';
+    }
+    console.log(payload);
     const response = await this.rp({
       method: 'POST',
       uri: `${checkoutURL}?step=contact_information`,
@@ -207,6 +211,7 @@ export default class Shopify {
       resolveWithFullResponse: true,
       form: payload
     });
+    console.log(response);
     return response;
   };
 
@@ -227,17 +232,14 @@ export default class Shopify {
         province: this.options.profile.deliveryProvince
       }
     };
-    console.log(payload);
     const response = await this.rp({
       method: 'POST',
       json: true,
       uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
       body: payload
     });
-    console.log(response);
     for (const shippingRates of response.shipping_rates) {
       if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
-        // const shipOpt = shippingRates.name.replace(/ /g, '%20');
         const shipPrc = shippingRates.price;
         const shipSource = shippingRates.source;
         const shipCode = shippingRates.code;
@@ -252,7 +254,6 @@ export default class Shopify {
   };
 
   sendShippingMethod = async (shippingToken, checkoutURL, authToken) => {
-    console.log(shippingToken);
     const payload = {
       utf8: '✓',
       _method: 'patch',
@@ -260,16 +261,11 @@ export default class Shopify {
       previous_step: 'shipping_method',
       step: 'payment_method',
       'checkout[shipping_rate][id]': `${encodeURIComponent(shippingToken)}`,
-      'checkout[client_details][browser_height]': '1089',
-      'checkout[client_details][browser_width]': '1179',
-      'checkout[client_details][javascript_enabled]': '1',
-      button: ''
+      button: '',
+      'checkout[client_details][browser_width]': '1710',
+      'checkout[client_details][browser_height]': '1289',
+      'checkout[client_details][javascript_enabled]': '1'
     };
-
-    // if (authToken !== '') {
-    //   payload['authenticity_token'] = `${authToken}`;
-    // }
-
     console.log(payload);
     const response = await this.rp({
       method: 'POST',
@@ -303,9 +299,9 @@ export default class Shopify {
       'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
       'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
       complete: '1',
-      'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
-      'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
-      'checkout[client_details][javascript_enabled]': '1',
+      // 'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
+      // 'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
+      // 'checkout[client_details][javascript_enabled]': '1',
       'checkout[total_price]': `${parseInt(orderTotal) + shippingPrice * 100}`
     };
 
@@ -333,10 +329,9 @@ export default class Shopify {
     });
   };
 
-  checkoutWithCheckoutURL = async checkoutURL => {
+  checkoutWithCheckoutURL = async (checkoutURL, paymentToken, shipping) => {
     if (captchaNeeded[this.options.task.store]) {
       ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
-      console.log(this.cookieJar.getCookieString(checkoutURL));
       ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
         cookies: `${this.cookieJar.getCookieString(checkoutURL)}`,
         checkoutURL: checkoutURL,
@@ -361,14 +356,14 @@ export default class Shopify {
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
           this.handleChangeStatus('Sending Customer Info');
           const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
-          // const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+          const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
           this.handleChangeStatus('Sending Shipping Info');
-          const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, '');
-          // const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+          const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+          const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
           this.handleChangeStatus('Sending Payment Info');
-          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, '', checkoutURL, orderTotal);
+          const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
           await this.pollQueueOrCheckout(checkoutResponse.request.href);
         }
       });
@@ -381,12 +376,12 @@ export default class Shopify {
       const orderTotal = bodyInfo.orderTotal;
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
       const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
-      // const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+      const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
-      const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, '');
-      // const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+      const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+      const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
-      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, '', checkoutURL, orderTotal);
+      const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
       await this.pollQueueOrCheckout(checkoutResponse.request.href);
     }
   };
@@ -427,18 +422,26 @@ export default class Shopify {
               console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
               this.handleChangeStatus('Sending Customer Info');
               const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken, captchaToken.captchaResponse);
-              // const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+              const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
               console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
               this.handleChangeStatus('Sending Shipping Info');
-              const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, '');
-              // const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+              const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+              const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
               console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
               this.handleChangeStatus('Sending Payment Info');
-              const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, '', checkoutURL, orderTotal);
+              const checkoutResponse = await this.sendCheckoutInfo(
+                paymentToken,
+                shipping.price,
+                paymentID,
+                checkoutBodyInfo.authToken,
+                checkoutURL,
+                orderTotal
+              );
               if (checkoutResponse.body.includes('<title>    Shipping method')) {
                 this.handleChangeStatus('Stuck On Shipping Method');
+                this.stop(true);
               } else {
-                await this.pollQueueOrCheckout(checkoutResponse.request.href);
+                await this.pollQueueOrCheckout(checkoutResponse.request.href, paymentToken, shipping);
               }
             }
           } catch (error) {
@@ -455,16 +458,17 @@ export default class Shopify {
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
         this.handleChangeStatus('Sending Customer Info');
         const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
-        // const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
+        const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
         this.handleChangeStatus('Sending Shipping Info');
-        const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, '');
-        // const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
+        const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
+        const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
         this.handleChangeStatus('Sending Payment Info');
-        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, '', checkoutURL, orderTotal);
+        const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
         if (checkoutResponse.body.includes('<title>    Shipping method')) {
           this.handleChangeStatus('Stuck On Shipping Method');
+          this.stop(true);
         } else {
           await this.pollQueueOrCheckout(checkoutResponse.request.href);
         }
