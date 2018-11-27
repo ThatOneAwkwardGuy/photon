@@ -188,7 +188,6 @@ export default class Shopify {
       'checkout[shipping_address][province]': `${this.options.profile.deliveryProvince}`,
       'checkout[shipping_address][zip]': `${this.options.profile.deliveryZip}`,
       'checkout[shipping_address][phone]': `${this.options.profile.phoneNumber}`,
-      'checkout[remember_me]': '0',
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
       'checkout[client_details][javascript_enabled]': '1',
@@ -197,16 +196,18 @@ export default class Shopify {
     if (captchaToken !== undefined) {
       payload['g-recaptcha-response'] = captchaToken;
     }
-    if (!stores[this.options.task.store].includes('palace')) {
+    if (!stores[this.options.task.store].includes('palace') && !this.options.task.store === 'Fear Of God') {
       payload['checkout[shipping_address][company]'] = '';
     }
     if (this.options.task.store === 'Fear Of God') {
       payload['checkout[shipping_address][id]'] = '';
+    } else {
+      payload['checkout[remember_me]'] = '0';
     }
     console.log(payload);
     const response = await this.rp({
       method: 'POST',
-      uri: `${checkoutURL}?step=contact_information`,
+      uri: checkoutURL,
       followAllRedirects: true,
       resolveWithFullResponse: true,
       form: payload
@@ -257,7 +258,7 @@ export default class Shopify {
     const payload = {
       utf8: '✓',
       _method: 'patch',
-      authenticity_token: `${authToken}`,
+      authenticity_token: authToken,
       previous_step: 'shipping_method',
       step: 'payment_method',
       'checkout[shipping_rate][id]': `${encodeURIComponent(shippingToken)}`,
@@ -267,9 +268,17 @@ export default class Shopify {
       'checkout[client_details][javascript_enabled]': '1'
     };
     console.log(payload);
+    if (this.options.task.store === 'Fear Of God') {
+      await this.rp({
+        method: 'GET',
+        uri: `${checkoutURL}/shipping_rates?step=shipping_method`,
+        followAllRedirects: true,
+        resolveWithFullResponse: true
+      });
+    }
     const response = await this.rp({
       method: 'POST',
-      uri: checkoutURL,
+      uri: `${checkoutURL}?step=shipping_method`,
       followAllRedirects: true,
       resolveWithFullResponse: true,
       form: payload

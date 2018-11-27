@@ -107,4 +107,4 @@
 - Fixed captcha queue problem (Needs testing)
 - Added account support for sites like FOG and Undefeated
 - Added seperate restock monitor rate
-- Added option to use single captcha for multiple checkouts (needs testing to see if it works)
+- Added option to use single captcha for multiple checkouts (supreme) (needs testing to see if it works)
