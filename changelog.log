@@ -106,5 +106,10 @@
 1.0.19b
 - Fixed captcha queue problem (Needs testing)
 - Added account support for sites like FOG and Undefeated
-- Added seperate restock monitor rate
+- Added separate restock monitor rate
 - Added option to use single captcha for multiple checkouts (supreme) (needs testing to see if it works)
+
+1.0.20b
+- Quick fix to fix adding tasks from homepage
+- Fix For Supreme ATC Bypass (Still experimental)
+- Supreme Pooky Support (Testing)

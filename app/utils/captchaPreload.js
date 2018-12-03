@@ -141,7 +141,7 @@ if (window.location.href.includes('supremenewyork.com')) {
 }
 
 if (!window.location.href.includes('google.com') && !window.location.href.includes('youtube.com')) {
-  captchaChecker = setInterval(checkCaptcha, 300);
+  captchaChecker = setInterval(checkCaptcha, 150);
 }
 // window.onload = () => {
 //   document.querySelector('body').style.height = '200px';

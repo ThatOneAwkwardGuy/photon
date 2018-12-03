@@ -1,5 +1,20 @@
 import React, { Component } from 'react';
-import { ListGroup, ListGroupItem, Container, Button, Collapse, Row, Col, Card, CardImg, CardBody, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
+import {
+  ListGroup,
+  ListGroupItem,
+  Container,
+  Button,
+  Collapse,
+  Row,
+  Col,
+  Card,
+  CardImg,
+  CardBody,
+  Modal,
+  ModalHeader,
+  ModalBody,
+  ModalFooter
+} from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
 import { firestore } from '../api/firebase';
 import Sizes from '../store/sizes';
@@ -68,13 +83,18 @@ export default class Home extends Component {
       proxy: '',
       size: Sizes['Shoes(UK/US)'][0],
       quantity: '1',
-      profile: this.props.profiles[Object.keys(this.props.profiles)[0]].profileID,
       tasks: '1',
       color: '',
+      keywordColor: '',
       category: 'Accessories',
       scheduledTime: '',
       atcBypass: false,
-      captchaBypass: false
+      captchaBypass: false,
+      monitorDelay: '',
+      checkoutDelay: '',
+      username: '',
+      password: '',
+      profile: this.props.profiles[Object.keys(this.props.profiles)[0]].profileID
     };
     let newTask = { ...task, ...store };
     const profile = this.props.profiles[0];
@@ -103,6 +123,7 @@ export default class Home extends Component {
                             key={`release-${index}`}
                             className="col-sm-4 releaseCard"
                             onClick={() => {
+                              console.log(data);
                               this.setState(
                                 {
                                   currentLaunchInfo: data

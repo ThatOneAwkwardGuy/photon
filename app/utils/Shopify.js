@@ -15,7 +15,7 @@ export default class Shopify {
     this.stop = stop;
     this.settings = settings;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
-    this.monitorDelay = options.task.monitorDelay === '' ? settings.monitorTime : options.task.monitorDelay;
+    this.monitorDelay = this.returnMonitorDelay();
     this.checkoutDelay = options.task.checkoutDelay === '' ? settings.checkoutTime : options.task.checkoutDelay;
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
@@ -33,6 +33,16 @@ export default class Shopify {
             : ''
           : `http://${this.options.task.proxy}`
     });
+  }
+
+  returnMonitorDelay() {
+    if (this.options.task.monitorDelay !== '' && this.options.task.monitorDelay !== undefined) {
+      return this.options.task.monitorDelay;
+    } else if (this.settings.restockMonitorTime !== '' && this.settings.restockMonitorTime !== undefined) {
+      return this.settings.restockMonitorTime;
+    } else {
+      return this.settings.monitorTime;
+    }
   }
 
   returnDomainFromURL(urlstring) {
@@ -135,6 +145,9 @@ export default class Shopify {
         } else if (response.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
           this.handleChangeStatus('Stuck On Shipping Method Page');
           this.stop(true);
+        } else if (response.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+          this.handleChangeStatus('Stuck On Payment Method Page');
+          this.stop(true);
         } else {
           this.handleChangeStatus('Check Email');
           this.stop(true);
@@ -167,6 +180,44 @@ export default class Shopify {
       return response.request.href;
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  returnBodyInfo = body => {
+    const $ = cheerio.load(body);
+    return {
+      paymentID: $('div.section.section--payment-method input').attr('value'),
+      authToken: $('input[name="authenticity_token"]').attr('value'),
+      orderTotal: $('span[data-checkout-subtotal-price-target]')['0'].attribs['data-checkout-subtotal-price-target']
+    };
+  };
+
+  getShippingToken = async () => {
+    const payload = {
+      shipping_address: {
+        zip: this.options.profile.deliveryZip,
+        country: this.options.profile.deliveryCountry,
+        province: this.options.profile.deliveryProvince
+      }
+    };
+    const response = await this.rp({
+      method: 'POST',
+      json: true,
+      uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
+      body: payload
+    });
+    for (const shippingRates of response.shipping_rates) {
+      if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
+        const shipPrc = shippingRates.price;
+        const shipSource = shippingRates.source;
+        const shipCode = shippingRates.code;
+        const shippingOption = `${shipSource}-${shipCode}-${shipPrc}`;
+        const shippingInfo = {
+          token: shippingOption,
+          price: shipPrc
+        };
+        return shippingInfo;
+      }
     }
   };
 
@@ -208,50 +259,12 @@ export default class Shopify {
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
-      followAllRedirects: true,
+      maxRedirects: 0,
       resolveWithFullResponse: true,
       form: payload
     });
     console.log(response);
     return response;
-  };
-
-  returnBodyInfo = body => {
-    const $ = cheerio.load(body);
-    return {
-      paymentID: $('div.section.section--payment-method input').attr('value'),
-      authToken: $('input[name="authenticity_token"]').attr('value'),
-      orderTotal: $('span[data-checkout-subtotal-price-target]')['0'].attribs['data-checkout-subtotal-price-target']
-    };
-  };
-
-  getShippingToken = async () => {
-    const payload = {
-      shipping_address: {
-        zip: this.options.profile.deliveryZip,
-        country: this.options.profile.deliveryCountry,
-        province: this.options.profile.deliveryProvince
-      }
-    };
-    const response = await this.rp({
-      method: 'POST',
-      json: true,
-      uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
-      body: payload
-    });
-    for (const shippingRates of response.shipping_rates) {
-      if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
-        const shipPrc = shippingRates.price;
-        const shipSource = shippingRates.source;
-        const shipCode = shippingRates.code;
-        const shippingOption = `${shipSource}-${shipCode}-${shipPrc}`;
-        const shippingInfo = {
-          token: shippingOption,
-          price: shipPrc
-        };
-        return shippingInfo;
-      }
-    }
   };
 
   sendShippingMethod = async (shippingToken, checkoutURL, authToken) => {

@@ -50,6 +50,7 @@ class Captcha extends Component {
 
   convertCookieString = (baseURL, cookieString) => {
     const cookieArray = cookieString.split(';');
+    console.log(cookieArray);
     let formattedCookieArray = [];
     for (const cookie of cookieArray) {
       const nameValuePair = cookie.replace(/\s+/g, '').split('=');

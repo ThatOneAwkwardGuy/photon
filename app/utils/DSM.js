@@ -162,6 +162,9 @@ export default class DSM {
         } else if (response.body.includes(`Shopify.Checkout.step = "shipping_method";`)) {
           this.handleChangeStatus('Stuck On Shipping Method Page');
           this.stop(true);
+        } else if (response.body.includes(`Shopify.Checkout.step = "payment_method";`)) {
+          this.handleChangeStatus('Stuck On Payment Method Page');
+          this.stop(true);
         } else {
           this.handleChangeStatus('Check Email');
           this.stop(true);
@@ -175,7 +178,7 @@ export default class DSM {
       } else if (url.includes('stock_problems') && !this.settings.monitorForRestock) {
         this.handleChangeStatus('Out Of Stock');
       } else {
-        this.checkoutWithCheckoutURL(url);
+        this.checkoutWithCheckoutURL(url, paymentToken, shipping);
       }
     } catch (e) {
       this.stop(false);
@@ -343,7 +346,7 @@ export default class DSM {
     });
   };
 
-  checkoutWithCheckoutURL = async checkoutURL => {
+  checkoutWithCheckoutURL = async (checkoutURL, paymentToken, shipping) => {
     if (captchaNeeded[this.options.task.store]) {
       ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
       ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {

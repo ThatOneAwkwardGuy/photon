@@ -27,7 +27,7 @@ export default class Supreme {
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
     this.run;
-    this.monitorDelay = options.task.monitorDelay === '' && options.task.monitorDelay !== undefined ? settings.monitorTime : options.task.monitorDelay;
+    this.monitorDelay = this.returnMonitorDelay();
     this.checkoutDelay = options.task.checkoutDelay === '' && options.task.checkoutDelay !== undefined ? settings.checkoutTime : options.task.checkoutDelay;
     this.proxy =
       this.options.task.proxy === ''
@@ -50,6 +50,16 @@ export default class Supreme {
       jar: this.cookieJar,
       proxy: this.proxy
     });
+  }
+
+  returnMonitorDelay() {
+    if (this.options.task.monitorDelay !== '' && this.options.task.monitorDelay !== undefined) {
+      return this.options.task.monitorDelay;
+    } else if (this.settings.restockMonitorTime !== '' && this.settings.restockMonitorTime !== undefined) {
+      return this.settings.restockMonitorTime;
+    } else {
+      return this.settings.monitorTime;
+    }
   }
 
   sleep = ms => {
@@ -148,10 +158,10 @@ export default class Supreme {
     if (!this.options.task.captchaBypass) {
       payload['g-recaptcha-response'] = captchaToken;
     }
-    console.log(payload);
     try {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
+        headers: { cookie: `${this.cookieJar.getCookieString('https://www.supremenewyork.com')};${cookies}` },
         method: 'POST',
         form: payload,
         uri: 'https://www.supremenewyork.com/checkout.js',
@@ -266,7 +276,6 @@ export default class Supreme {
 
   addToCart = async (productID, styleID, sizeID) => {
     if (this.options.task.atcBypass) {
-      console.log(`1+item--${sizeID}%2C${styleID}`);
       let cart1Cookie = new tough.Cookie({
         key: 'cart',
         value: `1+item--${sizeID}%2C${styleID}`,
@@ -275,12 +284,19 @@ export default class Supreme {
       });
       let cart2Cookie = new tough.Cookie({
         key: '_supreme_sess',
-        value: `MmVIZVQ0Rm5BS3RPZkVPU1BIWGppNmxxYkZjT0d0RzlDY2VzR0wyWDZlbW9CWGhDei9yQVQ0TUJBam93YnE5M0FRL3lKajhyN3pvOUVINkpqd0M4REVPNkZ2MCtoQXhiV1ZFOWQ2SXNOdFVFZWJpTktrb2VadTE1TTcyZVZYWGlZZWJDS0l6MUlDWVlBb3EvZE0xVTBsQzlnSEJBY0tBbUNUekRKN0crcVdnMHlxenFoRVhYZG0rUFBkZzA3T3VIaklBNFdVMnBJRUhEVGM2SElHNEczY2dwL01mbTBCSHZYN2VaTk5ySnlsa0w2UW5TN05Tek92dDZvTlU0MHFtQmJyc3NjOTV2d1dNYmRKWUdlU1RHLzlKOUl5dlR1NHFUR0xSZm94QmFlNVl5aGgrd2UvdzF5STNHUUt0akZlc1Fqbk4xMDhmalBXOFFDeUNvR1U0SHBqRFRoR1JCUzlZRFVaUmpyV3JIMzZGb1VTSVRUS09tNmZ4Qk9OeFJsczVOeW9QeDlqekJFSGF4ZXA3VXNhOHFIOXhtVVZSdUpyOGdiVmJSbXYrY0szZDdPNGxQQTlFa01KU2xwOS9McVlOTmNSZ2pZSFBDMWVhMk93UlVsZXIwRGcwT2taYzUrakF6cmZEclhSd29IN0NlMTBSS01oRms0SU5VaGlmY2FVMFgyd3pVa0U2MFBSQ0lCLzByRndEeS9mci9PZ2lTd2EyWk9PMVF1cmRzaUtsZ25LaDhjTGFRS3Q2RWdCVmZ4U1VYMmJsQ2NWcVJNbkJQc3BTdU9lcmxlNUpIMUFPdnNQeWJCekpoY3VOSkVVSytkQy9wMStMU3RFQWE1d3FOOXJNS2VtWmgxRWlnYTJ5NW94ci9rSlNxSnc9PS0tQ1FzL21BMDdLb3A3eTJWQ0wxUjU5UT09--7e00745496e05a1fca35b765086d00a7d1fedb0b`,
+        value: `WUU5S0gvZk14d0ZqRDR4alUzVXZJUkYyeGwzQ1NuUktvanNqQzBPUWJ3cnNjU3g1QUM0QVBuaW1PQW5XNEV6NktwdFpwRzVlRjJPSDNKWVBHS0R2WmFjQ2hXVTRQS2hNYlltbmlNNlVTSUdRU0dxM0JNTnVycEJURVVac2RHNk0vUlkySXBwNWJtNEkrb3grb1hTQ0Z0eFNYV1Z6Vy9vWFJmZHErNjA5dTFUTWNXcmhvS2ZCNkc4TjE4UVJGWW94VmNydGgyU1Fpc1MveUE2WmUweFErSmQ2RnUwRmR6ZGt5bXV2V2p4QXNEM3U1MXo5NlZIRHUvL203YnkwMkVnUDBQbHdVT0NrTHFQU3ZkanVQV3pWcENLVFUzZHJnUFoyQ0c3NVVjZE5yQVMyZ2VGRFhlQUdYTE1DQXUrRWdHcFFjWGd6TmFvbzJFK0tmekFKa0FmK1RYTC9VeGExSzRwdmVsWlFGVDR3TTcvRXY3UGNGK3J0SC9mekNRV3Z2MmhWWm04ckd6eTdzY3d1S3VTV2NHR3M4dDNMd0RHUGZ1OFpuZGFHWUg1V3NoK0RneUJCMTB0SDJ3ZzN0TTZiYXFudU5VUXFQdm5FWTYrN3RYenFXMnlzamdpSWJ5ZU5tQjZ4YVk4REtCK085ODI3OE5zK3p6OStmRjNSbkNSYnFtSXlrTjJtOHlIR1JxY1plV2xLY0dISUtzRUxJSTNBYVNIME9uYzlhVG5aaXFnQnlQdFh3ZXZuSEFweEpNVTJxS2hQSmFkRXo0MnFGb2ZWZFRTSUp0azFzWEtzd1hha1dkcHVqTFE1TUxoYm1GeTJrcmRUMVR5anp3bXZFMHF0N2FxbitQUk94bGxScS9DczQ3WUozbkUrbUE9PS0tTmRDQ2w5dXpNbUhGRVJlbTZ1WitoUT09--90da156b6815d08ccb88f6a7370057cf2d6f2d1f`,
+        domain: '.supremenewyork.com',
+        path: '/'
+      });
+      let cart3Cookie = new tough.Cookie({
+        key: 'request_method',
+        value: `POST`,
         domain: '.supremenewyork.com',
         path: '/'
       });
       this.cookieJar.setCookie(cart1Cookie.toString(), stores[this.options.task.store]);
       this.cookieJar.setCookie(cart2Cookie.toString(), stores[this.options.task.store]);
+      this.cookieJar.setCookie(cart3Cookie.toString(), stores[this.options.task.store]);
       this.rp({
         method: 'GET',
         uri: `https://www.supremenewyork.com/checkout.js`,
@@ -388,6 +404,7 @@ export default class Supreme {
             id: this.tokenID,
             proxy: this.proxy
           });
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Waiting For Captcha`);
           this.handleChangeStatus('Waiting For Captcha');
           ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
             if (!this.settings.supremeSingleCaptcha) {
