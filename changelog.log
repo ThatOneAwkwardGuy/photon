@@ -113,3 +113,6 @@
 - Quick fix to fix adding tasks from homepage
 - Fix For Supreme ATC Bypass (Still experimental)
 - Supreme Pooky Support (Testing)
+
+1.0.21b
+- Added retry on checkout error functionality for supreme. If your checkout returns an error the bot will wait the length of the error delay and then try checkout again straight away, without needing to add to cart or get another captcha.

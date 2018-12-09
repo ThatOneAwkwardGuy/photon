@@ -14,7 +14,7 @@ export default class Settings extends Component {
         restockMonitorTime: 0,
         monitorProxies: '',
         monitorForRestock: false,
-        supremeSingleCaptcha: false
+        retryOnCheckoutError: false
       }
     };
   }
@@ -139,11 +139,11 @@ export default class Settings extends Component {
                   </FormGroup>
                   <FormGroup row>
                     <Col xs="12">
-                      <h6 style={{ fontWeight: 600 }}>single captcha for checkout (supreme) </h6>
+                      <h6 style={{ fontWeight: 600 }}>retry on checkout error </h6>
                       <Toggle
-                        defaultChecked={this.props.settings.supremeSingleCaptcha}
+                        defaultChecked={this.props.settings.retryOnCheckoutError}
                         onChange={() => {
-                          this.setState({ settings: { ...this.state.settings, supremeSingleCaptcha: !this.state.settings.supremeSingleCaptcha } });
+                          this.setState({ settings: { ...this.state.settings, retryOnCheckoutError: !this.state.settings.retryOnCheckoutError } });
                         }}
                       />
                     </Col>

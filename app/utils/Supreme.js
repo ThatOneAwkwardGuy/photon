@@ -27,6 +27,9 @@ export default class Supreme {
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
     this.run;
+    this.productID = '';
+    this.styleID = '';
+    this.sizeID = '';
     this.monitorDelay = this.returnMonitorDelay();
     this.checkoutDelay = options.task.checkoutDelay === '' && options.task.checkoutDelay !== undefined ? settings.checkoutTime : options.task.checkoutDelay;
     this.proxy =
@@ -181,9 +184,18 @@ export default class Supreme {
       return response;
     } catch (e) {
       this.handleChangeStatus(e.message);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus('Error Checking Out - Retrying');
+        this.retryOnError(captchaToken, authToken, cookies);
+      }
       console.error(e);
     }
     this.stopTask(true);
+  };
+
+  retryOnError = async (captchaToken, authToken, cookies) => {
+    await this.sleep(this.settings.errorTime);
+    this.checkoutWithCapctcha(captchaToken, authToken, cookies);
   };
 
   getProductStyleID = async (productID, color, sizeInput) => {
@@ -275,6 +287,9 @@ export default class Supreme {
   };
 
   addToCart = async (productID, styleID, sizeID) => {
+    this.productID = productID;
+    this.styleID = styleID;
+    this.sizeID = sizeID;
     if (this.options.task.atcBypass) {
       let cart1Cookie = new tough.Cookie({
         key: 'cart',
@@ -407,14 +422,7 @@ export default class Supreme {
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Waiting For Captcha`);
           this.handleChangeStatus('Waiting For Captcha');
           ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-            if (!this.settings.supremeSingleCaptcha) {
-              if (this.tokenID === args.id) {
-                ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
-                this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
-                await this.sleep(this.checkoutDelay);
-                this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken, args.cookies);
-              }
-            } else {
+            if (this.tokenID === args.id) {
               ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
               this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
               await this.sleep(this.checkoutDelay);

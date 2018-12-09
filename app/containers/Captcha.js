@@ -79,8 +79,8 @@ class Captcha extends Component {
     }
 
     if (process.env.NODE_ENV === 'development') {
-      win.openDevTools();
-      webview.openDevTools();
+      // win.openDevTools();
+      // webview.openDevTools();
     }
 
     const sendGlobalID = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args.id);
