@@ -417,7 +417,8 @@ export default class Supreme {
             checkoutURL: 'https://supremenewyork.com/checkout',
             baseURL: stores[this.options.task.store],
             id: this.tokenID,
-            proxy: this.proxy
+            proxy: this.proxy,
+            profile: this.options.profile
           });
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Waiting For Captcha`);
           this.handleChangeStatus('Waiting For Captcha');

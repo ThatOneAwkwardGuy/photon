@@ -93,6 +93,8 @@ checkCaptcha = () => {
   // }
 };
 
+spoofPookyActions = () => {};
+
 getSupremeAuthToken = () => {
   authToken = document.querySelector('input[name=authenticity_token]').value;
   return authToken;
