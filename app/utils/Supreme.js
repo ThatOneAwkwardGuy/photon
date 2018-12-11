@@ -162,6 +162,24 @@ export default class Supreme {
       payload['g-recaptcha-response'] = captchaToken;
     }
     try {
+      let pooky_ok = new tough.Cookie({
+        key: 'pooky_ok',
+        value: 'eyJ0b2hydV9vayI6IHRydWUsICJlbmFibGVkIjogdHJ1ZSwgIm1zX2RyYWciOiJvZmYifQ==',
+        domain: '.supremenewyork.com',
+        path: '/'
+      });
+
+      let pooky_order_allow = new tough.Cookie({
+        key: 'pooky_order_allow',
+        value:
+          'eyJ0b2hydV9vayI6IHRydWUsImVuYWJsZWQiOiB0cnVlLCJhbGxfcmVsZWFzZXMiOnRydWUsInNwbGF5X2VudiI6InByb2QiLCAibW91c2Vfc2NvcmUiOjEwMCwiYnlwYXNzIjp0cnVlfQ==',
+        domain: '.supremenewyork.com',
+        path: '/'
+      });
+
+      this.cookieJar.setCookie(pooky_ok.toString(), stores[this.options.task.store]);
+      this.cookieJar.setCookie(pooky_order_allow.toString(), stores[this.options.task.store]);
+
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
         headers: { cookie: `${this.cookieJar.getCookieString('https://www.supremenewyork.com')};${cookies}` },
