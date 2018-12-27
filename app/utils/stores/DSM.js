@@ -1,13 +1,13 @@
-import stores from '../store/shops';
-import captchaNeeded from '../store/captcha';
-import { undefeatedAccountLogin } from './helpers';
+import stores from '../../store/shops';
+import captchaNeeded from '../../store/captcha';
+import { undefeatedAccountLogin } from '../helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
 var tough = require('tough-cookie');
 const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../constants';
 export default class DSM {
   constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run, handleChangeProductName) {
     this.options = options;

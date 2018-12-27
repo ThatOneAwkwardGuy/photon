@@ -5,6 +5,7 @@ export default {
   APBStore: 'https://www.apbstore.com',
   AddictMiami: 'https://www.addictmiami.com',
   AntiSocialSocialClub: 'https://shop.antisocialsocialclub.com',
+  Asphaltgold: 'https://asphaltgold.de',
   Attic: 'https://discoverattic.com',
   // BBCIceCream: 'https://bbcicecream.eu',
   BapeOnline: 'https://bapeonline.com',
@@ -44,6 +45,7 @@ export default {
   Oipolloi: 'https://www.oipolloi.com',
   Omocat: 'https://www.omocat-shop.com',
   Oneness287: 'https://www.oneness287.com',
+  // Overkill: 'https://www.overkillshop.com',
   PackerShoes: 'https://packershoes.com',
   PalaceUK: 'https://shop.palaceskateboards.com',
   PalaceUS: 'https://shop-usa.palaceskateboards.com',
@@ -67,14 +69,15 @@ export default {
   SocialStatusPGH: 'https://www.socialstatuspgh.com',
   Solefly: 'https://www.solefly.com',
   Soleheaven: 'https://www.soleheaven.com',
+  // SSENSE: 'https://www.ssense.com',
   Suede: 'https://suede-store.com',
   'Supreme-EU': 'https://www.supremenewyork.com',
   'Supreme-US': 'https://www.supremenewyork.com',
   TrophyRoom: 'https://www.trophyroomstore.com',
   Undefeated: 'https://undefeated.com',
-  'Union Jordan': 'https://unionjordan.com/',
+  'Union Jordan': 'https://unionjordan.com',
   Unknwn: 'https://www.unknwn.com',
   Vlone: 'https://vlone.co',
   WishATL: 'https://wishatl.com',
-  Xhibition: 'https://www.xhibition.co/'
+  Xhibition: 'https://www.xhibition.co'
 };

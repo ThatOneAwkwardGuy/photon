@@ -1,12 +1,12 @@
-import stores from '../store/shops';
-import captchaNeeded from '../store/captcha';
-import { undefeatedAccountLogin } from './helpers';
+import stores from '../../store/shops';
+import captchaNeeded from '../../store/captcha';
+import { undefeatedAccountLogin } from '../helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../utils/constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../constants';
 export default class Shopify {
   constructor(options, handleChangeStatus, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
     this.options = options;

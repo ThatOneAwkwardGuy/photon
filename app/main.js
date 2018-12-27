@@ -12,7 +12,8 @@ import {
   RECEIVE_RESET_CAPTCHA_TOKENS_ARRAY,
   SEND_CAPTCHA_TOKEN,
   RECEIVE_CAPTCHA_TOKEN,
-  FINISH_SENDING_CAPTCHA_TOKEN
+  FINISH_SENDING_CAPTCHA_TOKEN,
+  MAIN_PROCESS_CLEAR_RECEIVE_CAPTCHA_TOKEN_LISTENERS
 } from './utils/constants';
 import { autoUpdater } from 'electron-updater';
 const ipcMain = require('electron').ipcMain;
@@ -166,6 +167,10 @@ app.on('ready', async () => {
     } else {
       captchaWindow.show();
     }
+  });
+
+  ipcMain.on(MAIN_PROCESS_CLEAR_RECEIVE_CAPTCHA_TOKEN_LISTENERS, (event, arg) => {
+    ipcMain.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
   });
 
   ipcMain.on(RESET_CAPTCHA_TOKENS_ARRAY, (event, arg) => {

@@ -5,16 +5,16 @@ const cheerio = require('cheerio');
 var tough = require('tough-cookie');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
-import stores from '../store/shops';
-import countryCodes from '../store/countryCodes';
-import states from '../store/states';
+import stores from '../../store/shops';
+import countryCodes from '../../store/countryCodes';
+import states from '../../store/states';
 import {
   SEND_SUPREME_CHECKOUT_COOKIE,
   OPEN_CAPTCHA_WINDOW,
   FINISH_SENDING_CAPTCHA_TOKEN,
   BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
   RECEIVE_CAPTCHA_TOKEN
-} from '../utils/constants';
+} from '../constants';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run) {
     this.startTime = '';
@@ -162,24 +162,24 @@ export default class Supreme {
       payload['g-recaptcha-response'] = captchaToken;
     }
     try {
-      let pooky_ok = new tough.Cookie({
-        key: 'pooky_ok',
-        value: 'eyJ0b2hydV9vayI6IHRydWUsICJlbmFibGVkIjogdHJ1ZSwgIm1zX2RyYWciOiJvZmYifQ==',
-        domain: '.supremenewyork.com',
-        path: '/'
-      });
+      // let pooky_ok = new tough.Cookie({
+      //   key: 'pooky_ok',
+      //   value: 'eyJ0b2hydV9vayI6IHRydWUsICJlbmFibGVkIjogdHJ1ZSwgIm1zX2RyYWciOiJvZmYifQ==',
+      //   domain: '.supremenewyork.com',
+      //   path: '/'
+      // });
 
-      let pooky_order_allow = new tough.Cookie({
-        key: 'pooky_order_allow',
-        value:
-          'eyJ0b2hydV9vayI6IHRydWUsImVuYWJsZWQiOiB0cnVlLCJhbGxfcmVsZWFzZXMiOnRydWUsInNwbGF5X2VudiI6InByb2QiLCAibW91c2Vfc2NvcmUiOjEwMCwiYnlwYXNzIjp0cnVlfQ==',
-        domain: '.supremenewyork.com',
-        path: '/'
-      });
+      // let pooky_order_allow = new tough.Cookie({
+      //   key: 'pooky_order_allow',
+      //   value:
+      //     'eyJ0b2hydV9vayI6IHRydWUsImVuYWJsZWQiOiB0cnVlLCJhbGxfcmVsZWFzZXMiOnRydWUsInNwbGF5X2VudiI6InByb2QiLCAibW91c2Vfc2NvcmUiOjEwMCwiYnlwYXNzIjp0cnVlfQ==',
+      //   domain: '.supremenewyork.com',
+      //   path: '/'
+      // });
 
-      this.cookieJar.setCookie(pooky_ok.toString(), stores[this.options.task.store]);
-      this.cookieJar.setCookie(pooky_order_allow.toString(), stores[this.options.task.store]);
-
+      // this.cookieJar.setCookie(pooky_ok.toString(), stores[this.options.task.store]);
+      // this.cookieJar.setCookie(pooky_order_allow.toString(), stores[this.options.task.store]);
+      console.log(payload);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
         headers: { cookie: `${this.cookieJar.getCookieString('https://www.supremenewyork.com')};${cookies}` },
@@ -202,7 +202,7 @@ export default class Supreme {
       return response;
     } catch (e) {
       this.handleChangeStatus(e.message);
-      if (this.settings.retryOnCheckoutError) {
+      if (this.settings.retryOnCheckoutError && this.active) {
         this.handleChangeStatus('Error Checking Out - Retrying');
         this.retryOnError(captchaToken, authToken, cookies);
       }
@@ -214,6 +214,14 @@ export default class Supreme {
   retryOnError = async (captchaToken, authToken, cookies) => {
     await this.sleep(this.settings.errorTime);
     this.checkoutWithCapctcha(captchaToken, authToken, cookies);
+  };
+
+  getSupremeHomepage = async () => {
+    await this.rp({
+      method: 'GET',
+      uri: `https://www.supremenewyork.com/checkout.js`,
+      resolveWithFullResponse: true
+    });
   };
 
   getProductStyleID = async (productID, color, sizeInput) => {
@@ -351,6 +359,7 @@ export default class Supreme {
           resolveWithFullResponse: true,
           followAllRedirects: true
         });
+        console.log(response);
         return this.getAuthToken(response.body);
       } catch (e) {
         console.error(e);
@@ -420,6 +429,7 @@ export default class Supreme {
     }
     if (productID !== '') {
       try {
+        await this.getSupremeHomepage();
         await this.checkStock(productID, styleID, sizeID);
         const authToken = await this.addToCart(productID, styleID, sizeID);
         if (this.options.task.captchaBypass) {
@@ -442,6 +452,7 @@ export default class Supreme {
           this.handleChangeStatus('Waiting For Captcha');
           ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
             if (this.tokenID === args.id) {
+              console.log(args);
               ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
               this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
               await this.sleep(this.checkoutDelay);

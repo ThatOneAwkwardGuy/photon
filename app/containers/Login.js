@@ -90,7 +90,7 @@ class Login extends Component {
   render() {
     return (
       <div>
-        <Particles
+        {/* <Particles
           params={{
             particles: {
               number: {
@@ -183,7 +183,7 @@ class Login extends Component {
             },
             retina_detect: true
           }}
-        />
+        /> */}
         <Container fluid>
           <div className="loginTopBar">
             <Topbar />

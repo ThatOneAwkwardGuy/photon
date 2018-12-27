@@ -8,7 +8,7 @@ import Toggle from 'react-toggle';
 const _ = require('lodash');
 const moment = require('moment');
 const Shops = _.keys(stores);
-
+const passwordSites = ['Fear Of God', 'Undefeated', 'SSENSE'];
 class AddTask extends Component {
   constructor(props) {
     super(props);
@@ -136,7 +136,7 @@ class AddTask extends Component {
                         {Shops.map(this.returnOptions)}
                       </Input>
                     </Col>
-                    {this.state.formdata.store === 'Fear Of God' ? (
+                    {passwordSites.includes(this.state.formdata.store) ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="email">email</Label>
@@ -154,7 +154,7 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )}
-                    {this.state.formdata.store === 'Fear Of God' ? (
+                    {passwordSites.includes(this.state.formdata.store) ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="password">password</Label>

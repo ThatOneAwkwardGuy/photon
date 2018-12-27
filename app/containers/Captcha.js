@@ -4,7 +4,13 @@ import CaptchaTopbar from '../components/CaptchaTopbar';
 import CaptchaFooter from '../components/CaptchaFooter';
 import Waiting from '../components/Waiting';
 import { remote, ipcRenderer, session } from 'electron';
-import { SET_GLOBAL_ID_VARIABLE, CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../utils/constants';
+import {
+  SET_GLOBAL_ID_VARIABLE,
+  CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE,
+  RECEIVE_CAPTCHA_TOKEN,
+  FINISH_SENDING_CAPTCHA_TOKEN,
+  MAIN_PROCESS_CLEAR_RECEIVE_CAPTCHA_TOKEN_LISTENERS
+} from '../utils/constants';
 var os = require('os');
 
 class Captcha extends Component {
@@ -83,8 +89,8 @@ class Captcha extends Component {
       // webview.openDevTools();
     }
 
-    const sendGlobalID = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args.id);
-
+    const sendGlobalVariable = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args);
+    console.log(args);
     webview.loadURL(args.checkoutURL);
     ipcRenderer.once(FINISH_SENDING_CAPTCHA_TOKEN, (event, arg) => {
       if (this.jobsQueue.length > 0) {
@@ -94,6 +100,7 @@ class Captcha extends Component {
         this.active = false;
         webview.loadURL('https://accounts.google.com/Login');
         ipcRenderer.removeAllListeners(RECEIVE_CAPTCHA_TOKEN);
+        ipcRenderer.send(MAIN_PROCESS_CLEAR_RECEIVE_CAPTCHA_TOKEN_LISTENERS);
       }
     });
   };

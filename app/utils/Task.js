@@ -1,7 +1,10 @@
 import stores from '../store/shops';
-import Shopify from './Shopify';
-import DSM from './DSM';
-import Supreme from './Supreme';
+import Shopify from './stores/Shopify';
+import DSM from './stores/DSM';
+import Supreme from './stores/Supreme';
+import SSENSE from './stores/SSENSE';
+import Asphaltgold from './stores/Asphaltgold';
+import Overkill from './stores/Overkill';
 import {
   processKeywords,
   getSitemapJSON,
@@ -130,6 +133,15 @@ export default class Task {
         case 'DSM-US':
           this.DSM();
           break;
+        case 'SSENSE':
+          this.SSENSE();
+          break;
+        case 'Asphaltgold':
+          this.Asphaltgold();
+          break;
+        case 'Overkill':
+          this.Overkill();
+          break;
         default:
           if (!this.runOnce) {
             if (this.options.task.store === 'Fear Of God') {
@@ -250,6 +262,70 @@ export default class Task {
       return checkoutResponse;
     } else {
       this.handleChangeStatus('Size Is Unavailable');
+    }
+  };
+
+  SSENSE = async () => {
+    try {
+      this.handleChangeStatus('Generating Checkout');
+      const SSENSEInstance = new SSENSE(
+        this.options,
+        this.keywords,
+        this.handleChangeStatus,
+        this.handleChangeProductName,
+        this.proxy,
+        this.stopTask,
+        this.cookieJar,
+        this.settings,
+        this.run
+      );
+      const checkoutResponse = await SSENSEInstance.checkout();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  Asphaltgold = async () => {
+    try {
+      this.handleChangeStatus('Generating Checkout');
+      const AsphaltgoldInstance = new Asphaltgold(
+        this.options,
+        this.keywords,
+        this.handleChangeStatus,
+        this.handleChangeProductName,
+        this.proxy,
+        this.stopTask,
+        this.cookieJar,
+        this.settings,
+        this.run
+      );
+      if (this.options.task.mode === 'url') {
+        const checkoutResponse = await AsphaltgoldInstance.checkoutWithLink();
+      } else if (this.options.task.mode === 'keywords') {
+        const checkoutResponse = await AsphaltgoldInstance.checkoutWithKeywords();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  Overkill = async () => {
+    try {
+      this.handleChangeStatus('Generating Checkout');
+      const OverkillInstance = new Overkill(
+        this.options,
+        this.keywords,
+        this.handleChangeStatus,
+        this.handleChangeProductName,
+        this.proxy,
+        this.stopTask,
+        this.cookieJar,
+        this.settings,
+        this.run
+      );
+      const checkoutResponse = await OverkillInstance.checkout();
+    } catch (error) {
+      console.log(error);
     }
   };
 
