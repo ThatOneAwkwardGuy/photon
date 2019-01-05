@@ -2,14 +2,20 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const JavaScriptObfuscator = require('webpack-obfuscator');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
+
 const path = require('path');
 const mainConfig = {
   mode: 'production',
   target: 'electron-main',
-  entry: { main: './app/main.js', vendor: ['firebase'] },
+  entry: {
+    main: path.normalize(path.resolve(__dirname, 'app', 'main.js')),
+    vendor: ['firebase']
+  },
   output: {
-    path: __dirname + '/webpack-pack',
-    filename: '[name].js'
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
+    filename: '[name].js',
+    publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
   node: {
     __dirname: false,
@@ -21,8 +27,14 @@ const mainConfig = {
         test: /\.jsx?$/,
         loader: 'babel-loader',
         options: {
-          presets: 'minify',
-          plugins: ['emotion']
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
         },
         exclude: /node_modules/
       },
@@ -36,17 +48,20 @@ const mainConfig = {
       }
     ]
   },
-  plugins: [
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        output: {
-          comments: false,
-          beautify: false
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          mangle: true,
+          sourceMap: false,
+          toplevel: true,
+          output: {
+            comments: false
+          }
         }
-      }
-    }),
-    new JavaScriptObfuscator()
-  ],
+      })
+    ]
+  },
   resolve: {
     extensions: ['.js', '.json', '.jsx']
   }
@@ -57,17 +72,27 @@ const appConfig = {
   target: 'electron-renderer',
   entry: './app/app.js',
   output: {
-    path: __dirname + '/webpack-pack',
-    filename: 'app.js'
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
+    filename: 'app.js',
+    publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
-
+  node: {
+    __dirname: true
+  },
   module: {
     rules: [
       {
         test: /\.jsx?$/,
         loader: 'babel-loader',
         options: {
-          presets: 'minify'
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
         },
         exclude: /node_modules/
       },
@@ -93,21 +118,26 @@ const appConfig = {
       { test: /\.(png|woff|woff2|eot|ttf)$/, loader: 'url-loader?limit=100000' }
     ]
   },
-  plugins: [
-    new UglifyJsPlugin({
-      uglifyOptions: {
-        output: {
-          comments: false,
-          beautify: false
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          mangle: true,
+          sourceMap: false,
+          toplevel: true,
+          output: {
+            comments: false
+          }
         }
-      }
-    }),
+      })
+    ]
+  },
+  plugins: [
     new HtmlWebpackPlugin({
       title: 'Photon',
       template: './app/index.html',
       inject: false
     }),
-    new JavaScriptObfuscator(),
     new CopyWebpackPlugin([
       {
         from: './app/img/icon.png',

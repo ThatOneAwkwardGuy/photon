@@ -402,6 +402,19 @@ canvas {
   background-color: #1a1e2f !important;
 }
 
+#editTaskModal .row {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+
+#editTaskModal .modal-content {
+  border-left: solid 5px #03a9f4;
+}
+
+.modal-body {
+  padding: 0px 40px 0px 40px;
+}
+
 .loginTopBar .topBarLogoCol,
 .loginTopBar .topbar {
   background-color: transparent;

@@ -3,7 +3,7 @@ import { ADD_PROFILE, REMOVE_PROFILE } from '../actions/profile';
 
 import { omit } from 'lodash';
 
-export type taskStateType = {};
+export let taskStateType = {};
 
 const initialState = { profiles: {} };
 

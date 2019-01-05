@@ -2,13 +2,15 @@ import React, { Component } from 'react';
 import { Container, Row, Col, Button, Form, FormGroup, Label, Input } from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
 import stores from '../store/shops';
+import storeDropdown from '../store/siteDropdown';
 import Sizes from '../store/sizes';
+import Modes from '../store/modeOptions';
 import Datetime from 'react-datetime';
 import Toggle from 'react-toggle';
+import passwordSites from '../store/passwordSites';
 const _ = require('lodash');
 const moment = require('moment');
 const Shops = _.keys(stores);
-const passwordSites = ['Fear Of God', 'Undefeated', 'SSENSE'];
 class AddTask extends Component {
   constructor(props) {
     super(props);
@@ -61,7 +63,7 @@ class AddTask extends Component {
   };
 
   handleChange(e) {
-    if (e.target.value.includes('Supreme')) {
+    if (e.target.value.includes('supreme')) {
       this.setState({
         formdata: Object.assign({}, this.state.formdata, {
           [e.target.name]: e.target.value,
@@ -90,7 +92,7 @@ class AddTask extends Component {
 
   returnProfileName = (name, index) => <option key={`profile-${index}`}>{name}</option>;
 
-  returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
+  returnOptions = (name, index, keyName) => <option key={`${keyName}-${index}`}>{name}</option>;
 
   setScheduledTime = date => {
     this.setState({
@@ -101,12 +103,32 @@ class AddTask extends Component {
     });
   };
 
+  returnModeOptions = option => {
+    if (Modes[option] !== undefined) {
+      return Modes[option].map((modeOption, index) => <option key={`mode-${index}`}>{modeOption}</option>);
+    } else {
+      return ['url', 'keywords', 'variant', 'homepage'].map((modeOption, index) => <option key={`mode-${index}`}>{modeOption}</option>);
+    }
+  };
+
   returnSizeOptions = object => {
     let tree = [];
     for (const group in object) {
       tree.push(
         <optgroup key={`optgroup-${group}`} label={`${group}`}>
-          {object[group].map(this.returnOptions)}
+          {object[group].map((name, index) => this.returnOptions(name, index, 'size'))}
+        </optgroup>
+      );
+    }
+    return tree;
+  };
+
+  returnSiteOptions = object => {
+    let tree = [];
+    for (const group in object) {
+      tree.push(
+        <optgroup key={`optgroup-${group}`} label={`${group}`}>
+          {object[group].map((name, index) => this.returnOptions(name, index, 'site'))}
         </optgroup>
       );
     }
@@ -133,7 +155,7 @@ class AddTask extends Component {
                           this.handleChange(event);
                         }}
                       >
-                        {Shops.map(this.returnOptions)}
+                        {this.returnSiteOptions(storeDropdown)}
                       </Input>
                     </Col>
                     {passwordSites.includes(this.state.formdata.store) ? (
@@ -174,7 +196,7 @@ class AddTask extends Component {
                     )}
                   </FormGroup>
                   <FormGroup row>
-                    {this.state.formdata.store.includes('Supreme') ? (
+                    {this.state.formdata.store.includes('supreme') ? (
                       ''
                     ) : (
                       <Col xs="3">
@@ -188,10 +210,7 @@ class AddTask extends Component {
                             this.handleChange(event);
                           }}
                         >
-                          <option>url</option>
-                          <option>keywords</option>
-                          <option>variant</option>
-                          <option>homepage</option>
+                          {this.returnModeOptions(this.state.formdata.store)}
                         </Input>
                       </Col>
                     )}
@@ -281,7 +300,7 @@ class AddTask extends Component {
                         }}
                       />
                     </Col>
-                    {this.state.formdata.store.includes('Supreme') ? (
+                    {this.state.formdata.store.includes('supreme') ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="4">
                           <Label for="checkoutDelay">checkout delay (ms)(optional)</Label>
@@ -322,7 +341,7 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )}
-                    {this.state.formdata.mode !== 'variant' && !this.state.formdata.store.includes('Supreme') ? (
+                    {this.state.formdata.mode !== 'variant' && !this.state.formdata.store.includes('supreme') ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="keywordColor">color</Label>
@@ -340,7 +359,7 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )}
-                    {this.state.formdata.store.includes('Supreme') ? (
+                    {this.state.formdata.store.includes('supreme') ? (
                       <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                         <Col xs="3">
                           <Label for="category">category</Label>
@@ -459,7 +478,7 @@ class AddTask extends Component {
                         {this.profileNames.map(this.returnProfileName)}
                       </Input>
                     </Col>
-                    {this.state.formdata.store.includes('Supreme') ? (
+                    {this.state.formdata.store.includes('supreme') ? (
                       <Col xs="3">
                         <Label for="profile">color</Label>
                         <Input
@@ -488,8 +507,8 @@ class AddTask extends Component {
                       />
                     </Col>
                   </FormGroup>
-                  <FormGroup row style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-                    {this.state.formdata.store.includes('Supreme') ? (
+                  {/* <FormGroup row style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+                    {this.state.formdata.store.includes('supreme') ? (
                       <Col xs="3" className="text-center">
                         <Label for="tasks" className="align-items-center" check>
                           ATC Bypass
@@ -513,8 +532,8 @@ class AddTask extends Component {
                       </Col>
                     ) : (
                       ''
-                    )}
-                    {/* {this.state.formdata.store.includes('Supreme') ? (
+                    )} */}
+                  {/* {this.state.formdata.store.includes('supreme') ? (
                       <Col xs="3" className="text-center">
                         <Label for="tasks" className="align-items-center" check>
                           Captcha Bypass
@@ -539,7 +558,7 @@ class AddTask extends Component {
                     ) : (
                       ''
                     )} */}
-                  </FormGroup>
+                  {/* </FormGroup> */}
                   <FormGroup row>
                     <Col xs="2">
                       <Button

@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
 import { Button, Modal, ModalBody, ModalFooter, Table, Container, Row, Col, Form, FormGroup, Label, Input } from 'reactstrap';
 import { CSSTransition } from 'react-transition-group';
-import Task from '../utils/Task';
+import Modes from '../store/modeOptions';
+import storeDropdown from '../store/siteDropdown';
+import passwordSites from '../store/passwordSites';
 import FontAwesome from 'react-fontawesome';
 import stores from '../store/shops';
 import Sizes from '../store/sizes';
-import { ipcRenderer } from 'electron';
 import { RESET_CAPTCHA_TOKENS_ARRAY, RESET_CAPTCHA_WINDOW } from '../utils/constants';
 import Datetime from 'react-datetime';
 import Toggle from 'react-toggle';
@@ -15,12 +16,12 @@ var moment = require('moment');
 const _ = require('lodash');
 const Shops = _.keys(stores);
 const { dialog } = require('electron').remote;
+const ipcRenderer = require('electron').ipcRenderer;
 
 export default class Tasks extends Component {
   constructor(props) {
     super(props);
     this.profileNames = _.keys(this.props.profiles);
-    this.taskClasses = this.props.taskClasses;
     this.state = {
       scheduledTimeFlag: false,
       taskEditModal: false,
@@ -64,19 +65,28 @@ export default class Tasks extends Component {
     });
   };
 
-  returnOptions = (name, index) => <option key={`shop-${index}`}>{name}</option>;
+  returnOptions = (name, index, keyName) => <option key={`${keyName}-${index}`}>{name}</option>;
 
   handleSaveUpdatedTask = (task, id) => {
     this.props.onUpdateTask({ task, id });
   };
 
   handleChange = e => {
-    this.setState({
-      modalFormData: {
-        ...this.state.modalFormData,
-        task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value }
-      }
-    });
+    if (e.target.value.includes('supreme')) {
+      this.setState({
+        modalFormData: {
+          ...this.state.modalFormData,
+          task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value, mode: 'keywords' }
+        }
+      });
+    } else {
+      this.setState({
+        modalFormData: {
+          ...this.state.modalFormData,
+          task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value }
+        }
+      });
+    }
   };
 
   setScheduledTime = date => {
@@ -208,15 +218,40 @@ export default class Tasks extends Component {
     return tree;
   };
 
+  returnModeOptions = option => {
+    if (Modes[option] !== undefined) {
+      return Modes[option].map((modeOption, index) => <option key={`mode-${index}`}>{modeOption}</option>);
+    } else {
+      return ['url', 'keywords', 'variant', 'homepage'].map((modeOption, index) => <option key={`mode-${index}`}>{modeOption}</option>);
+    }
+  };
+
+  returnSizeOptions = object => {
+    let tree = [];
+    for (const group in object) {
+      tree.push(
+        <optgroup key={`optgroup-${group}`} label={`${group}`}>
+          {object[group].map((name, index) => this.returnOptions(name, index, 'size'))}
+        </optgroup>
+      );
+    }
+    return tree;
+  };
+
+  returnSiteOptions = object => {
+    let tree = [];
+    for (const group in object) {
+      tree.push(
+        <optgroup key={`optgroup-${group}`} label={`${group}`}>
+          {object[group].map((name, index) => this.returnOptions(name, index, 'site'))}
+        </optgroup>
+      );
+    }
+    return tree;
+  };
+
   returnTasks = (task, index) => (
-    <tr
-      className="taskTableRow"
-      key={`task-${index}`}
-      onClick={event => {
-        // console.log(index);
-        // console.log(event.target.screenX);
-      }}
-    >
+    <tr className="taskTableRow" key={`task-${index}`}>
       <td>{index + 1}</td>
       <td>{task.options.task.store}</td>
       <td>{task.options.profileID}</td>
@@ -359,11 +394,11 @@ export default class Tasks extends Component {
             </Container>
           </Col>
         </CSSTransition>
-        <Modal size="lg" isOpen={this.state.taskEditModal} toggle={this.toggle} className={this.props.className} centered={true}>
+        <Modal id="editTaskModal" size="lg" isOpen={this.state.taskEditModal} toggle={this.toggle} className={this.props.className} centered={true}>
           <ModalBody>
             <Form>
               <FormGroup row>
-                <Col xs="6">
+                <Col xs="3">
                   <Label for="store">store</Label>
                   <Input
                     type="select"
@@ -374,32 +409,68 @@ export default class Tasks extends Component {
                       this.handleChange(event);
                     }}
                   >
-                    {Shops.map(this.returnOptions)}
+                    {this.returnSiteOptions(storeDropdown)}
+                    {/* {Shops.map(this.returnOptions)} */}
                   </Input>
                 </Col>
+                {passwordSites.includes(this.state.modalFormData.task.store) ? (
+                  <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                    <Col xs="5">
+                      <Label for="email">email</Label>
+                      <Input
+                        type="text"
+                        name="email"
+                        id="email"
+                        value={this.state.modalFormData.task.email}
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                  </CSSTransition>
+                ) : (
+                  ''
+                )}
+                {passwordSites.includes(this.state.modalFormData.task.store) ? (
+                  <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                    <Col xs="4">
+                      <Label for="password">password</Label>
+                      <Input
+                        type="password"
+                        name="password"
+                        id="password"
+                        value={this.state.modalFormData.task.password}
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                  </CSSTransition>
+                ) : (
+                  ''
+                )}
               </FormGroup>
               <FormGroup row>
-                <Col xs="6">
-                  <Label for="mode">mode</Label>
-                  <Input
-                    type="select"
-                    name="mode"
-                    id="mode"
-                    value={this.state.modalFormData.task.mode}
-                    onChange={event => {
-                      this.handleChange(event);
-                    }}
-                  >
-                    <option>url</option>
-                    <option>keywords</option>
-                    <option>variant</option>
-                    <option>homepage</option>
-                  </Input>
-                </Col>
-              </FormGroup>
-              {this.state.modalFormData.task.mode !== 'keywords' ? (
-                <FormGroup row>
-                  <Col xs="12">
+                {this.state.modalFormData.task.store.includes('supreme') ? (
+                  ''
+                ) : (
+                  <Col xs="3">
+                    <Label for="mode">mode</Label>
+                    <Input
+                      type="select"
+                      name="mode"
+                      id="mode"
+                      value={this.state.modalFormData.task.mode}
+                      onChange={event => {
+                        this.handleChange(event);
+                      }}
+                    >
+                      {this.returnModeOptions(this.state.modalFormData.task.store)}
+                    </Input>
+                  </Col>
+                )}
+                {this.state.modalFormData.task.mode !== 'keywords' ? (
+                  <Col xs="9">
                     <Label for="modeInput">
                       {this.state.modalFormData.task.mode === 'url'
                         ? 'url'
@@ -416,20 +487,28 @@ export default class Tasks extends Component {
                       name="modeInput"
                       id="modeInput"
                       value={this.state.modalFormData.task.modeInput}
-                      placeholder="e.g +yeezy or http://example.com or variantID"
+                      placeholder={
+                        this.state.modalFormData.task.mode === 'url'
+                          ? 'http://example.com'
+                          : this.state.modalFormData.task.mode === 'keywords'
+                          ? '+yeezy -nike'
+                          : this.state.modalFormData.task.mode === 'variant'
+                          ? 'variantID'
+                          : this.state.modalFormData.task.mode === 'homepage'
+                          ? 'homepage url'
+                          : ''
+                      }
                       onChange={event => {
                         this.handleChange(event);
                       }}
                     />
                   </Col>
-                </FormGroup>
-              ) : (
-                ''
-              )}
-              {this.state.modalFormData.task.mode === 'homepage' || this.state.modalFormData.task.mode === 'keywords' ? (
-                <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                  <FormGroup row>
-                    <Col xs="12">
+                ) : (
+                  ''
+                )}
+                {this.state.modalFormData.task.mode === 'homepage' || this.state.modalFormData.task.mode === 'keywords' ? (
+                  <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
+                    <Col xs="9" style={{ marginTop: this.state.modalFormData.task.mode === 'homepage' ? '1rem' : '' }}>
                       <Label for="keywords">keywords</Label>
                       <Input
                         type="text"
@@ -443,11 +522,11 @@ export default class Tasks extends Component {
                         }}
                       />
                     </Col>
-                  </FormGroup>
-                </CSSTransition>
-              ) : (
-                ''
-              )}
+                  </CSSTransition>
+                ) : (
+                  ''
+                )}
+              </FormGroup>
               <FormGroup row>
                 <Col>
                   <Label for="proxy">proxy (optional)</Label>
@@ -456,7 +535,7 @@ export default class Tasks extends Component {
                     name="proxy"
                     id="proxy"
                     value={this.state.modalFormData.task.proxy}
-                    placeholder="user:pass@0.0.0.0:port"
+                    placeholder="user:pass@0.0.0.0:port or 0.0.0.0:port"
                     onChange={event => {
                       this.handleChange(event);
                     }}
@@ -475,7 +554,7 @@ export default class Tasks extends Component {
                     }}
                   />
                 </Col>
-                {this.state.modalFormData.task.store.includes('Supreme') ? (
+                {this.state.modalFormData.task.store.includes('supreme') ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                     <Col>
                       <Label for="checkoutDelay">checkout delay (ms)(optional)</Label>
@@ -498,7 +577,7 @@ export default class Tasks extends Component {
               <FormGroup row>
                 {this.state.modalFormData.task.mode !== 'variant' ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="4">
+                    <Col>
                       <Label for="size">size</Label>
                       <Input
                         type="select"
@@ -516,9 +595,9 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
-                {this.state.modalFormData.task.mode !== 'variant' && !this.state.modalFormData.task.store.includes('Supreme') ? (
+                {this.state.modalFormData.task.mode !== 'variant' && !this.state.modalFormData.task.store.includes('supreme') ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="4">
+                    <Col>
                       <Label for="keywordColor">color</Label>
                       <Input
                         type="text"
@@ -534,9 +613,9 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
-                {this.state.modalFormData.task.store.includes('Supreme') ? (
+                {this.state.modalFormData.task.store.includes('supreme') ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
-                    <Col xs="4">
+                    <Col>
                       <Label for="category">category</Label>
                       <Input
                         type="select"
@@ -557,6 +636,7 @@ export default class Tasks extends Component {
                         <option>Shorts</option>
                         <option>Skate</option>
                         <option>Sweatshirts</option>
+                        <option>T-Shirts</option>
                         <option>Tops/Sweaters</option>
                         <option>new</option>
                       </Input>
@@ -565,12 +645,12 @@ export default class Tasks extends Component {
                 ) : (
                   ''
                 )}
-                <Col xs="4">
+                <Col xs="3">
                   <Label for="quantity">quantity</Label>
                   <Input
                     type="select"
-                    name="select"
-                    id="select"
+                    name="quantity"
+                    id="quantity"
                     value={this.state.modalFormData.task.quantity}
                     onChange={event => {
                       this.handleChange(event);
@@ -587,12 +667,13 @@ export default class Tasks extends Component {
                     <option>9</option>
                   </Input>
                 </Col>
-                <Col xs="6" style={{ marginTop: '20px' }}>
+              </FormGroup>
+              <FormGroup row>
+                <Col xs="6">
                   <Label>
                     <span>Schedule Time (Optional)</span>
                     <Toggle checked={this.state.scheduledTimeFlag} onChange={this.toggleScheduledTime} />
                   </Label>
-
                   {this.state.scheduledTimeFlag ? (
                     <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                       <Datetime
@@ -616,16 +697,15 @@ export default class Tasks extends Component {
                   ) : (
                     ''
                   )}
-
                   {this.state.scheduledTimeFlag ? (
                     <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                       <Button
-                        style={{ marginTop: '20px' }}
+                        style={{ marginTop: '30px', float: 'right' }}
                         onClick={() => {
                           this.setState({
                             modalFormData: {
                               ...this.state.modalFormData,
-                              task: { ...this.state.modalFormData.task, scheduledTime: '' }
+                              scheduledTime: ''
                             }
                           });
                         }}
@@ -639,22 +719,22 @@ export default class Tasks extends Component {
                 </Col>
               </FormGroup>
               <FormGroup row>
-                <Col xs="6">
+                <Col xs="3">
                   <Label for="profile">profile</Label>
                   <Input
                     type="select"
-                    name="profileID"
-                    id="profileID"
-                    value={this.state.modalFormData.profileID}
+                    name="profile"
+                    id="profile"
+                    value={this.state.modalFormData.task.profile}
                     onChange={event => {
-                      this.handleProfileChange(event);
+                      this.handleChange(event);
                     }}
                   >
                     {this.profileNames.map(this.returnProfileName)}
                   </Input>
                 </Col>
-                {this.state.modalFormData.task.store.includes('Supreme') ? (
-                  <Col xs="6">
+                {this.state.modalFormData.task.store.includes('supreme') ? (
+                  <Col xs="3">
                     <Label for="profile">color</Label>
                     <Input
                       type="text"
@@ -670,70 +750,64 @@ export default class Tasks extends Component {
                   ''
                 )}
               </FormGroup>
-              <FormGroup row style={{ marginTop: '2rem', marginBottom: '2rem' }}>
-                {this.state.modalFormData.task.store.includes('Supreme') ? (
-                  <Col xs="3" className="text-center">
-                    <Label for="tasks" className="align-items-center" check>
-                      ATC Bypass
-                      <Input
-                        type="checkbox"
-                        name="atcBypass"
-                        id="atcBypass"
-                        style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
-                        value={this.state.modalFormData.task.atcBypass}
-                        checked={this.state.modalFormData.task.atcBypass === true}
-                        onChange={() => {
-                          this.setState({
-                            modalFormData: {
-                              ...this.state.modalFormData,
-                              task: {
-                                ...this.state.modalFormData.task,
-                                atcBypass: !this.state.modalFormData.task.atcBypass
-                              }
-                            }
-                          });
-                        }}
-                      />
-                    </Label>
-                  </Col>
-                ) : (
-                  ''
-                )}
-
-                {/* {this.state.modalFormData.task.store.includes('Supreme') ? (
-                  <Col xs="3" className="text-center">
-                    <Label for="tasks" className="align-items-center" check>
-                      Captcha Bypass
-                      <Input
-                        type="checkbox"
-                        name="captchaBypass"
-                        id="captchaBypass"
-                        style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
-                        value={this.state.modalFormData.task.captchaBypass}
-                        checked={this.state.modalFormData.task.captchaBypass === true}
-                        onChange={() => {
-                          this.setState({
-                            modalFormData: {
-                              ...this.state.modalFormData,
-                              task: {
-                                ...this.state.modalFormData.task,
-                                captchaBypass: !this.state.modalFormData.task.captchaBypass
-                              }
-                            }
-                          });
-                        }}
-                      />
-                    </Label>
-                  </Col>
-                ) : (
-                  ''
-                )} */}
-              </FormGroup>
+              {/* <FormGroup row style={{ marginTop: '2rem', marginBottom: '2rem' }}>
+                    {this.state.modalFormData.store.includes('supreme') ? (
+                      <Col xs="3" className="text-center">
+                        <Label for="tasks" className="align-items-center" check>
+                          ATC Bypass
+                          <Input
+                            type="checkbox"
+                            name="atcBypass"
+                            id="atcBypass"
+                            style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                            value={this.state.modalFormData.task.atcBypass}
+                            checked={this.state.modalFormData.task.atcBypass === true}
+                            onChange={() => {
+                              this.setState({
+                                modalFormData: {
+                                  ...this.state.modalFormData,
+                                  atcBypass: !this.state.modalFormData.task.atcBypass
+                                }
+                              });
+                            }}
+                          />
+                        </Label>
+                      </Col>
+                    ) : (
+                      ''
+                    )} */}
+              {/* {this.state.modalFormData.task.store.includes('supreme') ? (
+                      <Col xs="3" className="text-center">
+                        <Label for="tasks" className="align-items-center" check>
+                          Captcha Bypass
+                          <Input
+                            type="checkbox"
+                            name="captchaBypass"
+                            id="captchaBypass"
+                            style={{ WebkitAppearance: 'checkbox', marginLeft: '15px' }}
+                            value={this.state.modalFormData.task.captchaBypass}
+                            checked={this.state.modalFormData.task.captchaBypass === true}
+                            onChange={() => {
+                              this.setState({
+                                modalFormData: {
+                                  ...this.state.modalFormData,
+                                  captchaBypass: !this.state.modalFormData.task.captchaBypass
+                                }
+                              });
+                            }}
+                          />
+                        </Label>
+                      </Col>
+                    ) : (
+                      ''
+                    )} */}
+              {/* </FormGroup> */}
             </Form>
           </ModalBody>
           <ModalFooter>
             <Button
               onClick={() => {
+                this.props.taskClasses[this.state.updateTaskID].stopTask();
                 this.handleSaveUpdatedTask(
                   {
                     task: this.state.modalFormData.task,

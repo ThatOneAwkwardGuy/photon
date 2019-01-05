@@ -110,7 +110,7 @@ export default class Supreme {
 
   checkoutWithCapctcha = async (captchaToken, authToken, cookies) => {
     let payload;
-    if (this.options.task.store === 'Supreme-EU') {
+    if (this.options.task.store === 'supreme-eu') {
       payload = {
         utf8: '\u2713',
         authenticity_token: authToken,
@@ -133,7 +133,7 @@ export default class Supreme {
         'order[terms]': '1',
         hpcvv: ''
       };
-    } else if (this.options.task.store === 'Supreme-US') {
+    } else if (this.options.task.store === 'supreme-us') {
       payload = {
         utf8: '\u2713',
         authenticity_token: authToken,

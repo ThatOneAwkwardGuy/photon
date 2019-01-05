@@ -73,9 +73,11 @@ export default class Shopify {
 
   addToCart = async (variantID, amount) => {
     const payload = {
-      id: variantID,
-      quantity: amount
+      id: variantID
     };
+    if (this.options.task.store !== 'bdgastore') {
+      payload['quantity'] = 1;
+    }
     const response = await this.rp({
       method: 'POST',
       uri: `${stores[this.options.task.store]}/cart/add.js`,
@@ -221,6 +223,34 @@ export default class Shopify {
     }
   };
 
+  // submitExtraCartInfo = async () => {
+  //   const payload = {
+  //     'updates[]': '1',
+  //     'address[country]': this.options.profile.deliveryCountry,
+  //     'address[zip]': this.options.profile.deliveryZip,
+  //     checkout: 'Check out',
+  //     note: ''
+  //   };
+  //   await this.rp({
+  //     method: 'POST',
+  //     form: {
+  //       'shipping_address[zip]': 'RM17 5BN',
+  //       'shipping_address[country]': 'United Kingdom',
+  //       'shipping_address[province]': ''
+  //     },
+  //     uri: 'https://bdgastore.com/cart/prepare_shipping_rates'
+  //   });
+
+  //   const response = await this.rp({
+  //     method: 'POST',
+  //     form: payload,
+  //     uri: `https://bdgastore.com/cart`,
+  //     followAllRedirects: true,
+  //     resolveWithFullResponse: true
+  //   });
+  //   console.log(response);
+  // };
+
   sendCustomerInfo = async (checkoutURL, authToken, captchaToken) => {
     const payload = {
       utf8: '✓',
@@ -255,11 +285,11 @@ export default class Shopify {
     } else {
       payload['checkout[remember_me]'] = '0';
     }
-    console.log(payload);
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
-      maxRedirects: 0,
+      // maxRedirects: 0,
+      followAllRedirects: true,
       resolveWithFullResponse: true,
       form: payload
     });
@@ -392,6 +422,8 @@ export default class Shopify {
     } else {
       this.handleChangeStatus('Checking Out');
       const checkoutBody = await this.getCheckoutBody(checkoutURL);
+      console.log(checkoutURL);
+      console.log(checkoutBody);
       const bodyInfo = this.returnBodyInfo(checkoutBody);
       const paymentID = bodyInfo.paymentID;
       const authToken = bodyInfo.authToken;
@@ -505,7 +537,7 @@ export default class Shopify {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
-      this.stop(false);
+      this.stop(true);
     }
   };
 }

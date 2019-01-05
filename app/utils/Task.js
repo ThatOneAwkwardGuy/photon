@@ -5,21 +5,12 @@ import Supreme from './stores/Supreme';
 import SSENSE from './stores/SSENSE';
 import Asphaltgold from './stores/Asphaltgold';
 import Overkill from './stores/Overkill';
-import {
-  processKeywords,
-  getSitemapJSON,
-  getSitemapXML,
-  getAtomSitemapXML,
-  checkSitemapJSONForKeywords,
-  checkSitemapXMLForKeywords,
-  convertProductNameIntoArray,
-  checkAtomSitemapXMLForKeywords
-} from './helpers.js';
+import { processKeywords, getSitemapJSON, checkSitemapJSONForKeywords, convertProductNameIntoArray, checkAtomSitemapXMLForKeywords } from './helpers.js';
+import passwordSites from '../store/passwordSites';
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
 const _ = require('lodash');
-const convert = require('xml-js');
 const sizeSynonymns = {
   XSmall: ['XSMALL', 'XS', 'XSmall', 'X-Small'],
   Small: ['SMALL', 'S', 'Small'],
@@ -27,9 +18,8 @@ const sizeSynonymns = {
   Large: ['LARGE', 'L', 'Large'],
   XLarge: ['XLARGE', 'X-Large', 'X-LARGE', 'XL'],
   XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE'],
-  'N/A': ['N/A', 'Default Title', 'One Size']
+  'N/A': ['N/A', 'Default Title', 'One Size', 'O/S']
 };
-
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
     this.forceUpdate = forceUpdateFunction;
@@ -77,7 +67,7 @@ export default class Task {
 
   stopTask = (checkoutComplete = false) => {
     switch (this.options.task.store) {
-      case 'Supreme-EU':
+      case 'supreme-eu':
         if (this.supremeInstance !== '') {
           this.supremeInstance.stop();
           this.supremeInstance.stopMonitoring();
@@ -86,7 +76,7 @@ export default class Task {
             this.handleChangeStatus('Stopped');
           }
         }
-      case 'Supreme-US':
+      case 'supreme-us':
         if (this.supremeInstance !== '') {
           this.supremeInstance.stop();
           this.supremeInstance.stopMonitoring();
@@ -121,30 +111,30 @@ export default class Task {
         this.handleChangeStatus('Started');
       }
       switch (this.options.task.store) {
-        case 'Supreme-EU':
+        case 'supreme-eu':
           this.Supreme();
           break;
-        case 'Supreme-US':
+        case 'supreme-us':
           this.Supreme();
           break;
-        case 'DSM-EU':
+        case 'dsm-eu':
           this.DSM();
           break;
-        case 'DSM-US':
+        case 'dsm-us':
           this.DSM();
           break;
-        case 'SSENSE':
+        case 'ssense':
           this.SSENSE();
           break;
-        case 'Asphaltgold':
+        case 'asphaltgold':
           this.Asphaltgold();
           break;
-        case 'Overkill':
+        case 'overkill':
           this.Overkill();
           break;
         default:
           if (!this.runOnce) {
-            if (this.options.task.store === 'Fear Of God') {
+            if (passwordSites.includes(this.options.task.store)) {
               this.handleChangeStatus('Signing In');
               await this.handleSignIn();
             }
@@ -401,7 +391,7 @@ export default class Task {
   getVariantIDOfSize = (variantsArray, size) => {
     try {
       const found = [];
-      if (this.options.task.store.includes('DSM')) {
+      if (this.options.task.store.includes('dsm')) {
         for (const variant in variantsArray) {
           if (
             (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
