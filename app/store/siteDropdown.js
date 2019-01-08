@@ -99,6 +99,7 @@ export default {
     'soleclassics',
     'solefly',
     'solestop',
+    'sotostore',
     'suede-store',
     'super7',
     'sukamii',

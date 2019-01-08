@@ -5,6 +5,7 @@ import Supreme from './stores/Supreme';
 import SSENSE from './stores/SSENSE';
 import Asphaltgold from './stores/Asphaltgold';
 import Overkill from './stores/Overkill';
+import SOTOStore from './stores/SOTOStore';
 import { processKeywords, getSitemapJSON, checkSitemapJSONForKeywords, convertProductNameIntoArray, checkAtomSitemapXMLForKeywords } from './helpers.js';
 import passwordSites from '../store/passwordSites';
 const rp = require('request-promise');
@@ -132,6 +133,9 @@ export default class Task {
         case 'overkill':
           this.Overkill();
           break;
+        case 'sotostore':
+          this.SOTOStore();
+          break;
         default:
           if (!this.runOnce) {
             if (passwordSites.includes(this.options.task.store)) {
@@ -257,7 +261,6 @@ export default class Task {
 
   SSENSE = async () => {
     try {
-      this.handleChangeStatus('Generating Checkout');
       const SSENSEInstance = new SSENSE(
         this.options,
         this.keywords,
@@ -275,9 +278,29 @@ export default class Task {
     }
   };
 
+  SOTOStore = async () => {
+    try {
+      const SOTOInstance = new SOTOStore(
+        this.options,
+        this.keywords,
+        this.handleChangeStatus,
+        this.handleChangeProductName,
+        this.proxy,
+        this.stopTask,
+        this.cookieJar,
+        this.settings,
+        this.run
+      );
+      if (this.options.task.mode === 'url') {
+        const checkoutResponse = await SOTOInstance.checkoutWithLink();
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   Asphaltgold = async () => {
     try {
-      this.handleChangeStatus('Generating Checkout');
       const AsphaltgoldInstance = new Asphaltgold(
         this.options,
         this.keywords,

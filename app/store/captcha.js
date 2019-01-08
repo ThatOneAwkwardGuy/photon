@@ -98,6 +98,7 @@ export default {
   soleclassics: false,
   solefly: false,
   solestop: false,
+  sotostore: false,
   'suede-store': false,
   super7: false,
   sukamii: false,
