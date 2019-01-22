@@ -37,6 +37,7 @@ class AddTask extends Component {
         atcBypass: false,
         captchaBypass: false,
         monitorDelay: '',
+        priceCheckVal: '',
         checkoutDelay: '',
         username: '',
         password: ''
@@ -294,6 +295,19 @@ class AddTask extends Component {
                         name="monitorDelay"
                         id="monitorDelay"
                         value={this.state.formdata.monitorDelay}
+                        placeholder=""
+                        onChange={event => {
+                          this.handleChange(event);
+                        }}
+                      />
+                    </Col>
+                    <Col xs="4">
+                      <Label for="priceCheckVal">price check value (e.g 00.00)</Label>
+                      <Input
+                        type="number"
+                        name="priceCheckVal"
+                        id="priceCheckVal"
+                        value={this.state.formdata.priceCheckVal}
                         placeholder=""
                         onChange={event => {
                           this.handleChange(event);

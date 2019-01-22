@@ -1,1 +1,5 @@
-{"tasks":[{"task":{"store":"12amrun","mode":"url","modeInput":"","keywords":"","proxy":"","quantity":"1","tasks":"1","color":"","category":""}}]}
+{
+  "tasks": [
+    { "task": { "store": "12amrun", "mode": "url", "modeInput": "", "keywords": "", "proxy": "", "quantity": "1", "tasks": "1", "color": "", "category": "" } }
+  ]
+}

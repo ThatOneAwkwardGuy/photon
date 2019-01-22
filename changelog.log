@@ -126,3 +126,4 @@
 - Asphaltgold.de support - needs testing (Keywords and URL)
 - New Shopify sites from 70+ to 110+, will need to test them though
 - Fixed bug where if you edited a task, it would not change until 
+- Added price check for shopify sites

@@ -554,6 +554,19 @@ export default class Tasks extends Component {
                     }}
                   />
                 </Col>
+                <Col>
+                  <Label for="priceCheckVal">price check value (e.g 00.00)</Label>
+                  <Input
+                    type="number"
+                    name="priceCheckVal"
+                    id="priceCheckVal"
+                    value={this.state.modalFormData.task.priceCheckVal}
+                    placeholder=""
+                    onChange={event => {
+                      this.handleChange(event);
+                    }}
+                  />
+                </Col>
                 {this.state.modalFormData.task.store.includes('supreme') ? (
                   <CSSTransition in={true} appear={true} timeout={300} classNames="fade">
                     <Col>
@@ -827,7 +840,7 @@ export default class Tasks extends Component {
           </ModalFooter>
         </Modal>
         <Modal size="md" toggle={this.toggleDeleteAllModal} isOpen={this.state.deleteAllTasksModal} centered={true}>
-          <ModalBody>Are you sure you want to delete all of your current tasks?</ModalBody>
+          <ModalBody style={{ paddingTop: '20px' }}>Are you sure you want to delete all of your current tasks?</ModalBody>
           <ModalFooter>
             <Button
               onClick={() => {

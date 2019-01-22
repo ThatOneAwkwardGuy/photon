@@ -81,7 +81,28 @@ export default class Shopify {
     const response = await this.rp({
       method: 'POST',
       uri: `${stores[this.options.task.store]}/cart/add.js`,
-      form: payload
+      form: payload,
+      json: true
+    });
+    if (this.options.task.priceCheckVal !== '' && parseFloat(this.options.task.priceCheckVal) < response.price / 100) {
+      console.log('hello');
+      this.stop(true);
+      this.removeFromCart();
+      this.handleChangeStatus('Price Of Item Is Above Price Check');
+      throw new Error('Price Of Item Is Above Price Check');
+    }
+  };
+
+  removeFromCart = async () => {
+    const payload = {
+      quantity: '0',
+      line: '1'
+    };
+    const response = await this.rp({
+      method: 'POST',
+      uri: `${stores[this.options.task.store]}/cart/change.js`,
+      form: payload,
+      json: true
     });
   };
 
