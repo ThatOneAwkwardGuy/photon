@@ -274,12 +274,16 @@ export default class Supreme {
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
       if (product !== undefined) {
-        this.handleChangeProductName(product.name);
-        const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
-        if (styleID !== '') {
-          return [product.id, styleID, sizeID];
+        if (this.options.task.priceCheckVal !== '' && parseFloat(this.options.task.priceCheckVal) < response.price / 100) {
+          this.handleChangeProductName(product.name);
+          const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
+          if (styleID !== '') {
+            return [product.id, styleID, sizeID];
+          } else {
+            throw new Error('Style For Product Not Found');
+          }
         } else {
-          throw 'error';
+          throw new Error('Item Costs More Than Price Check');
         }
       } else {
         if (this.active) {
@@ -295,12 +299,16 @@ export default class Supreme {
       }
     } catch (e) {
       console.error(e);
-      if (this.active) {
+      if (this.active && e.message === 'Style For Product Not Found') {
         console.error(`Monitoring - Size/Style Not Currently Found - ${this.options.task.keywords}`);
         this.monitoring = true;
         this.handleChangeStatus('Monitoring - Size/Style Not Currently Found');
         this.monitoringTimeout = setTimeout(this.checkout, this.monitorDelay);
         return ['', '', ''];
+      } else if (e.message === 'Item Costs More Than Price Check') {
+        this.handleChangeStatus('Item Costs More Than Price Check');
+        clearTimeout(this.monitoringTimeout);
+        this.active = false;
       } else {
         clearTimeout(this.monitoringTimeout);
       }

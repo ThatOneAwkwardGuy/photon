@@ -19,10 +19,14 @@ const sizeSynonymns = {
   Large: ['LARGE', 'L', 'Large'],
   XLarge: ['XLARGE', 'X-Large', 'X-LARGE', 'XL'],
   XXLarge: ['XXLARGE', 'XX-Large', 'XXL', 'XX-LARGE'],
-  'N/A': ['N/A', 'Default Title', 'One Size', 'O/S']
+  'N/A': ['N/A', 'Default Title', 'One Size', 'O/S', 'F']
 };
 export default class Task {
   constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
+    // const stores = { ...stores, ...settings.customSites };
+    for (const site in settings.customSites) {
+      stores[site] = settings.customSites[site];
+    }
     this.forceUpdate = forceUpdateFunction;
     this.options = options;
     this.status = 'Not Started';
@@ -238,7 +242,7 @@ export default class Task {
     this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
     const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
     const content = await this.getVariantsFromHomepage(pageURL);
-    const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size);
+    const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size, this.options.task.keywordColor);
     if (variantID !== undefined) {
       const DSMInstance = new DSM(
         this.options,
@@ -344,7 +348,7 @@ export default class Task {
 
   checkoutWithGroupOfVariants = async variantIDs => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
-    const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size);
+    const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size, this.options.task.keywordColor);
     if (variantID !== undefined) {
       const shopifyCheckoutClass = new Shopify(
         this.options,
@@ -411,7 +415,7 @@ export default class Task {
     }
   };
 
-  getVariantIDOfSize = (variantsArray, size) => {
+  getVariantIDOfSize = (variantsArray, size, color) => {
     try {
       const found = [];
       if (this.options.task.store.includes('dsm')) {
@@ -419,7 +423,12 @@ export default class Task {
           if (
             (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1'), size)) ||
             (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2'), size)) ||
-            (_.get(variantsArray[variant], 'public_title') && this.checkSize(_.get(variantsArray[variant], 'public_title'), size))
+            (_.get(variantsArray[variant], 'option3') && this.checkSize(_.get(variantsArray[variant], 'option3'), size)) ||
+            (_.get(variantsArray[variant], 'public_title') && this.checkSize(_.get(variantsArray[variant], 'public_title'), size)) ||
+            (_.get(variantsArray[variant], 'option1') && this.checkSize(_.get(variantsArray[variant], 'option1').toLowerCase(), color.toLowerCase())) ||
+            (_.get(variantsArray[variant], 'option2') && this.checkSize(_.get(variantsArray[variant], 'option2').toLowerCase(), color.toLowerCase())) ||
+            (_.get(variantsArray[variant], 'option3') && this.checkSize(_.get(variantsArray[variant], 'option3').toLowerCase(), color.toLowerCase())) ||
+            (_.get(variantsArray[variant], 'public_title') && this.checkSize(_.get(variantsArray[variant], 'public_title').toLowerCase(), color.toLowerCase()))
           ) {
             found.push(variantsArray[variant].id);
           }
@@ -429,7 +438,12 @@ export default class Task {
           if (
             (_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1'), size)) ||
             (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2'), size)) ||
-            (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size))
+            (_.get(variant, 'option3') && this.checkSize(_.get(variant, 'option3'), size)) ||
+            (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title'), size)) ||
+            (_.get(variant, 'option1') && this.checkSize(_.get(variant, 'option1').toLowerCase(), color.toLowerCase())) ||
+            (_.get(variant, 'option2') && this.checkSize(_.get(variant, 'option2').toLowerCase(), color.toLowerCase())) ||
+            (_.get(variant, 'option3') && this.checkSize(_.get(variant, 'option3').toLowerCase(), color.toLowerCase())) ||
+            (_.get(variant, 'public_title') && this.checkSize(_.get(variant, 'public_title').toLowerCase(), color.toLowerCase()))
           ) {
             found.push(variant.id);
           }
@@ -483,6 +497,9 @@ export default class Task {
         try {
           const response = await rp({
             method: 'GET',
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Safari/537.36'
+            },
             uri: 'https://cdn.shopify.com/s/files/1/1940/4611/t/1/assets/custom.js'
           });
           propertiesHash = response.slice(

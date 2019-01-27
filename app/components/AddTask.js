@@ -18,6 +18,7 @@ class AddTask extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.returnProfileName = this.returnProfileName.bind(this);
+    storeDropdown.custom = _.keys(props.settings.customSites);
     this.state = {
       scheduledTimeFlag: false,
       formdata: {

@@ -6,9 +6,12 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../constants';
 export default class Shopify {
   constructor(options, handleChangeStatus, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run) {
+    for (const site in settings.customSites) {
+      stores[site] = settings.customSites[site];
+    }
     this.options = options;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
@@ -314,6 +317,7 @@ export default class Shopify {
       resolveWithFullResponse: true,
       form: payload
     });
+    console.log(payload);
     console.log(response);
     return response;
   };
@@ -325,7 +329,7 @@ export default class Shopify {
       authenticity_token: authToken,
       previous_step: 'shipping_method',
       step: 'payment_method',
-      'checkout[shipping_rate][id]': `${encodeURIComponent(shippingToken)}`,
+      'checkout[shipping_rate][id]': `${encodeURI(shippingToken)}`,
       button: '',
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
@@ -414,6 +418,7 @@ export default class Shopify {
       });
       this.handleChangeStatus('Waiting For Captcha');
       ipcRenderer.once(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+        ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, {});
         if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
           this.handleChangeStatus('Monitoring For Restock');
           await this.pollQueueOrCheckout(captchaToken.checkoutURL);
@@ -481,6 +486,7 @@ export default class Shopify {
         });
         this.handleChangeStatus('Waiting For Captcha');
         ipcRenderer.once(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
+          ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, {});
           try {
             if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
               this.handleChangeStatus('Monitoring For Restock');

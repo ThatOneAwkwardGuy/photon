@@ -1,22 +1,23 @@
 import stores from '../../store/shops';
 import captchaNeeded from '../../store/captcha';
+import { undefeatedAccountLogin } from '../helpers';
 const request = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
-import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../constants';
+import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN } from '../constants';
 export default class DSM {
   constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run, handleChangeProductName) {
     this.options = options;
-    this.handleChangeStatus = handleChangeStatus;
-    this.proxy = proxy;
-    this.handleChangeProductName = handleChangeProductName;
     this.propertiesHash = propertiesHash;
+    this.handleChangeStatus = handleChangeStatus;
+    this.handleChangeProductName = handleChangeProductName;
+    this.proxy = proxy;
     this.stop = stop;
     this.settings = settings;
     this.shopifyCheckoutURL = shopifyCheckoutURL;
-    this.monitorDelay = this.returnMonitorDelay();
+    this.monitorDelay = options.task.monitorDelay === '' ? settings.monitorTime : options.task.monitorDelay;
     this.checkoutDelay = options.task.checkoutDelay === '' ? settings.checkoutTime : options.task.checkoutDelay;
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
@@ -26,7 +27,7 @@ export default class DSM {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
         Cookie: this.cookieJar.getCookieString(stores[options.task.store])
       },
-      jar: this.cookieJar,
+      jar: cookieJar,
       proxy:
         this.options.task.proxy === ''
           ? this.proxy !== undefined
@@ -34,16 +35,6 @@ export default class DSM {
             : ''
           : `http://${this.options.task.proxy}`
     });
-  }
-
-  returnMonitorDelay() {
-    if (this.options.task.monitorDelay !== '' && this.options.task.monitorDelay !== undefined) {
-      return this.options.task.monitorDelay;
-    } else if (this.settings.restockMonitorTime !== '' && this.settings.restockMonitorTime !== undefined) {
-      return this.settings.restockMonitorTime;
-    } else {
-      return this.settings.monitorTime;
-    }
   }
 
   returnDomainFromURL(urlstring) {
@@ -74,6 +65,7 @@ export default class DSM {
 
   addToCart = async (variantID, amount) => {
     let payload;
+
     if (this.options.task.store === 'dsm-us') {
       payload = {
         id: variantID,
@@ -87,6 +79,8 @@ export default class DSM {
         'properties[_hash]': this.propertiesHash
       };
     }
+    console.log(payload);
+
     try {
       const response = await this.rp({
         method: 'POST',
@@ -97,23 +91,12 @@ export default class DSM {
         followRedirect: true
       });
       const productInfo = JSON.parse(response.body);
+      console.log(productInfo);
+      console.log(response);
       this.handleChangeProductName(productInfo.title);
     } catch (error) {
       console.error(error);
     }
-  };
-
-  removeFromCart = async () => {
-    const payload = {
-      quantity: '0',
-      line: '1'
-    };
-    const response = await this.rp({
-      method: 'POST',
-      uri: `${stores[this.options.task.store]}/cart/change.js`,
-      form: payload,
-      json: true
-    });
   };
 
   generatePaymentToken = async () => {
@@ -216,6 +199,46 @@ export default class DSM {
     }
   };
 
+  sendCustomerInfo = async (checkoutURL, authToken, captchaToken) => {
+    const payload = {
+      utf8: '✓',
+      _method: 'patch',
+      authenticity_token: authToken !== undefined ? authToken : '',
+      previous_step: 'contact_information',
+      step: 'shipping_method',
+      'checkout[email]': `${this.options.profile.paymentEmail}`,
+      'checkout[buyer_accepts_marketing]': '0',
+      'checkout[shipping_address][first_name]': `${this.options.profile.deliveryFirstName}`,
+      'checkout[shipping_address][last_name]': `${this.options.profile.deliveryLastName}`,
+      'checkout[shipping_address][address1]': `${this.options.profile.deliveryAddress}`,
+      'checkout[shipping_address][address2]': `${this.options.profile.deliveryAptorSuite}`,
+      'checkout[shipping_address][city]': `${this.options.profile.deliveryCity}`,
+      'checkout[shipping_address][country]': `${this.options.profile.deliveryCountry}`,
+      'checkout[shipping_address][province]': `${this.options.profile.deliveryProvince}`,
+      'checkout[shipping_address][zip]': `${this.options.profile.deliveryZip}`,
+      'checkout[shipping_address][phone]': `${this.options.profile.phoneNumber}`,
+      'checkout[remember_me]': '0',
+      'checkout[client_details][browser_width]': '1710',
+      'checkout[client_details][browser_height]': '1289',
+      'checkout[client_details][javascript_enabled]': '1',
+      button: ''
+    };
+    if (captchaToken !== undefined) {
+      payload['g-recaptcha-response'] = captchaToken;
+    }
+    if (!stores[this.options.task.store].includes('palace')) {
+      payload['checkout[shipping_address][company]'] = '';
+    }
+    const response = await this.rp({
+      method: 'POST',
+      uri: checkoutURL,
+      followAllRedirects: true,
+      resolveWithFullResponse: true,
+      form: payload
+    });
+    return response;
+  };
+
   returnBodyInfo = body => {
     const $ = cheerio.load(body);
     return {
@@ -241,6 +264,7 @@ export default class DSM {
     });
     for (const shippingRates of response.shipping_rates) {
       if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
+        const shipOpt = shippingRates.name.replace(/ /g, '%20');
         const shipPrc = shippingRates.price;
         const shipSource = shippingRates.source;
         const shipCode = shippingRates.code;
@@ -249,74 +273,24 @@ export default class DSM {
           token: shippingOption,
           price: shipPrc
         };
-        console.log(shippingInfo);
         return shippingInfo;
       }
     }
   };
 
-  // submitExtraCartInfo = async () => {
-  //   const payload = {
-  //     'updates[]': '1',
-  //     'address[country]': this.options.profile.deliveryCountry,
-  //     'address[zip]': this.options.profile.deliveryZip,
-  //     checkout: 'Check out',
-  //     note: ''
-  //   };
-  //   await this.rp({
-  //     method: 'POST',
-  //     form: {
-  //       'shipping_address[zip]': 'RM17 5BN',
-  //       'shipping_address[country]': 'United Kingdom',
-  //       'shipping_address[province]': ''
-  //     },
-  //     uri: 'https://bdgastore.com/cart/prepare_shipping_rates'
-  //   });
-
-  //   const response = await this.rp({
-  //     method: 'POST',
-  //     form: payload,
-  //     uri: `https://bdgastore.com/cart`,
-  //     followAllRedirects: true,
-  //     resolveWithFullResponse: true
-  //   });
-  //   console.log(response);
-  // };
-
-  sendCustomerInfo = async (checkoutURL, authToken, captchaToken) => {
+  sendShippingMethod = async (shippingToken, checkoutURL, authToken) => {
     const payload = {
       utf8: '✓',
       _method: 'patch',
-      authenticity_token: authToken !== undefined ? authToken : '',
-      previous_step: 'contact_information',
-      step: 'shipping_method',
-      'checkout[email]': `${this.options.profile.paymentEmail}`,
-      'checkout[buyer_accepts_marketing]': '0',
-      'checkout[shipping_address][first_name]': `${this.options.profile.deliveryFirstName}`,
-      'checkout[shipping_address][last_name]': `${this.options.profile.deliveryLastName}`,
-      'checkout[shipping_address][address1]': `${this.options.profile.deliveryAddress}`,
-      'checkout[shipping_address][address2]': `${this.options.profile.deliveryAptorSuite}`,
-      'checkout[shipping_address][city]': `${this.options.profile.deliveryCity}`,
-      'checkout[shipping_address][country]': `${this.options.profile.deliveryCountry}`,
-      'checkout[shipping_address][province]': `${this.options.profile.deliveryProvince}`,
-      'checkout[shipping_address][zip]': `${this.options.profile.deliveryZip}`,
-      'checkout[shipping_address][phone]': `${this.options.profile.phoneNumber}`,
+      authenticity_token: `${authToken}`,
+      previous_step: 'shipping_method',
+      step: 'payment_method',
+      'checkout[shipping_rate][id]': `${encodeURI(shippingToken)}`,
+      button: '',
       'checkout[client_details][browser_width]': '1710',
       'checkout[client_details][browser_height]': '1289',
-      'checkout[client_details][javascript_enabled]': '1',
-      button: ''
+      'checkout[client_details][javascript_enabled]': '1'
     };
-    if (captchaToken !== undefined) {
-      payload['g-recaptcha-response'] = captchaToken;
-    }
-    if (!stores[this.options.task.store].includes('palace') && !this.options.task.store === 'Fear Of God') {
-      payload['checkout[shipping_address][company]'] = '';
-    }
-    if (this.options.task.store === 'Fear Of God') {
-      payload['checkout[shipping_address][id]'] = '';
-    } else {
-      payload['checkout[remember_me]'] = '0';
-    }
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
@@ -327,44 +301,12 @@ export default class DSM {
     return response;
   };
 
-  sendShippingMethod = async (shippingToken, checkoutURL, authToken) => {
-    const payload = {
-      utf8: '✓',
-      _method: 'patch',
-      authenticity_token: authToken,
-      previous_step: 'shipping_method',
-      step: 'payment_method',
-      'checkout[shipping_rate][id]': `${encodeURI(shippingToken)}`,
-      button: '',
-      'checkout[client_details][browser_width]': '1710',
-      'checkout[client_details][browser_height]': '1289',
-      'checkout[client_details][javascript_enabled]': '1'
-    };
-    if (this.options.task.store === 'Fear Of God') {
-      await this.rp({
-        method: 'GET',
-        uri: `${checkoutURL}/shipping_rates?step=shipping_method`,
-        followAllRedirects: true,
-        resolveWithFullResponse: true
-      });
-    }
-    const response = await this.rp({
-      method: 'POST',
-      uri: `${checkoutURL}?step=shipping_method`,
-      followAllRedirects: true,
-      resolveWithFullResponse: true,
-      form: payload
-    });
-    console.log(response);
-    return response;
-  };
-
   sendCheckoutInfo = async (paymentToken, shippingPrice, paymentID, authToken, checkoutURL, orderTotal) => {
     const payload = {
       utf8: '✓',
       _method: 'patch',
-      previous_step: 'payment_method',
       authenticity_token: `${authToken}`,
+      previous_step: 'payment_method',
       step: '',
       s: `${paymentToken}`,
       'checkout[payment_gateway]': `${paymentID}`,
@@ -380,16 +322,11 @@ export default class DSM {
       'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
       'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
       complete: '1',
-      // 'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
-      // 'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
-      // 'checkout[client_details][javascript_enabled]': '1',
+      'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
+      'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
+      'checkout[client_details][javascript_enabled]': '1',
       'checkout[total_price]': `${parseInt(orderTotal) + shippingPrice * 100}`
     };
-
-    // if (authToken !== '') {
-    //   payload['authenticity_token'] = `${authToken}`;
-    // }
-
     const response = await this.rp({
       method: 'POST',
       uri: checkoutURL,
@@ -397,8 +334,6 @@ export default class DSM {
       resolveWithFullResponse: true,
       followAllRedirects: true
     });
-    console.log(payload);
-    console.log(response);
     return response;
   };
 
@@ -421,8 +356,7 @@ export default class DSM {
         baseURL: stores[this.options.task.store]
       });
       this.handleChangeStatus('Waiting For Captcha');
-      ipcRenderer.once(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
-        ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, {});
+      ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
         if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
           this.handleChangeStatus('Monitoring For Restock');
           await this.pollQueueOrCheckout(captchaToken.checkoutURL);
@@ -452,8 +386,6 @@ export default class DSM {
     } else {
       this.handleChangeStatus('Checking Out');
       const checkoutBody = await this.getCheckoutBody(checkoutURL);
-      console.log(checkoutURL);
-      console.log(checkoutBody);
       const bodyInfo = this.returnBodyInfo(checkoutBody);
       const paymentID = bodyInfo.paymentID;
       const authToken = bodyInfo.authToken;
@@ -479,6 +411,7 @@ export default class DSM {
       this.handleChangeStatus('Getting Shipping and Payment Tokens');
       const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
       let checkoutURL = this.shopifyCheckoutURL;
+      console.log(checkoutURL);
       if (captchaNeeded[this.options.task.store]) {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
@@ -489,13 +422,19 @@ export default class DSM {
           baseURL: stores[this.options.task.store]
         });
         this.handleChangeStatus('Waiting For Captcha');
-        ipcRenderer.once(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
-          ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, {});
+        ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, captchaToken) => {
           try {
-            if (captchaToken.checkoutURL.includes('stock_problems') && this.settings.monitorForRestock) {
+            if ((captchaToken.checkoutURL.includes('stock_problems') || captchaToken.checkoutURL.includes('chrome-error')) && this.settings.monitorForRestock) {
               this.handleChangeStatus('Monitoring For Restock');
-              await this.pollQueueOrCheckout(captchaToken.checkoutURL);
-            } else if (captchaToken.checkoutURL.includes('stock_problems') && !this.settings.monitorForRestock) {
+              if (captchaToken.checkoutURL.includes('chrome-error')) {
+                this.handleChangeStatus('Error Trying To Monitor Product');
+              } else {
+                await this.pollQueueOrCheckout(captchaToken.checkoutURL);
+              }
+            } else if (
+              (captchaToken.checkoutURL.includes('stock_problems') || captchaToken.checkoutURL.includes('chrome-error')) &&
+              !this.settings.monitorForRestock
+            ) {
               this.handleChangeStatus('Out Of Stock');
             } else {
               this.handleChangeStatus('Checking Out');
@@ -522,12 +461,7 @@ export default class DSM {
                 checkoutURL,
                 orderTotal
               );
-              if (checkoutResponse.body.includes('<title>    Shipping method')) {
-                this.handleChangeStatus('Stuck On Shipping Method');
-                this.stop(true);
-              } else {
-                await this.pollQueueOrCheckout(checkoutResponse.request.href, paymentToken, shipping);
-              }
+              await this.pollQueueOrCheckout(checkoutResponse.request.href);
             }
           } catch (error) {
             console.error(error);
@@ -541,22 +475,14 @@ export default class DSM {
         const authToken = bodyInfo.authToken;
         const orderTotal = bodyInfo.orderTotal;
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Customer Info`);
-        this.handleChangeStatus('Sending Customer Info');
         const sendCustomerInfoResponse = await this.sendCustomerInfo(checkoutURL, authToken);
         const sendShippingMethodBodyInfo = this.returnBodyInfo(sendCustomerInfoResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sending Shipping Info`);
-        this.handleChangeStatus('Sending Shipping Info');
         const sendShippingMethodResponse = await this.sendShippingMethod(shipping.token, checkoutURL, sendShippingMethodBodyInfo.authToken);
         const checkoutBodyInfo = this.returnBodyInfo(sendShippingMethodResponse.body);
         console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout`);
-        this.handleChangeStatus('Sending Payment Info');
         const checkoutResponse = await this.sendCheckoutInfo(paymentToken, shipping.price, paymentID, checkoutBodyInfo.authToken, checkoutURL, orderTotal);
-        if (checkoutResponse.body.includes('<title>    Shipping method')) {
-          this.handleChangeStatus('Stuck On Shipping Method');
-          this.stop(true);
-        } else {
-          await this.pollQueueOrCheckout(checkoutResponse.request.href);
-        }
+        await this.pollQueueOrCheckout(checkoutResponse.request.href);
       }
     } catch (e) {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Checkout - Error`);
@@ -568,7 +494,7 @@ export default class DSM {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
-      this.stop(true);
+      this.stop(false);
     }
   };
 }

@@ -71,8 +71,21 @@ class HomePage extends Component {
           <Alert className="updateAlert" color="danger" isOpen={this.state.updateBegun}>
             Please wait while we install the update.
           </Alert>
-          <Sidebar activeWindow={this.state.activeWindow} switchActiveComponent={this.switchActiveComponent} checkAccount={this.checkAccount} history={this.props.history} openCaptchaWindow={this.openCaptchaWindow} toggleFastModeModal={this.toggleFastModeModal} />
-          <Active activeWindow={this.state.activeWindow} switchActiveComponent={this.switchActiveComponent} getCaptchaWindow={this.getCaptchaWindowContents} fastModeModalVisible={this.state.fastModeModalVisible} toggleFastModeModal={this.toggleFastModeModal} />
+          <Sidebar
+            activeWindow={this.state.activeWindow}
+            switchActiveComponent={this.switchActiveComponent}
+            checkAccount={this.checkAccount}
+            history={this.props.history}
+            openCaptchaWindow={this.openCaptchaWindow}
+            toggleFastModeModal={this.toggleFastModeModal}
+          />
+          <Active
+            activeWindow={this.state.activeWindow}
+            switchActiveComponent={this.switchActiveComponent}
+            getCaptchaWindow={this.getCaptchaWindowContents}
+            fastModeModalVisible={this.state.fastModeModalVisible}
+            toggleFastModeModal={this.toggleFastModeModal}
+          />
         </Row>
         <Footer type="homepage" />
       </Container>

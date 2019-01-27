@@ -1,5 +1,4 @@
 import { ADD_TASK, REMOVE_TASK, UPDATE_TASK, REMOVE_ALL_TASKS } from '../actions/task';
-import { stat } from 'fs';
 
 const initialState = { tasks: [] };
 

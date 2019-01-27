@@ -127,3 +127,11 @@
 - New Shopify sites from 70+ to 110+, will need to test them though
 - Fixed bug where if you edited a task, it would not change until 
 - Added price check for shopify sites
+
+1.0.24b
+- Fixed images not loading
+- Added kids sizing options
+- Support for when colors are options in a shopify product drop down
+- Added price check for supreme
+- Fixed DSM EU checkout
+- Added custom Shopify site support

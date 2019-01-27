@@ -13,8 +13,8 @@ const mainConfig = {
   },
   output: {
     path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
-    filename: '[name].js',
-    publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
+    filename: '[name].js'
+    // publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
   node: {
     __dirname: false,
@@ -49,11 +49,11 @@ const appConfig = {
   mode: 'development',
   devtool: 'source-map',
   target: 'electron-renderer',
-  entry: './app/app.js',
+  entry: path.normalize(path.resolve(__dirname, 'app', 'app.js')),
   output: {
     path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
-    filename: 'app.js',
-    publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
+    filename: 'app.js'
+    // publicPath: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/'))
   },
   node: {
     __dirname: true
@@ -84,16 +84,13 @@ const appConfig = {
       },
       {
         test: /\.(jpe?g|png|gif)$/,
-        use: [{ loader: 'file-loader?name=/img/[name]__[hash:base64:5].[ext]' }]
+        use: [{ loader: 'url-loader?name=/img/[name]__[hash:base64:5].[ext]' }]
       },
       {
         test: /\.(svg)$/,
         use: [
           {
-            loader: 'file-loader?name=/files/[name]__[hash:base64:5].[ext]',
-            options: {
-              useRelativePath: true
-            }
+            loader: 'url-loader?name=/files/[name]__[hash:base64:5].[ext]'
           }
         ]
       },

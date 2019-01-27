@@ -21,6 +21,7 @@ const ipcRenderer = require('electron').ipcRenderer;
 export default class Tasks extends Component {
   constructor(props) {
     super(props);
+    storeDropdown.custom = _.keys(props.settings.customSites);
     this.profileNames = _.keys(this.props.profiles);
     this.state = {
       scheduledTimeFlag: false,
@@ -79,6 +80,14 @@ export default class Tasks extends Component {
           task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value, mode: 'keywords' }
         }
       });
+    } else if (e.target.name === 'profile') {
+      this.setState({
+        modalFormData: {
+          ...this.state.modalFormData,
+          profileID: e.target.value,
+          task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value }
+        }
+      });
     } else {
       this.setState({
         modalFormData: {
@@ -94,16 +103,6 @@ export default class Tasks extends Component {
       modalFormData: {
         ...this.state.modalFormData,
         task: { ...this.state.modalFormData.task, scheduledTime: date }
-      }
-    });
-  };
-
-  handleProfileChange = e => {
-    this.setState({
-      ...this.state,
-      modalFormData: {
-        ...this.state.modalFormData,
-        profileID: e.target.value
       }
     });
   };

@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { addTask, removeTask, updateTask, removeAllTasks } from '../actions/task';
 import { addProfile, removeProfile } from '../actions/profile';
 import { addProxies, deleteAllProxies } from '../actions/proxy';
-import { updateSettings } from '../actions/settings';
+import { updateSettings, addCustomSite, removeCustomSite } from '../actions/settings';
 import Home from '../components/Home';
 import AddTask from '../components/AddTask';
 import Tasks from '../components/Tasks';
@@ -38,10 +38,14 @@ class Active extends Component {
     const taskClassesInitialize = [];
     const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
     tasksArray.forEach(element => {
-      taskClassesInitialize.push(new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies));
+      taskClassesInitialize.push(
+        new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies)
+      );
     });
     this.setState({
-      taskClasses: taskClassesInitialize.map((task, index) => (this.state.taskClasses[index] !== undefined && this.state.taskClasses[index].active ? this.state.taskClasses[index] : task))
+      taskClasses: taskClassesInitialize.map((task, index) =>
+        this.state.taskClasses[index] !== undefined && this.state.taskClasses[index].active ? this.state.taskClasses[index] : task
+      )
     });
     this.forceUpdate();
   };
@@ -50,7 +54,9 @@ class Active extends Component {
     const taskClassesInitialize = [];
     const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
     tasksArray.forEach(element => {
-      taskClassesInitialize.push(new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies));
+      taskClassesInitialize.push(
+        new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies)
+      );
     });
     this.setState({
       taskClasses: taskClassesInitialize
@@ -81,7 +87,7 @@ class Active extends Component {
       case 'Home':
         return <Home onAddTask={this.props.onAddTask} profiles={this.props.profiles} />;
       case 'AddTask':
-        return <AddTask profiles={this.props.profiles} onAddTask={this.props.onAddTask} />;
+        return <AddTask profiles={this.props.profiles} settings={this.props.settings} onAddTask={this.props.onAddTask} />;
       case 'Tasks':
         return (
           <Tasks
@@ -104,7 +110,14 @@ class Active extends Component {
       case 'Profiles':
         return <Profiles profiles={this.props.profiles} onAddProfile={this.props.onAddProfile} onRemoveProfile={this.props.onRemoveProfile} />;
       case 'Settings':
-        return <Settings onUpdateSettings={this.props.onUpdateSettings} settings={this.props.settings} />;
+        return (
+          <Settings
+            onUpdateSettings={this.props.onUpdateSettings}
+            onAddCustomSite={this.props.onAddCustomSite}
+            onRemoveCustomSite={this.props.onRemoveCustomSite}
+            settings={this.props.settings}
+          />
+        );
       default:
         return <AddTask />;
     }
@@ -158,6 +171,12 @@ const mapActionsToProps = dispatch => ({
   },
   onRemoveAllTasks: content => {
     dispatch(removeAllTasks(content));
+  },
+  onAddCustomSite: content => {
+    dispatch(addCustomSite(content));
+  },
+  onRemoveCustomSite: content => {
+    dispatch(removeCustomSite(content));
   }
 });
 
