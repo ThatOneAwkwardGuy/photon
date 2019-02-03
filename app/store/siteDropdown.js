@@ -99,7 +99,6 @@ export default {
     'soleclassics',
     'solefly',
     'solestop',
-    'sotostore',
     'suede-store',
     'super7',
     'sukamii',
@@ -115,5 +114,10 @@ export default {
     'xhibition'
   ],
   Supreme: ['supreme-eu', 'supreme-us'],
-  Other: ['asphaltgold', 'overkill', 'ssense']
+  Other: [
+    // 'asphaltgold',
+    'overkill'
+    // 'ssense'
+    // 'sotostore'
+  ]
 };

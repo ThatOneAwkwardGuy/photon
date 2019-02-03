@@ -134,4 +134,8 @@
 - Support for when colors are options in a shopify product drop down
 - Added price check for supreme
 - Fixed DSM EU checkout
+- Fixed DSM US checkout
 - Added custom Shopify site support
+
+1.0.25b
+- Overkill checkout working and tested (Keywords and URL). error reporting is lacking so if a task hangs, you may not know whats wrong.

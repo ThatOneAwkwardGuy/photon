@@ -470,11 +470,35 @@ export default class DSM {
     }
   };
 
+  getCheckoutUrlDSM = async () => {
+    try {
+      const payload = {
+        'updates[]': '1',
+        checkout: 'Proceed to Checkout'
+      };
+      const response = await this.rp({
+        method: 'POST',
+        uri: `${stores[this.options.task.store]}/cart`,
+        form: payload,
+        resolveWithFullResponse: true,
+        followRedirect: true,
+        followAllRedirects: true
+      });
+      return response.request.href;
+    } catch (e) {
+      return e;
+    }
+  };
+
   checkoutWithVariant = async variantID => {
     try {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Adding To Cart`);
       this.handleChangeStatus('Adding To Cart');
       await this.addToCart(variantID, this.options.task.quantity);
+      console.log(this.options.task.store);
+      if (this.options.task.store === 'dsm-us') {
+        this.shopifyCheckoutURL = await this.getCheckoutUrlDSM();
+      }
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting  Shipping and Payment Tokens`);
       this.handleChangeStatus('Getting Shipping and Payment Tokens');
       const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
@@ -529,8 +553,10 @@ export default class DSM {
                 await this.pollQueueOrCheckout(checkoutResponse.request.href, paymentToken, shipping);
               }
             }
-          } catch (error) {
-            console.error(error);
+          } catch (e) {
+            console.error(e);
+            this.handleChangeStatus(_.get(e, "error.error['0']"));
+            return e;
           }
         });
       } else {

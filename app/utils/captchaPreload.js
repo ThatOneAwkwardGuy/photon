@@ -127,7 +127,9 @@ spoofPookyActions = document => {
 };
 
 checkCaptcha = () => {
-  spoofPookyActions(document);
+  if (window.location.href.includes('supremenewyork.com')) {
+    spoofPookyActions(document);
+  }
   if (
     document.location.href.includes('stock_problems') ||
     document.location.href.includes('chrome-error') ||

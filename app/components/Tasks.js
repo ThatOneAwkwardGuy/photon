@@ -80,6 +80,17 @@ export default class Tasks extends Component {
           task: { ...this.state.modalFormData.task, [e.target.name]: e.target.value, mode: 'keywords' }
         }
       });
+    } else if (e.target.name === 'store') {
+      this.setState({
+        modalFormData: {
+          ...this.state.modalFormData,
+          task: {
+            ...this.state.modalFormData.task,
+            [e.target.name]: e.target.value,
+            mode: Modes[e.target.value] !== undefined ? Modes[e.target.value][0] : 'url'
+          }
+        }
+      });
     } else if (e.target.name === 'profile') {
       this.setState({
         modalFormData: {

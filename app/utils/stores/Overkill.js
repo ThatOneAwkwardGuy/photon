@@ -3,6 +3,8 @@ const _ = require('lodash');
 const ipcRenderer = require('electron').ipcRenderer;
 const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
+const Entities = require('html-entities').AllHtmlEntities;
+const entities = new Entities();
 import stores from '../../store/shops';
 import countries from '../../store/countries';
 const sizeSynonymns = {
@@ -82,11 +84,6 @@ export default class Overkill {
           this.keywords.positiveKeywords.join(' ')
         )}`
       });
-      console.log(
-        `https://www.overkillshop.com/autocomplete.php?store=en&currency=EUR&fallback_url=https://www.overkillshop.com/en/catalogsearch/ajax/suggest/&q=${encodeURIComponent(
-          this.keywords.positiveKeywords.join(' ')
-        )}`
-      );
       let productLink = '';
       const $ = cheerio.load(response);
       $('a').each((index, element) => {
@@ -126,7 +123,7 @@ export default class Overkill {
       let size = '';
       const listItems = JSON.parse(response.match(/new Product.Config\(([^)]+)\)/)[1]).attributes[150].options;
       for (const item of listItems) {
-        console.log(item);
+        // console.log(item);
         if (checkSize(item.label, options.task.size)) {
           size = item.id;
           break;
@@ -139,7 +136,6 @@ export default class Overkill {
         selectValue
       };
     } catch (error) {
-      console.log(error);
       return error;
     }
   };
@@ -160,7 +156,8 @@ export default class Overkill {
         uri: atcInfo.formLink,
         resolveWithFullResponse: true
       });
-
+      // console.log(payload);
+      // console.log(response);
       return response;
     } catch (error) {
       return error;
@@ -186,143 +183,289 @@ export default class Overkill {
   };
 
   sendCheckoutInfo = async () => {
-    const bodyResponse = await this.rp({
-      method: 'GET',
-      uri: 'https://www.overkillshop.com/en/checkout/cart/'
-    });
+    try {
+      const bodyResponse = await this.rp({
+        method: 'GET',
+        uri: 'https://www.overkillshop.com/en/checkout/cart/'
+      });
 
-    const formKey = cheerio
-      .load(bodyResponse)('input[name="form_key"]')
-      .attr('value');
+      const formKey = cheerio
+        .load(bodyResponse)('input[name="form_key"]')
+        .attr('value');
 
-    const payload = {
-      cart: '1',
-      sidebar: '1'
-    };
+      const payload = {
+        cart: '1',
+        sidebar: '1'
+      };
+      let response1 = await this.rp({
+        method: 'POST',
+        uri: 'https://www.overkillshop.com/en/gomageprocart/procart/changeattributecart/',
+        form: payload,
+        followAllRedirects: true
+      });
 
-    let response = await this.rp({
-      method: 'POST',
-      uri: 'https://www.overkillshop.com/en/gomageprocart/procart/changeattributecart/',
-      form: payload,
-      followAllRedirects: true
-    });
+      await this.rp({
+        method: 'GET',
+        uri: 'https://www.overkillshop.com/en/checkout/onepage/'
+      });
 
-    const payload1 = {
-      method: 'guest'
-    };
-    await this.rp({
-      method: 'POST',
-      uri: 'https://www.overkillshop.com/en/checkout/onepage/saveMethod/',
-      form: payload1
-      // headers: {
-      //   cookie: this.cookieJar.getCookieString(stores[this.options.task.store])
-      // }
-    });
+      const payload2 = {
+        'billing[address_id]': '',
+        'billing[firstname]': this.options.profile.billingFirstName,
+        'billing[lastname]': this.options.profile.billingLastName,
+        'billing[company]': '',
+        'billing[street_number]': this.options.profile.billingAptorSuite,
+        'billing[street][]': '',
+        'billing[street][]': '',
+        'billing[postcode]': this.options.profile.billingZip,
+        'billing[region_id]': '',
+        'billing[region]': '',
+        'billing[city]': this.options.profile.billingCity,
+        'billing[country_id]': countries[this.options.profile.deliveryCountry].code,
+        'billing[email]': this.options.profile.paymentEmail,
+        'billing[telephone]': this.options.profile.phoneNumber,
+        'billing[fax]': '',
+        'billing[customer_password]': '',
+        'billing[confirm_password]': '',
+        'billing[save_in_address_book]': '1',
+        'billing[use_for_shipping]': '0',
+        'billing[street][]': this.options.profile.billingAddress
+      };
+      const response2 = await this.rp({
+        method: 'POST',
+        uri: 'https://www.overkillshop.com/en/checkout/onepage/saveBilling/',
+        form: payload2
+      });
 
-    const payload2 = {
-      'billing[address_id]': '',
-      'billing[firstname]': this.options.profile.billingFirstName,
-      'billing[lastname]': this.options.profile.billingLastName,
-      'billing[company]': '',
-      'billing[street][]': this.options.profile.billingAddress,
-      'billing[street_number]': this.options.profile.billingAptorSuite,
-      'billing[street][]': '',
-      'billing[street][]': '',
-      'billing[postcode]': this.options.profile.billingZip,
-      'billing[region_id]': '',
-      'billing[region]': '',
-      'billing[city]': this.options.profile.billingCity,
-      'billing[country_id]': countries[this.options.profile.deliveryCountry].code,
-      'billing[email]': this.options.profile.paymentEmail,
-      'billing[telephone]': this.options.profile.phoneNumber,
-      'billing[fax]': '',
-      'billing[customer_password]': '',
-      'billing[confirm_password]': '',
-      'billing[save_in_address_book]': '1',
-      'billing[use_for_shipping]': '0'
-    };
-    await this.rp({
-      method: 'POST',
-      uri: 'https://www.overkillshop.com/en/checkout/onepage/saveBilling/',
-      form: payload2
-    });
+      const payload3 = {
+        'shipping[address_id]': '',
+        'shipping[firstname]': this.options.profile.deliveryFirstName,
+        'shipping[lastname]': this.options.profile.deliveryLastName,
+        'shipping[company]': '',
+        'shipping[street_number]': this.options.profile.deliveryAptorSuite,
+        'shipping[street][]': '',
+        'shipping[street][]': '',
+        'shipping[postcode]': this.options.profile.deliveryZip,
+        'shipping[region_id]': '',
+        'shipping[region]': this.options.profile.deliveryProvince,
+        'shipping[city]': this.options.profile.deliveryCity,
+        'shipping[country_id]': countries[this.options.profile.deliveryCountry].code,
+        'shipping[telephone]': this.options.profile.phoneNumber,
+        'shipping[fax]': '',
+        'shipping[save_in_address_book]': '1',
+        'shipping[street][]': this.options.profile.deliveryAddress
+      };
+      const response3 = await this.rp({
+        method: 'POST',
+        uri: 'https://www.overkillshop.com/en/checkout/onepage/saveShipping/',
+        form: payload3
+      });
 
-    const payload3 = {
-      'shipping[address_id]': '',
-      'shipping[firstname]': this.options.profile.deliveryFirstName,
-      'shipping[lastname]': this.options.profile.deliveryLastName,
-      'shipping[company]': '',
-      'shipping[street][]': this.options.profile.deliveryAddress,
-      'shipping[street_number]': this.options.profile.deliveryAptorSuite,
-      'shipping[street][]': '',
-      'shipping[street][]': '',
-      'shipping[postcode]': this.options.profile.deliveryZip,
-      'shipping[region_id]': '',
-      'shipping[region]': this.options.profile.deliveryProvince,
-      'shipping[city]': this.options.profile.deliveryCity,
-      'shipping[country_id]': countries[this.options.profile.deliveryCountry].code,
-      'shipping[telephone]': this.options.profile.phoneNumber,
-      'shipping[fax]': '',
-      'shipping[save_in_address_book]': '1'
-    };
-    await this.rp({
-      method: 'POST',
-      uri: 'https://www.overkillshop.com/en/checkout/onepage/saveShipping/',
-      form: payload3
-    });
+      const payload4 = {
+        shipping_method: 'owebiashipping4_europe'
+      };
+      const response4 = await this.rp({
+        method: 'POST',
+        uri: 'https://www.overkillshop.com/en/checkout/onepage/saveShippingMethod/',
+        form: payload4
+      });
 
-    const payload4 = {
-      shipping_method: 'owebiashipping4_europe'
-    };
-    await this.rp({
-      method: 'POST',
-      uri: 'https://www.overkillshop.com/en/checkout/onepage/saveShippingMethod/',
-      form: payload4
-    });
+      const payload5 = {
+        'payment[method]': 'vrpayecommerce_creditcard'
+      };
+      const response5 = await this.rp({
+        method: 'POST',
+        uri: 'https://www.overkillshop.com/en/checkout/onepage/savePayment/',
+        form: payload5
+      });
 
-    const payload5 = {
-      'payment[method]': 'vrpayecommerce_creditcard'
-    };
-    await this.rp({
-      method: 'POST',
-      uri: 'https://www.overkillshop.com/en/checkout/onepage/savePayment/',
-      form: payload5
-    });
-
-    const payload6 = {
-      'payment[method]': 'vrpayecommerce_creditcard',
-      'ordercomment[comment]': '',
-      'agreement[5]': '1'
-    };
-    response = await this.rp({
-      method: 'POST',
-      uri: `https://www.overkillshop.com/en/checkout/onepage/saveOrder/form_key/${formKey}/`,
-      form: payload6
-    });
-    console.log(response);
+      const payload6 = {
+        'payment[method]': 'vrpayecommerce_creditcard',
+        'ordercomment[comment]': '',
+        'agreement[5]': '1'
+      };
+      const response6 = await this.rp({
+        method: 'POST',
+        json: true,
+        uri: `https://www.overkillshop.com/en/checkout/onepage/saveOrder/form_key/${formKey}/`,
+        form: payload6
+      });
+      return response6;
+    } catch (error) {
+      return error;
+    }
   };
 
-  checkout = async () => {
+  getPaymentPage = async url => {
+    try {
+      const response = await this.rp({
+        method: 'GET',
+        uri: url,
+        resolveWithFullResponse: true
+      });
+      return response.body;
+    } catch (error) {
+      return error;
+    }
+  };
+
+  getCardType = number => {
+    var re = new RegExp('^4');
+    if (number.match(re) != null) return 'visa';
+    if (/^(5[1-5][0-9]{14}|2(22[1-9][0-9]{12}|2[3-9][0-9]{13}|[3-6][0-9]{14}|7[0-1][0-9]{13}|720[0-9]{12}))$/.test(number)) return 'master';
+    re = new RegExp('^3[47]');
+    if (number.match(re) != null) return 'american_express';
+    re = new RegExp('^(6011|622(12[6-9]|1[3-9][0-9]|[2-8][0-9]{2}|9[0-1][0-9]|92[0-5]|64[4-9])|65)');
+    return '';
+  };
+
+  postCardInfo = async body => {
+    try {
+      const code = body.split('"').find(elem => elem.includes('https://oppwa.com/'));
+      const url = `https://oppwa.com/v1/checkouts/${code.split('=')[1]}`;
+
+      const response = await this.rp({
+        method: 'GET',
+        uri: `https://oppwa.com/v1/pciIframe.html?checkoutId=${code.split('=')[1]}`
+      });
+
+      const $ = cheerio.load(response);
+      const shopperEndToEnd = $('input[name="customParameters[SHOPPER_EndToEndIdentity]"]').attr('value');
+
+      const payload1 = {
+        'card.number': this.options.profile.paymentCardnumber,
+        'customParameters[SHOPPER_EndToEndIdentity]': shopperEndToEnd
+      };
+      const response1 = await this.rp({
+        method: 'POST',
+        uri: url,
+        form: payload1,
+        resolveWithFullResponse: true
+      });
+
+      const payload2 = {
+        'card.cvv': this.options.profile.paymentCVV
+      };
+      const response2 = await this.rp({
+        method: 'POST',
+        uri: url,
+        form: payload2,
+        resolveWithFullResponse: true
+      });
+
+      const payload3 = {
+        paymentBrand: this.getCardType(this.options.profile.paymentCardnumber).toUpperCase(),
+        'card.holder': this.options.profile.paymentCardholdersName,
+        shopperResultUrl: 'https://www.overkillshop.com/en/vrpayecommerce/response/handleResponse/pm/vrpayecommerce_creditcard/',
+        forceUtf8: '&#9760;',
+        'card.expiryMonth': this.options.profile.paymentCardExpiryMonth,
+        'card.expiryYear': this.options.profile.paymentCardExpiryYear,
+        shopOrigin: 'https://www.overkillshop.com'
+      };
+      const response3 = await this.rp({
+        method: 'POST',
+        uri: `${url}/payment`,
+        form: payload3,
+        resolveWithFullResponse: true,
+        followAllRedirects: true
+      });
+      return response3.body;
+    } catch (error) {
+      return error;
+    }
+  };
+
+  postMore = async body => {
+    try {
+      const $ = cheerio.load(body);
+      const MD = $('input[name="MD"]').attr('value');
+      const TermUrl = $('input[name="TermUrl"]').attr('value');
+      const PaReq = $('input[name="PaReq"]').attr('value');
+      const payload = {
+        MD: MD,
+        TermUrl: TermUrl,
+        PaReq: PaReq
+      };
+      const response = await this.rp({
+        method: 'POST',
+        url: 'https://cap.attempts.securecode.com/acspage/cap?RID=14&VAA=A',
+        form: payload
+      });
+
+      const $1 = cheerio.load(response);
+      const PaRes = $1('input[name="PaRes"]').attr('value');
+      const MD1 = $1('input[name="MD"]').attr('value');
+      const PaReq1 = $1('input[name="PaReq"]').attr('value');
+      const ABSlog = $1('input[name="ABSlog"]').attr('value');
+      const deviceDNA = $1('input[name="deviceDNA"]').attr('value');
+      const executionTime = $1('input[name="executionTime"]').attr('value');
+      const dnaError = $1('input[name="dnaError"]').attr('value');
+      const mesc = $1('input[name="mesc"]').attr('value');
+      const mescIterationCount = $1('input[name="mescIterationCount"]').attr('value');
+      const desc = $1('input[name="desc"]').attr('value');
+      const isDNADone = $1('input[name="isDNADone"]').attr('value');
+      const arcotFlashCookie = $1('input[name="arcotFlashCookie"]').attr('value');
+
+      const payload2 = {
+        PaRes: PaRes,
+        MD: MD1,
+        PaReq: PaReq1,
+        ABSlog: ABSlog,
+        deviceDNA: deviceDNA,
+        executionTime: executionTime,
+        dnaError: dnaError,
+        mesc: mesc,
+        mescIterationCount: mescIterationCount,
+        desc: desc,
+        isDNADone: isDNADone,
+        arcotFlashCookie: arcotFlashCookie
+      };
+      const response2 = await this.rp({
+        method: 'POST',
+        url: $1('form[name="downloadForm"]').attr('action'),
+        form: payload2
+      });
+
+      const $2 = cheerio.load(response2);
+      const payload3 = {
+        response: 'null',
+        threedsecure_verificationpath: 'null'
+      };
+      const response3 = await this.rp({
+        method: 'POST',
+        url: $2('form[name="redirectToMerchant"]').attr('action'),
+        form: payload3
+      });
+    } catch (error) {
+      return error;
+    }
+  };
+
+  checkoutWithKeywords = async () => {
     try {
       const product = await this.findProductWithKeywords();
-      console.log(product);
       const sizeInfo = await this.getSizes(product);
-      console.log(sizeInfo);
       const addToCartResponse = await this.addToCart(sizeInfo);
-      console.log(addToCartResponse);
       await this.getShippingInfo();
-      //   await this.sendEmail();
-      // await this.sendAddress();
-      // await this.setMethods();
-      // await this.saveBilling();
       const sendCheckoutInfoResponse = await this.sendCheckoutInfo();
-      //   console.log(sendCheckoutInfoResponse);
-      //   const paymentPageResponse = await this.getPaymentPage();
-      //   console.log(paymentPageResponse);
-      //   const [loginResponse, shippingIDResponse, encryptCardInfo] = await Promise.all([this.login(), this.getShippingInfo(), this.encryptCardInfo()]);
-      //   const checkoutBodyInfo = await this.getCheckoutBodyInfo();
-      //   const checkoutResponse = await this.sendCheckoutInfo(shippingIDResponse, checkoutBodyInfo, encryptCardInfo);
-      //   console.log(checkoutResponse);
+      const paymentPageResponse = await this.getPaymentPage(sendCheckoutInfoResponse.redirect);
+      const postCardInfoResponse = await this.postCardInfo(paymentPageResponse);
+      await this.postMore(postCardInfoResponse);
+    } catch (error) {
+      this.handleChangeStatus(error.message);
+      console.error(error);
+    }
+  };
+
+  checkoutWithURL = async product => {
+    try {
+      const sizeInfo = await this.getSizes(product.split('https:')[1]);
+      const addToCartResponse = await this.addToCart(sizeInfo);
+      await this.getShippingInfo();
+      const sendCheckoutInfoResponse = await this.sendCheckoutInfo();
+      const paymentPageResponse = await this.getPaymentPage(sendCheckoutInfoResponse.redirect);
+      const postCardInfoResponse = await this.postCardInfo(paymentPageResponse);
+      await this.postMore(postCardInfoResponse);
     } catch (error) {
       this.handleChangeStatus(error.message);
       console.error(error);

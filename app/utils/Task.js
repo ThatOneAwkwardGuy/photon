@@ -239,7 +239,9 @@ export default class Task {
 
   DSM = async () => {
     this.handleChangeStatus('Generating Checkout');
-    this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
+    if (this.options.task.store !== 'dsm-us') {
+      this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
+    }
     const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
     const content = await this.getVariantsFromHomepage(pageURL);
     const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size, this.options.task.keywordColor);
@@ -340,7 +342,11 @@ export default class Task {
         this.settings,
         this.run
       );
-      const checkoutResponse = await OverkillInstance.checkout();
+      if (this.options.task.mode === 'url') {
+        const checkoutResponse = await OverkillInstance.checkoutWithURL(this.options.task.modeInput);
+      } else if (this.options.task.mode === 'keywords') {
+        const checkoutResponse = await OverkillInstance.checkoutWithKeywords();
+      }
     } catch (error) {
       console.log(error);
     }

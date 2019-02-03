@@ -1,6 +1,6 @@
 {
   "name": "Photon",
-  "version": "1.0.24b",
+  "version": "1.0.25b",
   "description": "Photon AIO Bot",
   "main": "./webpack-pack/main.js",
   "author": {
@@ -52,8 +52,9 @@
     "emotion": "^10.0.5",
     "firebase": "^5.1.0",
     "font-awesome": "^4.7.0",
-    "grpc": "^1.12.2",
+    "grpc": "^1.18.0",
     "history": "^4.6.3",
+    "html-entities": "^1.2.1",
     "jquery": "^3.3.1",
     "lodash": "^4.17.10",
     "moment": "^2.22.2",

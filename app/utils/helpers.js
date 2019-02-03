@@ -5,6 +5,7 @@ const _ = require('lodash');
 const convert = require('xml-js');
 
 export const processKeywords = (keywordsString, colorString) => {
+  console.log(keywordsString);
   if (keywordsString !== '' || colorString !== '') {
     const keywordsArray = keywordsString.split(' ');
     let positiveKeywords = [];
@@ -57,7 +58,10 @@ export const checkSitemapJSONForKeywords = (sitemapObj, keywords) => {
     const productNameArray = product.title.toLowerCase().split(/[^a-zA-Z0-9']/);
     // const positiveKeywordsCount = _.difference(keywords.positiveKeywords, productNameArray);
     // const negativeKeywordsCount = _.difference(keywords.negativeKeywords, productNameArray);
-    if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
+    if (
+      _.difference(keywords.positiveKeywords, productNameArray).length === 0 &&
+      _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length
+    ) {
       // Returns product object with variants array already there
       return product;
     }
@@ -70,7 +74,10 @@ export const checkSitemapXMLForKeywords = (sitemapObj, keywords) => {
     const productName = _.get(product, "['image:image']['image:title']._text");
     if (productName !== undefined) {
       const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
-      if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
+      if (
+        _.difference(keywords.positiveKeywords, productNameArray).length === 0 &&
+        _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length
+      ) {
         return product;
       }
     }
@@ -132,7 +139,10 @@ export const checkAtomSitemapXMLForKeywords = (sitemapObj, keywords) => {
     const productName = _.get(product, 'title._text');
     if (productName !== undefined) {
       const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
-      if (_.difference(keywords.positiveKeywords, productNameArray).length === 0 && _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length) {
+      if (
+        _.difference(keywords.positiveKeywords, productNameArray).length === 0 &&
+        _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length
+      ) {
         return product;
       }
     }

@@ -72,6 +72,14 @@ class AddTask extends Component {
           mode: 'keywords'
         })
       });
+    }
+    if (e.target.name === 'store') {
+      this.setState({
+        formdata: Object.assign({}, this.state.formdata, {
+          [e.target.name]: e.target.value,
+          mode: Modes[e.target.value] !== undefined ? Modes[e.target.value][0] : 'url'
+        })
+      });
     } else {
       this.setState({
         formdata: Object.assign({}, this.state.formdata, {

@@ -1,8 +1,9 @@
 export default {
-  Asphaltgold: ['url', 'keywords'],
-  'DSM-EU': ['url', 'keywords', 'homepage'],
-  'DSM-US': ['url', 'keywords', 'homepage'],
+  asphaltgold: ['url', 'keywords'],
+  'dsm-eu': ['url', 'keywords', 'homepage'],
+  'dsm-us': ['url', 'keywords', 'homepage'],
   'supreme-eu': ['keywords'],
   'supreme-us': ['keywords'],
-  sotostore: ['url', 'keywords']
+  sotostore: ['url', 'keywords'],
+  overkill: ['url', 'keywords']
 };
