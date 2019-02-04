@@ -196,6 +196,7 @@ export default class Shopify {
   };
 
   getCheckoutUrl = async () => {
+    this.handleChangeStatus('Getting Checkout URL');
     try {
       const response = await this.rp({
         method: 'GET',
@@ -206,6 +207,7 @@ export default class Shopify {
       return response.request.href;
     } catch (e) {
       console.error(e);
+      return e.response.headers.location;
     }
   };
 
@@ -474,7 +476,12 @@ export default class Shopify {
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting  Shipping and Payment Tokens`);
       this.handleChangeStatus('Getting Shipping and Payment Tokens');
       const [paymentToken, shipping] = await Promise.all([this.generatePaymentToken(), this.getShippingToken()]);
-      let checkoutURL = this.shopifyCheckoutURL;
+      let checkoutURL;
+      if (this.shopifyCheckoutURL !== undefined) {
+        checkoutURL = this.shopifyCheckoutURL;
+      } else {
+        checkoutURL = await this.getCheckoutUrl();
+      }
       if (captchaNeeded[this.options.task.store]) {
         ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
         ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {

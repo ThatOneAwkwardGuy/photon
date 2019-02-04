@@ -1,6 +1,6 @@
 {
   "name": "Photon",
-  "version": "1.0.25b",
+  "version": "1.0.26b",
   "description": "Photon AIO Bot",
   "main": "./webpack-pack/main.js",
   "author": {

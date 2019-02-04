@@ -115,7 +115,7 @@ export default {
   ],
   Supreme: ['supreme-eu', 'supreme-us'],
   Other: [
-    // 'asphaltgold',
+    'asphaltgold',
     'overkill'
     // 'ssense'
     // 'sotostore'

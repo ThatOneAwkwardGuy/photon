@@ -36,6 +36,21 @@ const mainConfig = {
           ]
         },
         exclude: /node_modules(?!\/webpack-dev-server)/
+      },
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
+        },
+        exclude: /node_modules(?!\/webpack-dev-server)/
       }
     ]
   },
@@ -65,6 +80,21 @@ const appConfig = {
     rules: [
       {
         test: /\.jsx?$/,
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
+        },
+        exclude: /node_modules(?!\/webpack-dev-server)/
+      },
+      {
+        test: /\.js$/,
         loader: 'babel-loader',
         options: {
           presets: ['@babel/preset-env', '@babel/preset-react'],

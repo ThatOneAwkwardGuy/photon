@@ -139,3 +139,5 @@
 
 1.0.25b
 - Overkill checkout working and tested (Keywords and URL). error reporting is lacking so if a task hangs, you may not know whats wrong.
+
+1.0.26b

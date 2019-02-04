@@ -206,8 +206,10 @@ export default class Task {
         followRedirect: true,
         followAllRedirects: true
       });
+      console.log(response);
       return response.request.headers.referer;
     } catch (e) {
+      console.log(e);
       return e.response.headers.location;
     }
   };

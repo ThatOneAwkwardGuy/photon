@@ -12,6 +12,7 @@ import {
   MAIN_PROCESS_CLEAR_RECEIVE_CAPTCHA_TOKEN_LISTENERS
 } from '../utils/constants';
 var os = require('os');
+const path = require('path');
 
 class Captcha extends Component {
   constructor(props) {
@@ -55,20 +56,23 @@ class Captcha extends Component {
   };
 
   convertCookieString = (baseURL, cookieString) => {
-    const cookieArray = cookieString.split(';');
-    console.log(cookieArray);
-    let formattedCookieArray = [];
-    for (const cookie of cookieArray) {
-      const nameValuePair = cookie.replace(/\s+/g, '').split('=');
-      formattedCookieArray.push({
-        url: baseURL.includes('supreme') ? `https://www.${baseURL.split('//')[1].split('/')[0]}` : baseURL,
-        value: nameValuePair[1],
-        domain: baseURL.includes('supreme') ? 'www.' + baseURL.split('//')[1].split('/')[0] : baseURL.split('//')[1].split('/')[0],
-        path: '/',
-        name: nameValuePair[0]
-      });
+    if (cookieString.length > 0) {
+      const cookieArray = cookieString.split(';');
+      let formattedCookieArray = [];
+      for (const cookie of cookieArray) {
+        const nameValuePair = cookie.replace(/\s+/g, '').split('=');
+        formattedCookieArray.push({
+          url: baseURL.includes('supreme') ? `https://www.${baseURL.split('//')[1].split('/')[0]}` : baseURL,
+          value: nameValuePair[1],
+          domain: baseURL.includes('supreme') ? 'www.' + baseURL.split('//')[1].split('/')[0] : baseURL.split('//')[1].split('/')[0],
+          path: '/',
+          name: nameValuePair[0]
+        });
+      }
+      return formattedCookieArray;
+    } else {
+      return [];
     }
-    return formattedCookieArray;
   };
 
   processCaptcha = args => {
@@ -133,7 +137,7 @@ class Captcha extends Component {
           id="captchaWebview"
           src="http://google.com"
           webpreferences="allowRunningInsecureContent, javascript=yes"
-          preload="../app/utils/captchaPreload.js"
+          preload={`file://${path.normalize(path.resolve('app', 'utils', 'captchaPreload.js'))}`}
           style={{
             width: '100%',
             height: this.state.waiting ? '0px' : 'calc(100% - 90px)'
