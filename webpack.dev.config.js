@@ -1,6 +1,5 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const path = require('path');
-const webpack = require('webpack');
 var LiveReloadPlugin = require('webpack-livereload-plugin');
 
 const mainConfig = {
@@ -54,7 +53,6 @@ const mainConfig = {
       }
     ]
   },
-  plugins: [],
   resolve: {
     extensions: ['.js', '.json', '.jsx']
   }
@@ -140,4 +138,43 @@ const appConfig = {
   }
 };
 
-module.exports = [mainConfig, appConfig];
+const captchaPreloadConfig = {
+  mode: 'development',
+  devtool: 'source-map',
+  target: 'electron-renderer',
+  entry: path.normalize(path.resolve(__dirname, 'app', 'utils', 'captchaPreload.js')),
+  output: {
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
+    filename: 'captchaPreload.js'
+  },
+  node: {
+    __dirname: true
+  },
+  devServer: {
+    hot: true
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
+        },
+        exclude: /node_modules(?!\/webpack-dev-server)/
+      }
+    ]
+  },
+  resolve: {
+    extensions: ['.js', '.json', '.jsx']
+  }
+};
+
+module.exports = [mainConfig, appConfig, captchaPreloadConfig];

@@ -33,8 +33,13 @@
       ]
     },
     "files": [
-      "webpack-pack/",
-      "./app/utils/captchaPreload.js"
+      "webpack-pack/"
+    ],
+    "extraResources": [
+      {
+        "from": "webpack-pack/captchaPreload.js",
+        "to": "./"
+      }
     ],
     "publish": {
       "provider": "github",
