@@ -4,7 +4,7 @@ const TerserPlugin = require('terser-webpack-plugin');
 const path = require('path');
 
 const mainConfig = {
-  mode: 'development',
+  mode: 'production',
   target: 'electron-main',
   entry: {
     main: path.normalize(path.resolve(__dirname, 'app', 'main.js')),
@@ -81,7 +81,7 @@ const mainConfig = {
 };
 
 const appConfig = {
-  mode: 'development',
+  mode: 'production',
   target: 'electron-renderer',
   entry: path.normalize(path.resolve(__dirname, 'app', 'app.js')),
   output: {
@@ -177,7 +177,7 @@ const appConfig = {
 };
 
 const captchaPreloadConfig = {
-  mode: 'development',
+  mode: 'production',
   target: 'electron-renderer',
   entry: path.normalize(path.resolve(__dirname, 'app', 'utils', 'captchaPreload.js')),
   output: {
