@@ -29,7 +29,7 @@ export default class Footer extends Component {
           </a>
           <a
             onClick={() => {
-              shell.openExternal('https://twitter.com/bot_photon');
+              shell.openExternal('https://twitter.com/photonaio');
             }}
           >
             <FontAwesome name="twitter" className="twitterLogoFooter logoFooter" />

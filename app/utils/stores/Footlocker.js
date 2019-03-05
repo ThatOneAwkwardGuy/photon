@@ -2,6 +2,7 @@ const request = require('request-promise');
 const _ = require('lodash');
 const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
+const log = require('electron-log');
 import stores from '../../store/shops';
 import countryCodes from '../../store/countryCodes';
 import countries from '../../store/countries';

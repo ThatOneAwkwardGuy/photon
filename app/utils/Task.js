@@ -8,6 +8,7 @@ import Overkill from './stores/Overkill';
 import SOTOStore from './stores/SOTOStore';
 import { processKeywords, getSitemapJSON, checkSitemapJSONForKeywords, convertProductNameIntoArray, checkAtomSitemapXMLForKeywords } from './helpers.js';
 import passwordSites from '../store/passwordSites';
+const log = require('electron-log');
 const rp = require('request-promise');
 const cheerio = require('cheerio');
 const moment = require('moment');
@@ -22,11 +23,11 @@ const sizeSynonymns = {
   'N/A': ['N/A', 'Default Title', 'One Size', 'O/S', 'F']
 };
 export default class Task {
-  constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies) {
-    // const stores = { ...stores, ...settings.customSites };
+  constructor(options, forceUpdateFunction, settings, checkoutProxy, monitorProxies, index) {
     for (const site in settings.customSites) {
       stores[site] = settings.customSites[site];
     }
+    this.index = index;
     this.forceUpdate = forceUpdateFunction;
     this.options = options;
     this.status = 'Not Started';
@@ -68,6 +69,11 @@ export default class Task {
     } else {
       return `http://${this.proxy.user}:${this.proxy.pass}@${this.proxy.ip}:${this.proxy.port}`;
     }
+  };
+
+  sleep = ms => {
+    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sleeping For ${ms}ms`);
+    return new Promise(resolve => setTimeout(resolve, ms));
   };
 
   stopTask = (checkoutComplete = false) => {
@@ -189,7 +195,7 @@ export default class Task {
         followAllRedirects: true
       });
     } catch (e) {
-      throw e;
+      this.handleChangeStatus(`Failed Signing In`);
     }
   };
 
@@ -224,11 +230,13 @@ export default class Task {
       this.monitorProxy,
       this.stopTask,
       this.handleChangeProductName,
-      this.run
+      this.run,
+      this.index
     );
     try {
       this.supremeInstance.checkout();
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       if (this.active) {
         this.monitoring = true;
         this.handleChangeStatus('Monitoring');
@@ -240,30 +248,41 @@ export default class Task {
   };
 
   DSM = async () => {
-    this.handleChangeStatus('Generating Checkout');
-    if (this.options.task.store !== 'dsm-us') {
-      this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
-    }
-    const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
-    const content = await this.getVariantsFromHomepage(pageURL);
-    const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size, this.options.task.keywordColor);
-    if (variantID !== undefined) {
-      const DSMInstance = new DSM(
-        this.options,
-        this.handleChangeStatus,
-        content.propertiesHash,
-        this.proxy,
-        this.stopTask,
-        this.shopifyCheckoutURL,
-        this.cookieJar,
-        this.settings,
-        this.run,
-        this.handleChangeProductName
-      );
-      const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
-      return checkoutResponse;
-    } else {
-      this.handleChangeStatus('Size Is Unavailable');
+    try {
+      this.handleChangeStatus('Generating Checkout');
+      if (this.options.task.store !== 'dsm-us') {
+        this.shopifyCheckoutURL = await this.getQueueBypassCheckoutLink();
+      }
+      const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
+      const content = await this.getVariantsFromHomepage(pageURL);
+      const variantID = this.getVariantIDOfSize(content.variantIDs, this.options.task.size, this.options.task.keywordColor);
+      if (variantID !== undefined) {
+        const DSMInstance = new DSM(
+          this.options,
+          this.handleChangeStatus,
+          content.propertiesHash,
+          this.proxy,
+          this.stopTask,
+          this.shopifyCheckoutURL,
+          this.cookieJar,
+          this.settings,
+          this.run,
+          this.handleChangeProductName,
+          this.index
+        );
+        const checkoutResponse = await DSMInstance.checkoutWithVariant(variantID);
+        return checkoutResponse;
+      } else {
+        if (this.settings.monitorForRestock) {
+          this.handleChangeStatus(`Size Is Unavailable - Retrying in ${this.settings.monitorTime}ms`);
+          await this.sleep(this.settings.monitorTime);
+          this.run();
+        } else {
+          this.handleChangeStatus(`Size Is Unavailable`);
+        }
+      }
+    } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
     }
   };
 
@@ -278,11 +297,19 @@ export default class Task {
         this.stopTask,
         this.cookieJar,
         this.settings,
-        this.run
+        this.run,
+        this.index
       );
       const checkoutResponse = await SSENSEInstance.checkout();
     } catch (error) {
-      console.log(error);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Error (${error.message}) - Retrying in ${this.settings.errorTime}ms`);
+        await this.sleep(this.settings.errorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus(`Error (${error.message})`);
+      }
+      log.error(`[Task - ${this.index + 1}] - ${error}`);
     }
   };
 
@@ -297,13 +324,21 @@ export default class Task {
         this.stopTask,
         this.cookieJar,
         this.settings,
-        this.run
+        this.run,
+        this.index
       );
       if (this.options.task.mode === 'url') {
         const checkoutResponse = await SOTOInstance.checkoutWithLink();
       }
     } catch (error) {
-      console.log(error);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Error (${error.message}) - Retrying in ${this.settings.errorTime}ms`);
+        await this.sleep(this.settings.errorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus(`Error (${error.message})`);
+      }
+      log.error(`[Task - ${this.index + 1}] - ${error}`);
     }
   };
 
@@ -318,7 +353,8 @@ export default class Task {
         this.stopTask,
         this.cookieJar,
         this.settings,
-        this.run
+        this.run,
+        this.index
       );
       if (this.options.task.mode === 'url') {
         const checkoutResponse = await AsphaltgoldInstance.checkoutWithLink();
@@ -326,7 +362,14 @@ export default class Task {
         const checkoutResponse = await AsphaltgoldInstance.checkoutWithKeywords();
       }
     } catch (error) {
-      console.log(error);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Error (${error.message}) - Retrying in ${this.settings.errorTime}ms`);
+        await this.sleep(this.settings.errorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus(`Error (${error.message})`);
+      }
+      log.error(`[Task - ${this.index + 1}] - ${error}`);
     }
   };
 
@@ -342,7 +385,8 @@ export default class Task {
         this.stopTask,
         this.cookieJar,
         this.settings,
-        this.run
+        this.run,
+        this.index
       );
       if (this.options.task.mode === 'url') {
         const checkoutResponse = await OverkillInstance.checkoutWithURL(this.options.task.modeInput);
@@ -350,40 +394,80 @@ export default class Task {
         const checkoutResponse = await OverkillInstance.checkoutWithKeywords();
       }
     } catch (error) {
-      console.log(error);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Error (${error.message}) - Retrying in ${this.settings.errorTime}ms`);
+        await this.sleep(this.settings.errorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus(`Error (${error.message})`);
+      }
+      log.error(`[Task - ${this.index + 1}] - ${error}`);
     }
   };
 
   checkoutWithGroupOfVariants = async variantIDs => {
-    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
-    const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size, this.options.task.keywordColor);
-    if (variantID !== undefined) {
-      const shopifyCheckoutClass = new Shopify(
-        this.options,
-        this.handleChangeStatus,
-        this.proxy,
-        this.stopTask,
-        this.shopifyCheckoutURL,
-        this.cookieJar,
-        this.settings,
-        this.run
-      );
-      const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
-      return checkoutResponse;
-    } else {
-      this.handleChangeStatus('Size Is Unavailable');
+    try {
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Getting Variant Of Specified Size`);
+      const variantID = this.getVariantIDOfSize(variantIDs, this.options.task.size, this.options.task.keywordColor);
+      if (variantID !== undefined) {
+        const shopifyCheckoutClass = new Shopify(
+          this.options,
+          this.handleChangeStatus,
+          this.proxy,
+          this.stopTask,
+          this.shopifyCheckoutURL,
+          this.cookieJar,
+          this.settings,
+          this.run,
+          this.index
+        );
+        const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(variantID);
+        return checkoutResponse;
+      } else {
+        if (this.settings.monitorForRestock) {
+          this.handleChangeStatus(`Size Is Unavailable - Retrying in ${this.settings.monitorTime}ms`);
+          await this.sleep(this.settings.monitorTime);
+          this.run();
+        } else {
+          this.handleChangeStatus('Size Is Unavailable');
+        }
+      }
+    } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
     }
   };
 
   urlMode = async () => {
-    const variantIDs = await this.getVariantsFromLinkJSON(this.options.task.modeInput);
-    const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(variantIDs);
+    try {
+      const variantIDs = await this.getVariantsFromLinkJSON(this.options.task.modeInput);
+      const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(variantIDs);
+    } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Size Is Unavailable - Retrying in ${this.settings.monitorTime}ms`);
+        await this.sleep(this.settings.monitorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus('Size Is Unavailable');
+      }
+    }
   };
 
   keywordsMode = async () => {
-    console.log(`[${moment().format('HH:mm:ss:SSS')}] - Searching For Product`);
-    const variantIDs = await this.getVariantsFromKeywords(stores[this.options.task.store]);
-    const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(variantIDs);
+    try {
+      console.log(`[${moment().format('HH:mm:ss:SSS')}] - Searching For Product`);
+      const variantIDs = await this.getVariantsFromKeywords(stores[this.options.task.store]);
+      const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(variantIDs);
+    } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Size Is Unavailable - Retrying in ${this.settings.monitorTime}ms`);
+        await this.sleep(this.settings.monitorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus('Size Is Unavailable');
+      }
+    }
   };
 
   variantMode = async variant => {
@@ -395,15 +479,38 @@ export default class Task {
       this.shopifyCheckoutURL,
       this.cookieJar,
       this.settings,
-      this.run
+      this.run,
+      this.index
     );
-    const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(this.options.task.modeInput);
+    try {
+      const checkoutResponse = await shopifyCheckoutClass.checkoutWithVariant(this.options.task.modeInput);
+    } catch (error) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Size Is Unavailable - Retrying in ${this.settings.monitorTime}ms`);
+        await this.sleep(this.settings.monitorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus('Size Is Unavailable');
+      }
+    }
   };
 
   homepageMode = async () => {
-    const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
-    const content = await this.getVariantsFromHomepage(pageURL);
-    const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(content.variantIDs, content.propertiesHash);
+    try {
+      const pageURL = this.options.task.modeInput === '' ? stores[this.options.task.store] : this.options.task.modeInput;
+      const content = await this.getVariantsFromHomepage(pageURL);
+      const checkoutWithGroupOfVariants = await this.checkoutWithGroupOfVariants(content.variantIDs, content.propertiesHash);
+    } catch (error) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
+      if (this.settings.retryOnCheckoutError) {
+        this.handleChangeStatus(`Size Is Unavailable - Retrying in ${this.settings.monitorTime}ms`);
+        await this.sleep(this.settings.monitorTime);
+        this.run();
+      } else {
+        this.handleChangeStatus('Size Is Unavailable');
+      }
+    }
   };
 
   checkSize = (option, size) => {
@@ -460,6 +567,7 @@ export default class Task {
       return found[0];
     } catch (error) {
       console.log(error);
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
     }
   };
 
@@ -476,6 +584,7 @@ export default class Task {
       return response.product.variants;
     } catch (e) {
       console.log(e);
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       const variantsSecondTry = await this.getVariantsFromLinkHTML(link);
       return variantsSecondTry;
     }
@@ -522,6 +631,7 @@ export default class Task {
       }
       return { variantIDs: variantsObj, propertiesHash: propertiesHash };
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       if (this.active) {
         if (e.statusCode == '403') {
           this.changeMonitorProxy();
@@ -549,6 +659,7 @@ export default class Task {
         return productVariant;
       }
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       if (this.active) {
         this.monitoring = true;
         this.handleChangeStatus('Monitoring');
@@ -583,6 +694,7 @@ export default class Task {
       const variantIDs = this.getVariantsFromLinkJSON(pageURLs[0]);
       return variantIDs;
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       if (this.active) {
         this.monitoring = true;
         this.handleChangeStatus('Monitoring');

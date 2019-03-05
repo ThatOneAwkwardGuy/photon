@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 var tough = require('tough-cookie');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
+const log = require('electron-log');
 import stores from '../../store/shops';
 import countryCodes from '../../store/countryCodes';
 import states from '../../store/states';
@@ -16,7 +17,7 @@ import {
   RECEIVE_CAPTCHA_TOKEN
 } from '../constants';
 export default class Supreme {
-  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run) {
+  constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run, index) {
     this.startTime = '';
     this.price = '';
     this.currency = '';
@@ -26,7 +27,8 @@ export default class Supreme {
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
     this.settings = settings;
-    this.run;
+    this.run = run;
+    this.index = index;
     this.productID = '';
     this.styleID = '';
     this.sizeID = '';
@@ -67,6 +69,7 @@ export default class Supreme {
 
   sleep = ms => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sleeping For ${ms}ms`);
+    log.info(`[Task - ${this.index + 1}] - Sleeping For ${ms}ms`);
     return new Promise(resolve => setTimeout(resolve, ms));
   };
 
@@ -109,6 +112,7 @@ export default class Supreme {
   };
 
   checkoutWithCapctcha = async (captchaToken, authToken, cookies) => {
+    log.info(`[Task - ${this.index + 1}] - Checking Out With Captcha`);
     let payload;
     if (this.options.task.store === 'supreme-eu') {
       payload = {
@@ -162,24 +166,6 @@ export default class Supreme {
       payload['g-recaptcha-response'] = captchaToken;
     }
     try {
-      // let pooky_ok = new tough.Cookie({
-      //   key: 'pooky_ok',
-      //   value: 'eyJ0b2hydV9vayI6IHRydWUsICJlbmFibGVkIjogdHJ1ZSwgIm1zX2RyYWciOiJvZmYifQ==',
-      //   domain: '.supremenewyork.com',
-      //   path: '/'
-      // });
-
-      // let pooky_order_allow = new tough.Cookie({
-      //   key: 'pooky_order_allow',
-      //   value:
-      //     'eyJ0b2hydV9vayI6IHRydWUsImVuYWJsZWQiOiB0cnVlLCJhbGxfcmVsZWFzZXMiOnRydWUsInNwbGF5X2VudiI6InByb2QiLCAibW91c2Vfc2NvcmUiOjEwMCwiYnlwYXNzIjp0cnVlfQ==',
-      //   domain: '.supremenewyork.com',
-      //   path: '/'
-      // });
-
-      // this.cookieJar.setCookie(pooky_ok.toString(), stores[this.options.task.store]);
-      // this.cookieJar.setCookie(pooky_order_allow.toString(), stores[this.options.task.store]);
-      console.log(payload);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
         headers: { cookie: `${this.cookieJar.getCookieString('https://www.supremenewyork.com')};${cookies}` },
@@ -201,6 +187,7 @@ export default class Supreme {
       this.stopTask(true);
       return response;
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       this.handleChangeStatus(e.message);
       if (this.settings.retryOnCheckoutError && this.active) {
         this.handleChangeStatus('Error Checking Out - Retrying');
@@ -212,6 +199,7 @@ export default class Supreme {
   };
 
   retryOnError = async (captchaToken, authToken, cookies) => {
+    log.error(`[Task - ${this.index + 1}] - Retrying After Error`);
     await this.sleep(this.settings.errorTime);
     this.checkoutWithCapctcha(captchaToken, authToken, cookies);
   };
@@ -225,6 +213,7 @@ export default class Supreme {
   };
 
   getProductStyleID = async (productID, color, sizeInput) => {
+    log.info(`[Task - ${this.index + 1}] - Getting Product Style ID`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -258,6 +247,7 @@ export default class Supreme {
         return ['', '', ''];
       }
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       this.handleChangeStatus('Error Getting Supreme Product Style');
       console.error(e);
       return ['', '', ''];
@@ -265,6 +255,7 @@ export default class Supreme {
   };
 
   getProduct = async () => {
+    log.info(`[Task - ${this.index + 1}] - Getting Product`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -274,7 +265,7 @@ export default class Supreme {
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
       if (product !== undefined) {
-        if (this.options.task.priceCheckVal !== '' && parseFloat(this.options.task.priceCheckVal) < response.price / 100) {
+        if (this.options.task.priceCheckVal === '' || parseFloat(this.options.task.priceCheckVal) < product.price / 100) {
           this.handleChangeProductName(product.name);
           const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
           if (styleID !== '') {
@@ -299,6 +290,7 @@ export default class Supreme {
       }
     } catch (e) {
       console.error(e);
+      log.error(`[Task - ${this.index + 1}] - ${e}`);
       if (this.active && e.message === 'Style For Product Not Found') {
         console.error(`Monitoring - Size/Style Not Currently Found - ${this.options.task.keywords}`);
         this.monitoring = true;
@@ -321,6 +313,7 @@ export default class Supreme {
   };
 
   addToCart = async (productID, styleID, sizeID) => {
+    log.info(`[Task - ${this.index + 1}] - Adding To Cart`);
     this.productID = productID;
     this.styleID = styleID;
     this.sizeID = sizeID;
@@ -371,11 +364,13 @@ export default class Supreme {
         return this.getAuthToken(response.body);
       } catch (e) {
         console.error(e);
+        log.error(`[Task - ${this.index + 1}] - ${e}`);
       }
     }
   };
 
   findProductWithKeyword = (productArray, keywords) => {
+    log.info(`[Task - ${this.index + 1}] - Finding Product With Keyword`);
     if (keywords.positiveKeywords.length === 0 && keywords.negativeKeywords.length === 0) {
       return undefined;
     } else {
@@ -395,6 +390,7 @@ export default class Supreme {
   };
 
   monitorForRestock = async (productID, styleID, sizeID) => {
+    log.info(`[Task - ${this.index + 1}] - Monitoring For Restock`);
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Monitoring For Restock`);
     const response = await this.rp({
       method: 'GET',
@@ -415,6 +411,7 @@ export default class Supreme {
   };
 
   checkStock = async (productID, styleID, sizeID) => {
+    log.info(`[Task - ${this.index + 1}] - Checking Stock`);
     const response = await this.rp({
       method: 'GET',
       uri: `https://www.supremenewyork.com/shop/${productID}.json`,
@@ -432,6 +429,7 @@ export default class Supreme {
 
   checkout = async (productID, styleID, sizeID) => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
+    log.info(`[Task - ${this.index + 1}] - Started Supreme Checkout`);
     if (productID === undefined) {
       [productID, styleID, sizeID] = await this.getProduct();
     }
@@ -470,6 +468,7 @@ export default class Supreme {
         }
       } catch (e) {
         console.log(e);
+        log.error(`[Task - ${this.index + 1}] - ${e}`);
         if (e === 'Out Of Stock') {
           this.handleChangeStatus('Out Of Stock');
           if (this.settings.monitorForRestock) {

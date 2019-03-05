@@ -123,7 +123,6 @@ export default class Home extends Component {
                             key={`release-${index}`}
                             className="col-sm-4 releaseCard"
                             onClick={() => {
-                              console.log(data);
                               this.setState(
                                 {
                                   currentLaunchInfo: data

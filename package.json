@@ -1,6 +1,6 @@
 {
   "name": "Photon",
-  "version": "1.0.26b",
+  "version": "1.0.27b",
   "description": "Photon AIO Bot",
   "main": "./webpack-pack/main.js",
   "author": {
@@ -38,7 +38,7 @@
     "extraResources": [
       {
         "from": "webpack-pack/captchaPreload.js",
-        "to": "./"
+        "to": "webpack-pack/captchaPreload.js"
       }
     ],
     "publish": {
@@ -53,6 +53,7 @@
     "cheerio": "^1.0.0-rc.2",
     "connected-react-router": "^6.0.0",
     "crypto-js": "^3.1.9-1",
+    "electron-log": "^3.0.1",
     "electron-updater": "^4.0.6",
     "emotion": "^10.0.5",
     "firebase": "^5.1.0",
@@ -74,6 +75,7 @@
     "react-dom": "^16.4.0",
     "react-emotion": "^10.0.0",
     "react-fontawesome": "^1.6.1",
+    "react-lazylog": "^3.2.0",
     "react-particles-js": "^2.2.0",
     "react-redux": "^6.0.0",
     "react-router": "4.3.1",

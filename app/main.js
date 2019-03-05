@@ -5,6 +5,7 @@ import {
   CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE,
   BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
   OPEN_CAPTCHA_WINDOW,
+  OPEN_LOGS_WINDOW,
   RESET_CAPTCHA_WINDOW,
   SET_GLOBAL_ID_VARIABLE,
   ALERT_UPDATE_AVAILABLE,
@@ -22,6 +23,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 let mainWindow = null;
 let captchaWindow = null;
+let logWindow = null;
 let forceQuit = false;
 
 let initialiseCaptchaWindow = () => {
@@ -48,6 +50,34 @@ let initialiseCaptchaWindow = () => {
       protocol: 'file:',
       slashes: true,
       hash: 'captcha'
+    })
+  );
+};
+
+let initialiseLogWindow = () => {
+  logWindow = new BrowserWindow({
+    webPreferences: {
+      contextIsolation: false
+    },
+    modal: true,
+    show: false,
+    minWidth: 200,
+    minHeight: 300,
+    width: 500,
+    height: 650,
+    frame: false,
+    resizable: true,
+    focusable: true,
+    minimizable: true,
+    closable: true,
+    allowRunningInsecureContent: true
+  });
+  logWindow.loadURL(
+    url.format({
+      pathname: path.join(__dirname, 'index.html'),
+      protocol: 'file:',
+      slashes: true,
+      hash: 'logs'
     })
   );
 };
@@ -104,7 +134,7 @@ app.on('ready', async () => {
   );
 
   initialiseCaptchaWindow();
-
+  initialiseLogWindow();
   // show window once on first load
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.show();
@@ -166,6 +196,15 @@ app.on('ready', async () => {
       captchaWindow.show();
     } else {
       captchaWindow.show();
+    }
+  });
+
+  ipcMain.on(OPEN_LOGS_WINDOW, (event, arg) => {
+    if (logWindow.isDestroyed()) {
+      initialiseLogWindow();
+      logWindow.show();
+    } else {
+      logWindow.show();
     }
   });
 

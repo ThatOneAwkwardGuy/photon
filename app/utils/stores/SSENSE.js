@@ -2,6 +2,7 @@ const request = require('request-promise');
 const _ = require('lodash');
 const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
+const log = require('electron-log');
 import stores from '../../store/shops';
 import countryCodes from '../../store/countryCodes';
 import countries from '../../store/countries';
@@ -15,7 +16,7 @@ const sizeSynonymns = {
   'N/A': ['N/A', 'Default Title', 'One Size']
 };
 export default class SSENSE {
-  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run) {
+  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run, index) {
     this.options = options;
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
@@ -28,6 +29,7 @@ export default class SSENSE {
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
+    this.index = index;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',

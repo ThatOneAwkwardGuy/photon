@@ -5,9 +5,10 @@ const cheerio = require('cheerio');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const ipcRenderer = require('electron').ipcRenderer;
+const log = require('electron-log');
 import { BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, OPEN_CAPTCHA_WINDOW, RECEIVE_CAPTCHA_TOKEN, FINISH_SENDING_CAPTCHA_TOKEN } from '../constants';
 export default class DSM {
-  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run, handleChangeProductName) {
+  constructor(options, handleChangeStatus, propertiesHash, proxy, stop, shopifyCheckoutURL, cookieJar, settings, run, handleChangeProductName, index) {
     this.options = options;
     this.handleChangeStatus = handleChangeStatus;
     this.proxy = proxy;
@@ -21,6 +22,7 @@ export default class DSM {
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
+    this.index = index;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
@@ -52,6 +54,7 @@ export default class DSM {
   }
 
   getQueueBypassCheckoutLink = async () => {
+    log.info(`[Task - ${this.index + 1}] - Getting Checkout Queue Bypass Link`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -69,10 +72,12 @@ export default class DSM {
 
   sleep = ms => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Sleeping For ${ms}ms`);
+    log.info(`Sleeping For ${ms}ms`);
     return new Promise(resolve => setTimeout(resolve, ms));
   };
 
   addToCart = async (variantID, amount) => {
+    log.info(`[Task - ${this.index + 1}] - Adding To Cart`);
     let payload;
     if (this.options.task.store === 'dsm-us') {
       payload = {
@@ -99,54 +104,70 @@ export default class DSM {
       const productInfo = JSON.parse(response.body);
       this.handleChangeProductName(productInfo.title);
     } catch (error) {
-      console.error(error);
+      throw new Error('Error Adding To Cart');
     }
   };
 
   removeFromCart = async () => {
+    log.info(`[Task - ${this.index + 1}] - Removing From Cart`);
     const payload = {
       quantity: '0',
       line: '1'
     };
-    const response = await this.rp({
-      method: 'POST',
-      uri: `${stores[this.options.task.store]}/cart/change.js`,
-      form: payload,
-      json: true
-    });
+    try {
+      const response = await this.rp({
+        method: 'POST',
+        uri: `${stores[this.options.task.store]}/cart/change.js`,
+        form: payload,
+        json: true
+      });
+    } catch (error) {
+      throw new Error('Error Removing From Cart');
+    }
   };
 
   generatePaymentToken = async () => {
-    const payload = {
-      credit_card: {
-        number: this.options.profile.paymentCardnumber,
-        name: this.options.profile.paymentCardholdersName,
-        month: this.options.profile.paymentCardExpiryMonth,
-        year: this.options.profile.paymentCardExpiryYear,
-        verification_value: this.options.profile.paymentCVV
-      }
-    };
-    const response = await this.rp({
-      method: 'POST',
-      uri: 'https://elb.deposit.shopifycs.com/sessions',
-      body: payload,
-      json: true
-    });
-    return response.id;
+    log.info(`[Task - ${this.index + 1}] - Generating Payment Token`);
+    try {
+      const payload = {
+        credit_card: {
+          number: this.options.profile.paymentCardnumber,
+          name: this.options.profile.paymentCardholdersName,
+          month: this.options.profile.paymentCardExpiryMonth,
+          year: this.options.profile.paymentCardExpiryYear,
+          verification_value: this.options.profile.paymentCVV
+        }
+      };
+      const response = await this.rp({
+        method: 'POST',
+        uri: 'https://elb.deposit.shopifycs.com/sessions',
+        body: payload,
+        json: true
+      });
+      return response.id;
+    } catch (error) {
+      throw new Error('Error Generating Payment Token');
+    }
   };
 
   getCheckoutBody = async checkoutURL => {
-    const response = await this.rp({
-      method: 'GET',
-      uri: `${checkoutURL}?step=payment_method`,
-      resolveWithFullResponse: true,
-      followAllRedirects: true,
-      followRedirect: true
-    });
+    log.info(`[Task - ${this.index + 1}] - Getting Checkout Body`);
+    try {
+      const response = await this.rp({
+        method: 'GET',
+        uri: `${checkoutURL}?step=payment_method`,
+        resolveWithFullResponse: true,
+        followAllRedirects: true,
+        followRedirect: true
+      });
+    } catch (error) {
+      throw new Error(`Error Getting Checkout Body - ${error.code}`);
+    }
     return response.body;
   };
 
   pollQueueOrCheckout = async (url, paymentToken, shipping) => {
+    log.info(`[Task - ${this.index + 1}] - Polling Checkout`);
     if (url.includes('processing')) {
       this.handleChangeStatus('Processing');
     } else if (url.includes('throttle') || url.includes('queue')) {
@@ -198,11 +219,12 @@ export default class DSM {
       }
     } catch (e) {
       this.stop(false);
-      console.error(e);
+      throw new Error('Error Polling Checkout');
     }
   };
 
   getCheckoutUrl = async () => {
+    log.info(`[Task - ${this.index + 1}] - Getting Checkout Url`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -212,7 +234,7 @@ export default class DSM {
       });
       return response.request.href;
     } catch (e) {
-      console.error(e);
+      throw new Error('Error Getting Checkout Url');
     }
   };
 
@@ -226,180 +248,172 @@ export default class DSM {
   };
 
   getShippingToken = async () => {
-    const payload = {
-      shipping_address: {
-        zip: this.options.profile.deliveryZip,
-        country: this.options.profile.deliveryCountry,
-        province: this.options.profile.deliveryProvince
+    log.info(`[Task - ${this.index + 1}] - Getting Shipping Token`);
+    try {
+      const payload = {
+        shipping_address: {
+          zip: this.options.profile.deliveryZip,
+          country: this.options.profile.deliveryCountry,
+          province: this.options.profile.deliveryProvince
+        }
+      };
+      const response = await this.rp({
+        method: 'POST',
+        json: true,
+        uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
+        body: payload
+      });
+      for (const shippingRates of response.shipping_rates) {
+        if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
+          const shipPrc = shippingRates.price;
+          const shipSource = shippingRates.source;
+          const shipCode = shippingRates.code;
+          const shippingOption = `${shipSource}-${shipCode}-${shipPrc}`;
+          const shippingInfo = {
+            token: shippingOption,
+            price: shipPrc
+          };
+          console.log(shippingInfo);
+          return shippingInfo;
+        }
       }
-    };
-    const response = await this.rp({
-      method: 'POST',
-      json: true,
-      uri: `${stores[this.options.task.store]}/cart/shipping_rates.json`,
-      body: payload
-    });
-    for (const shippingRates of response.shipping_rates) {
-      if (!shippingRates.name.toLowerCase().includes('collection') && !shippingRates.name.toLowerCase().includes('pick')) {
-        const shipPrc = shippingRates.price;
-        const shipSource = shippingRates.source;
-        const shipCode = shippingRates.code;
-        const shippingOption = `${shipSource}-${shipCode}-${shipPrc}`;
-        const shippingInfo = {
-          token: shippingOption,
-          price: shipPrc
-        };
-        console.log(shippingInfo);
-        return shippingInfo;
-      }
+    } catch (error) {
+      throw new Error('Error Getting Shipping Token');
     }
   };
 
-  // submitExtraCartInfo = async () => {
-  //   const payload = {
-  //     'updates[]': '1',
-  //     'address[country]': this.options.profile.deliveryCountry,
-  //     'address[zip]': this.options.profile.deliveryZip,
-  //     checkout: 'Check out',
-  //     note: ''
-  //   };
-  //   await this.rp({
-  //     method: 'POST',
-  //     form: {
-  //       'shipping_address[zip]': 'RM17 5BN',
-  //       'shipping_address[country]': 'United Kingdom',
-  //       'shipping_address[province]': ''
-  //     },
-  //     uri: 'https://bdgastore.com/cart/prepare_shipping_rates'
-  //   });
-
-  //   const response = await this.rp({
-  //     method: 'POST',
-  //     form: payload,
-  //     uri: `https://bdgastore.com/cart`,
-  //     followAllRedirects: true,
-  //     resolveWithFullResponse: true
-  //   });
-  //   console.log(response);
-  // };
-
   sendCustomerInfo = async (checkoutURL, authToken, captchaToken) => {
-    const payload = {
-      utf8: '✓',
-      _method: 'patch',
-      authenticity_token: authToken !== undefined ? authToken : '',
-      previous_step: 'contact_information',
-      step: 'shipping_method',
-      'checkout[email]': `${this.options.profile.paymentEmail}`,
-      'checkout[buyer_accepts_marketing]': '0',
-      'checkout[shipping_address][first_name]': `${this.options.profile.deliveryFirstName}`,
-      'checkout[shipping_address][last_name]': `${this.options.profile.deliveryLastName}`,
-      'checkout[shipping_address][address1]': `${this.options.profile.deliveryAddress}`,
-      'checkout[shipping_address][address2]': `${this.options.profile.deliveryAptorSuite}`,
-      'checkout[shipping_address][city]': `${this.options.profile.deliveryCity}`,
-      'checkout[shipping_address][country]': `${this.options.profile.deliveryCountry}`,
-      'checkout[shipping_address][province]': `${this.options.profile.deliveryProvince}`,
-      'checkout[shipping_address][zip]': `${this.options.profile.deliveryZip}`,
-      'checkout[shipping_address][phone]': `${this.options.profile.phoneNumber}`,
-      'checkout[client_details][browser_width]': '1710',
-      'checkout[client_details][browser_height]': '1289',
-      'checkout[client_details][javascript_enabled]': '1',
-      button: ''
-    };
-    if (captchaToken !== undefined) {
-      payload['g-recaptcha-response'] = captchaToken;
+    log.info(`[Task - ${this.index + 1}] - Sending Customer Info`);
+    try {
+      const payload = {
+        utf8: '✓',
+        _method: 'patch',
+        authenticity_token: authToken !== undefined ? authToken : '',
+        previous_step: 'contact_information',
+        step: 'shipping_method',
+        'checkout[email]': `${this.options.profile.paymentEmail}`,
+        'checkout[buyer_accepts_marketing]': '0',
+        'checkout[shipping_address][first_name]': `${this.options.profile.deliveryFirstName}`,
+        'checkout[shipping_address][last_name]': `${this.options.profile.deliveryLastName}`,
+        'checkout[shipping_address][address1]': `${this.options.profile.deliveryAddress}`,
+        'checkout[shipping_address][address2]': `${this.options.profile.deliveryAptorSuite}`,
+        'checkout[shipping_address][city]': `${this.options.profile.deliveryCity}`,
+        'checkout[shipping_address][country]': `${this.options.profile.deliveryCountry}`,
+        'checkout[shipping_address][province]': `${this.options.profile.deliveryProvince}`,
+        'checkout[shipping_address][zip]': `${this.options.profile.deliveryZip}`,
+        'checkout[shipping_address][phone]': `${this.options.profile.phoneNumber}`,
+        'checkout[client_details][browser_width]': '1710',
+        'checkout[client_details][browser_height]': '1289',
+        'checkout[client_details][javascript_enabled]': '1',
+        button: ''
+      };
+      if (captchaToken !== undefined) {
+        payload['g-recaptcha-response'] = captchaToken;
+      }
+      if (!stores[this.options.task.store].includes('palace') && !this.options.task.store === 'Fear Of God') {
+        payload['checkout[shipping_address][company]'] = '';
+      }
+      if (this.options.task.store === 'Fear Of God') {
+        payload['checkout[shipping_address][id]'] = '';
+      } else {
+        payload['checkout[remember_me]'] = '0';
+      }
+      const response = await this.rp({
+        method: 'POST',
+        uri: checkoutURL,
+        followAllRedirects: true,
+        resolveWithFullResponse: true,
+        form: payload
+      });
+      return response;
+    } catch (error) {
+      throw new Error('Error Sending Customer Info');
     }
-    if (!stores[this.options.task.store].includes('palace') && !this.options.task.store === 'Fear Of God') {
-      payload['checkout[shipping_address][company]'] = '';
-    }
-    if (this.options.task.store === 'Fear Of God') {
-      payload['checkout[shipping_address][id]'] = '';
-    } else {
-      payload['checkout[remember_me]'] = '0';
-    }
-    const response = await this.rp({
-      method: 'POST',
-      uri: checkoutURL,
-      followAllRedirects: true,
-      resolveWithFullResponse: true,
-      form: payload
-    });
-    return response;
   };
 
   sendShippingMethod = async (shippingToken, checkoutURL, authToken) => {
-    const payload = {
-      utf8: '✓',
-      _method: 'patch',
-      authenticity_token: authToken,
-      previous_step: 'shipping_method',
-      step: 'payment_method',
-      'checkout[shipping_rate][id]': `${encodeURI(shippingToken)}`,
-      button: '',
-      'checkout[client_details][browser_width]': '1710',
-      'checkout[client_details][browser_height]': '1289',
-      'checkout[client_details][javascript_enabled]': '1'
-    };
-    if (this.options.task.store === 'Fear Of God') {
-      await this.rp({
-        method: 'GET',
-        uri: `${checkoutURL}/shipping_rates?step=shipping_method`,
+    log.info(`[Task - ${this.index + 1}] - Sending Shipping Info`);
+    try {
+      const payload = {
+        utf8: '✓',
+        _method: 'patch',
+        authenticity_token: authToken,
+        previous_step: 'shipping_method',
+        step: 'payment_method',
+        'checkout[shipping_rate][id]': `${encodeURI(shippingToken)}`,
+        button: '',
+        'checkout[client_details][browser_width]': '1710',
+        'checkout[client_details][browser_height]': '1289',
+        'checkout[client_details][javascript_enabled]': '1'
+      };
+      if (this.options.task.store === 'Fear Of God') {
+        await this.rp({
+          method: 'GET',
+          uri: `${checkoutURL}/shipping_rates?step=shipping_method`,
+          followAllRedirects: true,
+          resolveWithFullResponse: true
+        });
+      }
+      const response = await this.rp({
+        method: 'POST',
+        uri: `${checkoutURL}?step=shipping_method`,
         followAllRedirects: true,
-        resolveWithFullResponse: true
+        resolveWithFullResponse: true,
+        form: payload
       });
+      console.log(response);
+      return response;
+    } catch (error) {
+      throw new Error('Error Sending Shipping Info');
     }
-    const response = await this.rp({
-      method: 'POST',
-      uri: `${checkoutURL}?step=shipping_method`,
-      followAllRedirects: true,
-      resolveWithFullResponse: true,
-      form: payload
-    });
-    console.log(response);
-    return response;
   };
 
   sendCheckoutInfo = async (paymentToken, shippingPrice, paymentID, authToken, checkoutURL, orderTotal) => {
-    const payload = {
-      utf8: '✓',
-      _method: 'patch',
-      previous_step: 'payment_method',
-      authenticity_token: `${authToken}`,
-      step: '',
-      s: `${paymentToken}`,
-      'checkout[payment_gateway]': `${paymentID}`,
-      'checkout[credit_card][vault]': 'false',
-      'checkout[different_billing_address]': 'true',
-      'checkout[billing_address][first_name]': `${this.options.profile.billingFirstName}`,
-      'checkout[billing_address][last_name]': `${this.options.profile.billingLastName}`,
-      'checkout[billing_address][address1]': `${this.options.profile.billingAddress}`,
-      'checkout[billing_address][address2]': `${this.options.profile.billingAptorSuite}`,
-      'checkout[billing_address][city]': `${this.options.profile.billingCity}`,
-      'checkout[billing_address][country]': `${this.options.profile.billingCountry}`,
-      'checkout[billing_address][province]': `${this.options.profile.billingProvince}`,
-      'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
-      'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
-      complete: '1',
-      // 'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
-      // 'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
-      // 'checkout[client_details][javascript_enabled]': '1',
-      'checkout[total_price]': `${parseInt(orderTotal) + shippingPrice * 100}`
-    };
+    log.info(`[Task - ${this.index + 1}] - Sending Checkout Info`);
+    try {
+      const payload = {
+        utf8: '✓',
+        _method: 'patch',
+        previous_step: 'payment_method',
+        authenticity_token: `${authToken}`,
+        step: '',
+        s: `${paymentToken}`,
+        'checkout[payment_gateway]': `${paymentID}`,
+        'checkout[credit_card][vault]': 'false',
+        'checkout[different_billing_address]': 'true',
+        'checkout[billing_address][first_name]': `${this.options.profile.billingFirstName}`,
+        'checkout[billing_address][last_name]': `${this.options.profile.billingLastName}`,
+        'checkout[billing_address][address1]': `${this.options.profile.billingAddress}`,
+        'checkout[billing_address][address2]': `${this.options.profile.billingAptorSuite}`,
+        'checkout[billing_address][city]': `${this.options.profile.billingCity}`,
+        'checkout[billing_address][country]': `${this.options.profile.billingCountry}`,
+        'checkout[billing_address][province]': `${this.options.profile.billingProvince}`,
+        'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
+        'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
+        complete: '1',
+        // 'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
+        // 'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
+        // 'checkout[client_details][javascript_enabled]': '1',
+        'checkout[total_price]': `${parseInt(orderTotal) + shippingPrice * 100}`
+      };
 
-    // if (authToken !== '') {
-    //   payload['authenticity_token'] = `${authToken}`;
-    // }
+      // if (authToken !== '') {
+      //   payload['authenticity_token'] = `${authToken}`;
+      // }
 
-    const response = await this.rp({
-      method: 'POST',
-      uri: checkoutURL,
-      form: payload,
-      resolveWithFullResponse: true,
-      followAllRedirects: true
-    });
-    console.log(payload);
-    console.log(response);
-    return response;
+      const response = await this.rp({
+        method: 'POST',
+        uri: checkoutURL,
+        form: payload,
+        resolveWithFullResponse: true,
+        followAllRedirects: true
+      });
+      console.log(payload);
+      console.log(response);
+      return response;
+    } catch (error) {
+      throw new Error('Error Sending Checkout Info');
+    }
   };
 
   getHomepage = async () => {
@@ -471,6 +485,7 @@ export default class DSM {
   };
 
   getCheckoutUrlDSM = async () => {
+    log.info(`[Task - ${this.index + 1}] - Getting Checkout Url`);
     try {
       const payload = {
         'updates[]': '1',
@@ -486,6 +501,7 @@ export default class DSM {
       });
       return response.request.href;
     } catch (e) {
+      log.error(`[Task - ${this.index + 1}] - ${e.message}`);
       return e;
     }
   };
@@ -556,6 +572,7 @@ export default class DSM {
           } catch (e) {
             console.error(e);
             this.handleChangeStatus(_.get(e, "error.error['0']"));
+            log.error(`[Task - ${this.index + 1}] - ${e.message}`);
             return e;
           }
         });
@@ -594,6 +611,7 @@ export default class DSM {
       } else {
         this.handleChangeStatus(_.get(e, "error.error['0']"));
       }
+      log.error(`[Task - ${this.index + 1}] - ${e.message}`);
       this.stop(true);
     }
   };

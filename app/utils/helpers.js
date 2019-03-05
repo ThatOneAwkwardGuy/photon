@@ -3,9 +3,9 @@ const rp = require('request-promise');
 const cheerio = require('cheerio');
 const _ = require('lodash');
 const convert = require('xml-js');
+const log = require('electron-log');
 
 export const processKeywords = (keywordsString, colorString) => {
-  console.log(keywordsString);
   if (keywordsString !== '' || colorString !== '') {
     const keywordsArray = keywordsString.split(' ');
     let positiveKeywords = [];
@@ -43,8 +43,10 @@ export const getSitemapJSON = async siteurl => {
       return ['XML', XMLresponse];
     } catch (e) {
       console.error(e);
+      log.error(e);
     }
     console.error(e);
+    log.error(e);
   }
 };
 
@@ -106,6 +108,7 @@ export const getSitemapXML = async siteurl => {
     return productsXML2JSON;
   } catch (e) {
     console.error(e);
+    log.error(e);
   }
 };
 
@@ -131,6 +134,7 @@ export const getAtomSitemapXML = async siteurl => {
     return productsXML2JSON;
   } catch (e) {
     console.error(e);
+    log.error(e);
   }
 };
 
@@ -170,15 +174,8 @@ export const undefeatedAccountLogin = async (accountObject, cookieJar) => {
       followAllRedirects: true
     });
     return response;
-    // console.log({
-    //   form_type: 'customer_login',
-    //   utf8: '✓',
-    //   'customer[email]': accountObject.email,
-    //   'customer[password]': accountObject.password
-    //   // checkout_url: checkoutURL
-    // });
-    // const $ = cheerio.load(response.body);
   } catch (e) {
     console.error(e);
+    log.error(e);
   }
 };

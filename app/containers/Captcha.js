@@ -84,6 +84,7 @@ class Captcha extends Component {
       win.webContents.session.cookies.set(cookie, error => {
         if (error !== null) {
           console.log(error);
+          log.error('Failed Setting Cookies In Captcha Window');
         }
       });
     }
@@ -94,7 +95,6 @@ class Captcha extends Component {
     }
 
     const sendGlobalVariable = ipcRenderer.sendSync(SET_GLOBAL_ID_VARIABLE, args);
-    console.log(args);
     webview.loadURL(args.checkoutURL);
     ipcRenderer.once(FINISH_SENDING_CAPTCHA_TOKEN, (event, arg) => {
       if (this.jobsQueue.length > 0) {
@@ -137,8 +137,8 @@ class Captcha extends Component {
           id="captchaWebview"
           src="http://google.com"
           webpreferences="allowRunningInsecureContent, javascript=yes"
-          preload="../../captchaPreload.js"
-          // preload={path.normalize(path.resolve(__dirname, 'webpack-pack', 'captchaPreload.js'))}
+          preload="../../webpack-pack/captchaPreload.js"
+          // preload={path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'))}
           style={{
             width: '100%',
             height: this.state.waiting ? '0px' : 'calc(100% - 90px)'

@@ -3,7 +3,7 @@ import { ListGroup, ListGroupItem, Container, Row, Col } from 'reactstrap';
 import FontAwesome from 'react-fontawesome';
 import { auth } from '../api/firebase/';
 const ipcRenderer = require('electron').ipcRenderer;
-import { OPEN_CAPTCHA_WINDOW } from '../utils/constants';
+import { OPEN_CAPTCHA_WINDOW, OPEN_LOGS_WINDOW } from '../utils/constants';
 export default class Sidebar extends Component {
   constructor(props) {
     super(props);
@@ -20,6 +20,10 @@ export default class Sidebar extends Component {
 
   openCaptchaWindow = () => {
     ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
+  };
+
+  openLogsWindow = () => {
+    ipcRenderer.send(OPEN_LOGS_WINDOW, 'open');
   };
 
   render() {
@@ -105,6 +109,16 @@ export default class Sidebar extends Component {
               <FontAwesome name="bolt" className="sidebarIcon" />
               fast mode
             </ListGroupItem> */}
+            <ListGroupItem
+              onClick={() => {
+                this.openLogsWindow();
+              }}
+              tag="button"
+              action
+            >
+              <FontAwesome name="align-justify" className="sidebarIcon" />
+              logs
+            </ListGroupItem>
             <ListGroupItem
               onClick={() => {
                 this.openCaptchaWindow();

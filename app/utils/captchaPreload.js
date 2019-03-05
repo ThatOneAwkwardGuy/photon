@@ -25,91 +25,76 @@ pressChar = (input, string) => {
 spoofPookyActions = document => {
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 216, 178, 201, 163, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 0);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 215, 178, 200, 163, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 9);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 213, 177, 198, 162, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 26);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 212, 176, 197, 161, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 43);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 210, 173, 195, 158, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 59);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 208, 165, 193, 150, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 77);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 208, 157, 193, 142, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 92);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 209, 148, 194, 133, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 109);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 216, 139, 201, 124, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 126);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 227, 131, 212, 116, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 143);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 247, 123, 232, 108, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 159);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 312, 108, 297, 93, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 192);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 355, 107, 340, 92, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 209);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 399, 110, 384, 95, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 226);
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
-    console.log('mouseEvent');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 481, 132, 466, 117, !1, !1, !1, !1, 0, null);
     document.querySelector('body').dispatchEvent(mouseMoveEvent);
   }, 240);

@@ -3,6 +3,7 @@ const _ = require('lodash');
 const ipcRenderer = require('electron').ipcRenderer;
 const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
+const log = require('electron-log');
 import stores from '../../store/shops';
 import countries from '../../store/countries';
 const sizeSynonymns = {
@@ -15,7 +16,7 @@ const sizeSynonymns = {
   'N/A': ['N/A', 'Default Title', 'One Size']
 };
 export default class Asphaltgold {
-  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run) {
+  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run, index) {
     this.options = options;
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
@@ -28,6 +29,7 @@ export default class Asphaltgold {
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
+    this.index = index;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
@@ -54,6 +56,7 @@ export default class Asphaltgold {
   }
 
   findProductWithKeywords = async () => {
+    log.info(`[Task - ${this.index + 1}] - Finding Product With Keywords`);
     try {
       const keywords = this.keywords;
       const response = await this.rp({
@@ -74,10 +77,12 @@ export default class Asphaltgold {
         ) {
           this.handleChangeProductName(product.name);
           return product;
+        } else {
+          throw new Error('No Product Found');
         }
       }
     } catch (error) {
-      return error;
+      throw new Error('No Product Found');
     }
   };
 
@@ -100,6 +105,7 @@ export default class Asphaltgold {
 
   getSizes = async productLink => {
     this.handleChangeStatus('Getting Size');
+    log.info(`[Task - ${this.index + 1}] - Getting Available Sizes`);
     try {
       const options = this.options;
       const checkSize = this.checkSize;
@@ -133,36 +139,39 @@ export default class Asphaltgold {
         selectValue
       };
     } catch (error) {
-      return error;
+      throw new Error('Error Getting Size');
     }
   };
 
   addToCart = async atcInfo => {
     this.handleChangeStatus('Adding To Cart');
-    try {
-      const selectValue = atcInfo.selectValue;
-      const payload = {
-        form_key: atcInfo.formKey,
-        product: atcInfo.productID,
-        related_product: '',
-        [selectValue]: atcInfo.size,
-        qty: 1,
-        isAjax: 1
-      };
-      const response = await this.rp({
-        method: 'POST',
-        form: payload,
-        uri: atcInfo.formLink
-      });
+    log.info(`[Task - ${this.index + 1}] - Adding To Cart`);
+    const selectValue = atcInfo.selectValue;
+    const payload = {
+      form_key: atcInfo.formKey,
+      product: atcInfo.productID,
+      related_product: '',
+      [selectValue]: atcInfo.size,
+      qty: 1,
+      isAjax: 1
+    };
+    const response = await this.rp({
+      method: 'POST',
+      form: payload,
+      uri: atcInfo.formLink
+    });
+    const formattedResponse = JSON.parse(response);
+    if (formattedResponse.status === 'ERROR') {
+      throw new Error('Error Adding To Cart');
+    } else {
       return response;
-    } catch (error) {
-      return error;
     }
   };
 
   sendCheckoutInfo = async () => {
-    this.handleChangeStatus('Sending Checkout');
+    log.info(`[Task - ${this.index + 1}] - Sending Checkout Info`);
     try {
+      this.handleChangeStatus('Sending Checkout');
       const payload = `billing[firstname]=${this.options.profile.billingFirstName}&billing[lastname]=${this.options.profile.billingLastName}&billing[email]=${
         this.options.profile.paymentEmail
       }&billing[telephone]=${this.options.profile.phoneNumber}&billing[company]=&billing[street][]=${this.options.profile.billingAddress}&billing[street][]=${
@@ -205,11 +214,12 @@ export default class Asphaltgold {
       });
       return response;
     } catch (error) {
-      return error;
+      throw new Error('Error Sending Checkout Info');
     }
   };
 
   getPaymentPage = async () => {
+    log.info(`[Task - ${this.index + 1}] - Getting Payment Page`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -226,56 +236,127 @@ export default class Asphaltgold {
       });
       return response;
     } catch (error) {
-      return error;
+      throw new Error('Error Getting Payment Page');
     }
   };
 
   submitPaymentForm = async formBody => {
-    const $ = cheerio.load(formBody);
-    const payload = {};
-    $('form input').each((index, element) => {
-      const input = $(element);
-      payload[input.attr('name')] = input.attr('value');
-    });
-    console.log(payload);
-    const response = await this.rp({
-      method: 'POST',
-      uri: 'https://www.ipg-online.com/connect/gateway/processing',
-      form: payload,
-      resolveWithFullResponse: true,
-      followAllRedirects: true
-    });
-    return response;
+    log.info(`[Task - ${this.index + 1}] - Submitting Payment Info`);
+    try {
+      const $ = cheerio.load(formBody);
+      const payload = {};
+      $('form input').each((index, element) => {
+        const input = $(element);
+        payload[input.attr('name')] = input.attr('value');
+      });
+      const response = await this.rp({
+        method: 'POST',
+        uri: 'https://www.ipg-online.com/connect/gateway/processing',
+        form: payload,
+        resolveWithFullResponse: true,
+        followAllRedirects: true
+      });
+      return response;
+    } catch (error) {
+      throw new Error('Error Submitting Payment Info');
+    }
   };
 
   submitPayment = async paymentBody => {
-    this.handleChangeStatus('Submitting Payment');
-    const $ = cheerio.load(paymentBody);
-    const payload = {
-      bname: `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
-      cardnumber: this.options.profile.paymentCardnumber.match(/.{1,4}/g).join(' '),
-      expmonth: this.options.profile.paymentCardExpiryMonth.substr(-1),
-      expyear: this.options.profile.paymentCardExpiryYear.substr(-1),
-      cvm_masked: '***',
-      cvm: this.options.profile.paymentCVV,
-      'org.apache.myfaces.trinidad.faces.FORM': 'cciForm',
-      _noJavaScript: false,
-      'javax.faces.ViewState': $('[name="javax.faces.ViewState"]').attr('value'),
-      source: 'cancel'
-    };
-    const response = await this.rp({
-      method: 'POST',
-      form: payload,
-      uri: 'https://www.ipg-online.com/connect/gateway/processing?execution=e1s1',
-      resolveWithFullResponse: true
-    });
-    if (response.body.includes('Cancelled')) {
-      this.handleChangeStatus('Payment Failed');
-    } else {
-      this.handleChangeStatus('Check Email');
+    log.info(`[Task - ${this.index + 1}] - Submitting Payment Gateway Info`);
+    try {
+      this.handleChangeStatus('Submitting Payment');
+      const $ = cheerio.load(paymentBody);
+      const payload = {
+        bname: `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
+        cardnumber: this.options.profile.paymentCardnumber.match(/.{1,4}/g).join(' '),
+        expmonth: this.options.profile.paymentCardExpiryMonth.substr(-1),
+        expyear: this.options.profile.paymentCardExpiryYear.substr(-1),
+        cvm_masked: '***',
+        cvm: this.options.profile.paymentCVV,
+        'org.apache.myfaces.trinidad.faces.FORM': 'cciForm',
+        _noJavaScript: false,
+        'javax.faces.ViewState': $('[name="javax.faces.ViewState"]').attr('value'),
+        source: 'next'
+      };
+      const response = await this.rp({
+        method: 'POST',
+        form: payload,
+        uri: 'https://www.ipg-online.com/connect/gateway/processing?execution=e1s1',
+        resolveWithFullResponse: true,
+        followAllRedirects: true
+      });
+
+      const $2 = cheerio.load(response.body);
+      const payload2 = {};
+      $2('form input').each((index, element) => {
+        const input = $(element);
+        payload2[input.attr('name')] = input.attr('value');
+      });
+      const uri2 = $2('form').attr('action');
+      const response2 = await this.rp({
+        method: 'POST',
+        form: payload2,
+        uri: uri2,
+        resolveWithFullResponse: true,
+        followAllRedirects: true
+      });
+
+      let response3;
+      if (!response2.body.includes('<title>Verified by Visa</title>')) {
+        const $3 = cheerio.load(response2.body);
+        const payload3 = {};
+        $3('form input').each((index, element) => {
+          const input = $(element);
+          payload3[input.attr('name')] = input.attr('value');
+        });
+        payload3.PaReq = payload2.PaReq;
+        payload3.ABSlog = 'GPP';
+        payload3.deviceDNA = '';
+        payload3.executionTime = '';
+        payload3.dnaError = '';
+        payload3.mesc = '';
+        payload3.mescIterationCount = '0';
+        payload3.desc = '';
+        payload3.isDNADone = 'false';
+        payload3.arcotFlashCookie = '';
+
+        const uri3 = $3('form').attr('action');
+        response3 = await this.rp({
+          method: 'POST',
+          form: payload3,
+          uri: uri3,
+          resolveWithFullResponse: true,
+          followAllRedirects: true
+        });
+      } else {
+        const $3 = cheerio.load(response2.body);
+        const payload3 = {};
+        $3('form[name="downloadForm"] input').each((index, element) => {
+          const input = $(element);
+          payload3[input.attr('name')] = input.attr('value');
+        });
+
+        const uri3 = $3('form[name="downloadForm"]').attr('action');
+        response3 = await this.rp({
+          method: 'POST',
+          form: payload3,
+          uri: uri3,
+          resolveWithFullResponse: true,
+          followAllRedirects: true
+        });
+      }
+
+      if (response3.body.includes('approval_code')) {
+        this.handleChangeStatus(`Payment Failed - ${$3('input[name="approval_code"]')}`);
+      } else {
+        this.handleChangeStatus('Check Email');
+      }
+      this.stop(true);
+      return response;
+    } catch (error) {
+      throw new Error('Error Submitting Payment');
     }
-    this.stop(true);
-    return response;
   };
 
   checkoutWithKeywords = async () => {
@@ -283,14 +364,13 @@ export default class Asphaltgold {
       const product = await this.findProductWithKeywords();
       const sizeInfo = await this.getSizes(product.attributes.deeplink);
       await this.addToCart(sizeInfo);
-      const sendCheckoutInfoResponse = await this.sendCheckoutInfo();
+      await this.sendCheckoutInfo();
       const paymentPageResponse = await this.getPaymentPage();
       const submitPaymentFormResponse = await this.submitPaymentForm(paymentPageResponse.body);
       const submitPaymentResponse = await this.submitPayment(submitPaymentFormResponse.body);
-      console.log(submitPaymentResponse);
     } catch (error) {
       this.handleChangeStatus(error.message);
-      console.error(error);
+      log.error(`[Task - ${this.index + 1}] - ${error.message}`);
     }
   };
 
@@ -302,11 +382,10 @@ export default class Asphaltgold {
       const paymentPageResponse = await this.getPaymentPage();
       const submitPaymentFormResponse = await this.submitPaymentForm(paymentPageResponse.body);
       const submitPaymentResponse = await this.submitPayment(submitPaymentFormResponse.body);
-      console.log(submitPaymentResponse);
     } catch (error) {
       this.handleChangeStatus(error.message);
       this.stop(true);
-      console.error(error);
+      log.error(`[Task - ${this.index + 1}] - ${error.message}`);
     }
   };
 }

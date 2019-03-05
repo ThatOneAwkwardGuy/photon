@@ -37,9 +37,16 @@ class Active extends Component {
     const tasksArray = this.props.tasks;
     const taskClassesInitialize = [];
     const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
-    tasksArray.forEach(element => {
+    tasksArray.forEach((element, index) => {
       taskClassesInitialize.push(
-        new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies)
+        new Task(
+          { profile: this.props.profiles[element.profileID], ...element },
+          this.forceUpdateHandler,
+          this.props.settings,
+          this.taskProxy,
+          monitorProxies,
+          index
+        )
       );
     });
     this.setState({
@@ -53,9 +60,16 @@ class Active extends Component {
   initialize = tasksArray => {
     const taskClassesInitialize = [];
     const monitorProxies = this.props.settings.monitorProxies.length > 0 ? this.props.settings.monitorProxies.split(/\r?\n/) : [];
-    tasksArray.forEach(element => {
+    tasksArray.forEach((element, index) => {
       taskClassesInitialize.push(
-        new Task({ profile: this.props.profiles[element.profileID], ...element }, this.forceUpdateHandler, this.props.settings, this.taskProxy, monitorProxies)
+        new Task(
+          { profile: this.props.profiles[element.profileID], ...element },
+          this.forceUpdateHandler,
+          this.props.settings,
+          this.taskProxy,
+          monitorProxies,
+          index
+        )
       );
     });
     this.setState({

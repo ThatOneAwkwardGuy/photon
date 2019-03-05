@@ -142,3 +142,7 @@
 
 1.0.26b
 - Fixed captcha handling
+
+1.0.27b
+- Fixed price check problem for supreme
+- Added Log window to track progress of all tasks

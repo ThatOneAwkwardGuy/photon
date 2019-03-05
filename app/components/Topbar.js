@@ -6,7 +6,6 @@ import Close from '../img/svg/close.svg';
 import { remote } from 'electron';
 export default class Topbar extends Component {
   minimiseWindow = () => {
-    console.log('minimising');
     remote.getCurrentWindow().minimize();
   };
 

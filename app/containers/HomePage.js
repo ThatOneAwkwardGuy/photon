@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import { auth } from '../api/firebase/';
 import { ipcRenderer } from 'electron';
 import { BEGIN_UPDATE } from '../utils/constants';
+const log = require('electron-log');
 
 class HomePage extends Component {
   constructor(props) {
@@ -56,8 +57,12 @@ class HomePage extends Component {
     });
   }
 
-  render() {
+  componentDidMount() {
     this.checkAccount();
+    log.info('Photon Started');
+  }
+
+  render() {
     return (
       <Container fluid>
         <Topbar />

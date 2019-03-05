@@ -2,6 +2,7 @@ const request = require('request-promise');
 const _ = require('lodash');
 const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
+const log = require('electron-log');
 import stores from '../../store/shops';
 import countryCodes from '../../store/countryCodes';
 import countries from '../../store/countries';
@@ -16,7 +17,7 @@ const sizeSynonymns = {
   'N/A': ['N/A', 'Default Title', 'One Size']
 };
 export default class SOTOStore {
-  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run) {
+  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run, index) {
     this.options = options;
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
@@ -29,6 +30,7 @@ export default class SOTOStore {
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
+    this.index = index;
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36',
@@ -55,6 +57,7 @@ export default class SOTOStore {
   }
 
   findProductWithKeywords = async () => {
+    log.info(`[Task - ${this.index + 1}] - Finding Product With Keywords`);
     try {
       const keywords = this.keywords;
       const response = await this.rp({
@@ -86,6 +89,7 @@ export default class SOTOStore {
   };
 
   getSizes = async productLink => {
+    log.info(`[Task - ${this.index + 1}] - Getting Sizes`);
     try {
       const options = this.options;
       const checkSize = this.checkSize;
@@ -117,6 +121,7 @@ export default class SOTOStore {
   };
 
   addToCart = async atcInfo => {
+    log.info(`[Task - ${this.index + 1}] - Adding To Cart`);
     try {
       const payload = {
         id: atcInfo.size,
@@ -138,6 +143,7 @@ export default class SOTOStore {
   };
 
   checkout = async checkoutBody => {
+    log.info(`[Task - ${this.index + 1}] - Checking Out`);
     const $ = cheerio.load(checkoutBody);
     const checkoutToken = $('input[name="_AntiCsrfToken"]').attr('value');
     const payload = {
@@ -160,10 +166,10 @@ export default class SOTOStore {
       followAllRedirects: true,
       uri: `${stores[this.options.task.store]}/en/cart/process`
     });
-    console.log(response);
   };
 
   setShipping = async () => {
+    log.info(`[Task - ${this.index + 1}] - Setting Shipping`);
     const payload = {
       id: '76',
       partial: 'ajax-cart'
@@ -177,6 +183,7 @@ export default class SOTOStore {
   };
 
   submitPaymentInfo = urlData => {
+    log.info(`[Task - ${this.index + 1}] - Submitting Payment Info`);
     const payload = {
       displayGroup: 'card',
       'card.cardNumber': '5391+2320+9964+0190',
@@ -234,9 +241,14 @@ export default class SOTOStore {
   };
 
   checkoutWithLink = async () => {
-    const size = await this.getSizes('https://www.sotostore.com/en/product/15516/1992-nuptse-jacket');
-    const addToCartResponse = await this.addToCart(size);
-    await this.setShipping();
-    const checkoutResponse = await this.checkout(addToCartResponse.body);
+    log.info(`[Task - ${this.index + 1}] - Beggining Checkout`);
+    try {
+      const size = await this.getSizes('https://www.sotostore.com/en/product/15516/1992-nuptse-jacket');
+      const addToCartResponse = await this.addToCart(size);
+      await this.setShipping();
+      const checkoutResponse = await this.checkout(addToCartResponse.body);
+    } catch (error) {
+      log.error(`[Task - ${this.index + 1}] - ${error}`);
+    }
   };
 }

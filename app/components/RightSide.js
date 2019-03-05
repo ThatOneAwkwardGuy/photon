@@ -23,7 +23,6 @@ export default class RightSide extends Component {
         <h6 className="text-center">upcoming releases</h6>
         {this.state.launchDetails.map((element, index) => {
           const data = element.data();
-          console.log(data);
           return (
             <Card key={index}>
               <CardImg top width="100%" src={data.image} alt="Card image cap" />

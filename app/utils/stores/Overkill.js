@@ -5,6 +5,7 @@ const cheerio = require('cheerio');
 const uuidv4 = require('uuid/v4');
 const Entities = require('html-entities').AllHtmlEntities;
 const entities = new Entities();
+const log = require('electron-log');
 import stores from '../../store/shops';
 import countries from '../../store/countries';
 const sizeSynonymns = {
@@ -17,7 +18,7 @@ const sizeSynonymns = {
   'N/A': ['N/A', 'Default Title', 'One Size']
 };
 export default class Overkill {
-  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run) {
+  constructor(options, keywords, handleChangeStatus, handleChangeProductName, proxy, stop, cookieJar, settings, run, index) {
     this.options = options;
     this.keywords = keywords;
     this.handleChangeStatus = handleChangeStatus;
@@ -30,6 +31,7 @@ export default class Overkill {
     this.cookieJar = cookieJar;
     this.tokenID = uuidv4();
     this.run = run;
+    this.index = index;
     console.log(stores[options.task.store]);
     this.rp = request.defaults({
       headers: {
@@ -74,6 +76,7 @@ export default class Overkill {
   };
 
   findProductWithKeywords = async () => {
+    log.info(`[Task - ${this.index + 1}] - Finding Product`);
     try {
       const checkSize = this.checkSize;
       const options = this.options;
@@ -109,6 +112,7 @@ export default class Overkill {
   };
 
   getSizes = async productLink => {
+    log.info(`[Task - ${this.index + 1}] - Getting Available Sizes`);
     try {
       const options = this.options;
       const checkSize = this.checkSize;
@@ -141,6 +145,7 @@ export default class Overkill {
   };
 
   addToCart = async atcInfo => {
+    log.info(`[Task - ${this.index + 1}] - Adding To Cart`);
     try {
       const selectValue = atcInfo.selectValue;
       const payload = {
@@ -165,6 +170,7 @@ export default class Overkill {
   };
 
   getShippingInfo = async () => {
+    log.info(`[Task - ${this.index + 1}] - Getting Shipping Info`);
     try {
       const payload = {
         country_id: countries[this.options.profile.deliveryCountry].code,
@@ -183,6 +189,7 @@ export default class Overkill {
   };
 
   sendCheckoutInfo = async () => {
+    log.info(`[Task - ${this.index + 1}] - Sending Checkout Info`);
     try {
       const bodyResponse = await this.rp({
         method: 'GET',
@@ -297,6 +304,7 @@ export default class Overkill {
   };
 
   getPaymentPage = async url => {
+    log.info(`[Task - ${this.index + 1}] - Getting Payment Page`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -320,6 +328,7 @@ export default class Overkill {
   };
 
   postCardInfo = async body => {
+    log.info(`[Task - ${this.index + 1}] - Sending Card Info`);
     try {
       const code = body.split('"').find(elem => elem.includes('https://oppwa.com/'));
       const url = `https://oppwa.com/v1/checkouts/${code.split('=')[1]}`;
@@ -376,6 +385,7 @@ export default class Overkill {
   };
 
   postMore = async body => {
+    log.info(`[Task - ${this.index + 1}] - Sending Checkout Gateway Info`);
     try {
       const $ = cheerio.load(body);
       const MD = $('input[name="MD"]').attr('value');
@@ -453,6 +463,7 @@ export default class Overkill {
       await this.postMore(postCardInfoResponse);
     } catch (error) {
       this.handleChangeStatus(error.message);
+      log.error(`[Task - ${this.index + 1}] -  ${error.message}`);
       console.error(error);
     }
   };
@@ -468,6 +479,7 @@ export default class Overkill {
       await this.postMore(postCardInfoResponse);
     } catch (error) {
       this.handleChangeStatus(error.message);
+      log.error(`[Task - ${this.index + 1}] -  ${error.message}`);
       console.error(error);
     }
   };
