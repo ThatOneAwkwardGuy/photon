@@ -628,3 +628,13 @@ canvas {
   background: none;
   color: white;
 }
+
+.logLine {
+  padding: 3px;
+}
+
+.logLine:hover {
+  /* margin: 20px; */
+  background: #1eaaf1;
+  white-space: nowrap;
+}

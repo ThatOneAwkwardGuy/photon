@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { Container } from 'reactstrap';
+import { Container, Row, Button, Col } from 'reactstrap';
 import CaptchaTopbar from '../components/CaptchaTopbar';
-import { ScrollFollow, LazyLog } from 'react-lazylog';
+import { ScrollFollow, LazyLog } from 'react-lazylog/es5';
+
 const log = require('electron-log');
 const fs = require('fs');
 const path = require('path');
@@ -9,6 +10,7 @@ class Logs extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      error: false,
       display: true,
       logUrl: log.transports.file.findLogPath()
     };
@@ -23,10 +25,10 @@ class Logs extends Component {
     const filedir = path.dirname(filepath);
     console.log(filepath);
     try {
-      await fs.openSync(filepath);
+      await fs.openSync(filepath, 'r');
     } catch (error) {
       console.log(error);
-      this.setState({ display: false });
+      this.setState({ error: true });
     }
     fs.watch(filedir, { encoding: 'buffer' }, (eventType, who) => {
       if (eventType === 'rename') {
@@ -49,7 +51,20 @@ class Logs extends Component {
           <div className="flex-grow-1" style={{ marginBottom: '20px' }}>
             <ScrollFollow
               startFollowing={true}
-              render={({ follow, onScroll }) => <LazyLog stream={true} selectableLines={true} url={this.state.logUrl} follow={true} onScroll={onScroll} />}
+              render={({ follow, onScroll }) => (
+                <LazyLog
+                  lineClassName="logLine"
+                  rowHeight={35}
+                  stream={true}
+                  selectableLines={true}
+                  url={this.state.logUrl}
+                  follow={true}
+                  onScroll={onScroll}
+                  style={{
+                    backgroundColor: '#1A1E2E'
+                  }}
+                />
+              )}
             />
           </div>
         ) : (
@@ -57,6 +72,18 @@ class Logs extends Component {
             <h1>No Logs Available</h1>
           </div>
         )}
+        <Row>
+          <Col style={{ padding: '20px' }}>
+            <Button
+              onClick={() => {
+                log.transports.file.file = log.transports.file.findLogPath();
+                log.transports.file.clear();
+              }}
+            >
+              Clear Log
+            </Button>
+          </Col>
+        </Row>
       </Container>
     );
   }
