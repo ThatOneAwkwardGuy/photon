@@ -137,8 +137,8 @@ class Captcha extends Component {
           id="captchaWebview"
           src="http://google.com"
           webpreferences="allowRunningInsecureContent, javascript=yes"
-          preload="../../webpack-pack/captchaPreload.js"
-          // preload={path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'))}
+          // preload="../../webpack-pack/captchaPreload.js"
+          preload={path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'))}
           style={{
             width: '100%',
             height: this.state.waiting ? '0px' : 'calc(100% - 90px)'
