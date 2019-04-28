@@ -3,9 +3,13 @@ const _ = require('lodash');
 const ipcRenderer = require('electron').ipcRenderer;
 const cheerio = require('cheerio');
 var tough = require('tough-cookie');
+const path = require('path');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const log = require('electron-log');
+const remote = require('electron').remote;
+const windowManager = remote.require('electron-window-manager');
+import url from 'url';
 import stores from '../../store/shops';
 import countryCodes from '../../store/countryCodes';
 import states from '../../store/states';
@@ -49,7 +53,10 @@ export default class Supreme {
     this.monitoringRefreshCount = 0;
     this.rp = request.defaults({
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
+        'User-Agent':
+          this.options.task.store === 'supreme-autofill'
+            ? 'Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Mobile Safari/537.36'
+            : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
         // Cookie: this.cookieJar.getCookieString('supremenewyork.com/')
       },
       jar: this.cookieJar,
@@ -82,6 +89,13 @@ export default class Supreme {
     this.active = false;
   };
 
+  stopWindow = () => {
+    const window = windowManager.get(`window-${this.token}`);
+    if (window) {
+      window.close();
+    }
+  };
+
   stopMonitoring = () => {
     this.monitoring = false;
   };
@@ -111,19 +125,89 @@ export default class Supreme {
       .join('&')}`;
   };
 
+  prefixes = (prev, next) => (prev ? `${prev}[${next}]` : next);
+
+  serialize = (key, value, prefix = '') => {
+    switch (value.constructor.name) {
+      case 'Array':
+        return value.map((obj, i) => this.serialize(i + '', obj, this.prefixes(prefix, key))).join('&');
+      case 'Object':
+        return this.parse(value, this.prefixes(prefix, key));
+      default:
+        return this.prefixes(prefix, key) + '=' + value;
+    }
+  };
+  parse = (json, prefix = '') =>
+    Object.keys(json)
+      .map(key => this.serialize(key, json[key], prefix))
+      .join('&');
+
+  pollSupremeStatus = async slug => {
+    const response = await this.rp({
+      method: 'GET',
+      uri: `https://www.supremenewyork.com/checkout/${slug}/status.json`,
+      resolveWithFullResponse: true,
+      followAllRedirects: true,
+      json: true
+    });
+    switch (response.body.status) {
+      case 'queued': {
+        await this.sleep(500);
+        this.pollSupremeStatus(slug);
+        break;
+      }
+      case 'failed': {
+        if (response.body.cart && !response.body.cart[0].in_stock) {
+          this.handleChangeStatus('Out Of Stock');
+          if (this.settings.monitorForRestock) {
+            this.handleChangeStatus('Monitoring For Restock');
+            this.monitoring = true;
+            while (this.monitoring) {
+              await this.monitorForRestock(productID, styleID, sizeID);
+            }
+          } else {
+            this.stopTask(true);
+          }
+        } else if (response.body.errors) {
+          for (error in response.body.errors) {
+            if (response.body.errors[error] && response.body.errors[error] !== '') {
+              this.handleChangeStatus(Object.values(response.body.errors)[error]);
+              break;
+            }
+          }
+        } else if (
+          JSON.stringify(response.body).includes(
+            'Unfortunately, we cannot process your payment. This could be due to  your payment being declined by your card issuer.'
+          )
+        ) {
+          this.handleChangeStatus('Error Processing Payment');
+        } else if (JSON.stringify(response.body).includes('number is not a valid credit card number')) {
+          this.handleChangeStatus('Number Is Not A Valid Credit Card Number');
+        } else {
+          this.handleChangeStatus('Check Email');
+        }
+        break;
+      }
+      default: {
+        this.handleChangeStatus('Check Email');
+        this.stop(true);
+      }
+    }
+  };
+
   checkoutWithCapctcha = async (captchaToken, authToken, cookies) => {
     log.info(`[Task - ${this.index + 1}] - Checking Out With Captcha`);
     let payload;
     if (this.options.task.store === 'supreme-eu') {
       payload = {
-        utf8: '\u2713',
+        utf8: '✓',
         authenticity_token: authToken,
         'order[billing_name]': `${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`,
         'order[email]': this.options.profile.paymentEmail,
         'order[tel]': this.options.profile.phoneNumber,
         'order[billing_address]': this.options.profile.billingAddress,
-        'order[billing_address_2]': '',
-        'order[billing_address_3]': this.options.profile.billingCity,
+        'order[billing_address_2]': this.options.profile.billingAptorSuite,
+        'order[billing_address_3]': '',
         'order[billing_city]': this.options.profile.billingCity,
         'order[billing_zip]': this.options.profile.billingZip,
         'order[billing_country]': countryCodes[this.options.profile.billingCountry],
@@ -159,31 +243,87 @@ export default class Supreme {
         'credit_card[year]': this.options.profile.paymentCardExpiryYear,
         'credit_card[rvv]': this.options.profile.paymentCVV,
         'order[terms]': '1',
-        'credit_card[vval]': '862'
+        'credit_card[vval]': this.options.profile.paymentCVV
       };
     }
     if (!this.options.task.captchaBypass) {
       payload['g-recaptcha-response'] = captchaToken;
     }
+    console.log(payload);
     try {
+      console.log(cookies);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
-        headers: { cookie: `${this.cookieJar.getCookieString('https://www.supremenewyork.com')};${cookies}` },
+        headers: {
+          cookie: `${cookies}`,
+          accept: '*/*',
+          'accept-language': 'en-US,en;q=0.9',
+          'cache-control': 'no-cache',
+          'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          'x-requested-with': 'XMLHttpRequest',
+          pragma: 'no-cache'
+        },
         method: 'POST',
-        form: payload,
-        uri: 'https://www.supremenewyork.com/checkout.js',
-        json: true,
+        body: encodeURI(this.parse(payload)) + '&order%5Bterms%5D=1',
+        uri: 'https://www.supremenewyork.com/checkout.json',
         resolveWithFullResponse: true,
-        followAllRedirects: true
+        followAllRedirects: true,
+        json: true
       });
       console.log(response);
-      if (response.body.includes('Unfortunately, we cannot process your payment. This could be due to  your payment being declined by your card issuer.')) {
-        this.handleChangeStatus('Error Processing Payment');
-      } else if (response.body.includes('number is not a valid credit card number')) {
-        this.handleChangeStatus('Number Is Not A Valid Credit Card Number');
+      if (response.body.slug) {
+        this.handleChangeStatus('Waiting...');
+        await this.pollSupremeStatus(response.body.slug);
+      } else if (response.body.status === 'failed') {
+        if (response.body.cart && !response.body.cart[0].in_stock) {
+          this.handleChangeStatus('Out Of Stock');
+          if (this.settings.monitorForRestock) {
+            this.handleChangeStatus('Monitoring For Restock');
+            this.monitoring = true;
+            while (this.monitoring) {
+              await this.monitorForRestock(productID, styleID, sizeID);
+            }
+          } else {
+            this.stopTask(true);
+          }
+        } else if (response.body.errors) {
+          for (error in response.body.errors) {
+            if (response.body.errors[error] && response.body.errors[error] !== '') {
+              this.handleChangeStatus(Object.values(response.body.errors)[error]);
+              break;
+            }
+          }
+        } else if (
+          JSON.stringify(response.body).includes(
+            'Unfortunately, we cannot process your payment. This could be due to  your payment being declined by your card issuer.'
+          )
+        ) {
+          this.handleChangeStatus('Error Processing Payment');
+        } else if (JSON.stringify(response.body).includes('number is not a valid credit card number')) {
+          this.handleChangeStatus('Number Is Not A Valid Credit Card Number');
+        } else {
+          this.handleChangeStatus('Check Email');
+        }
       } else {
-        this.handleChangeStatus('Check Email');
+        log.info(response.body);
       }
+
+      // try {
+      //   const parsedResponse = JSON.parse(response.body);
+      //   if (parsedResponse.status === 'failed') {
+
+      //   } else {
+      //     this.handleChangeStatus('Check Email');
+      //   }
+      // } catch (error) {
+      //   if (response.body.includes('Unfortunately, we cannot process your payment. This could be due to  your payment being declined by your card issuer.')) {
+      //     this.handleChangeStatus('Error Processing Payment');
+      //   } else if (response.body.includes('number is not a valid credit card number')) {
+      //     this.handleChangeStatus('Number Is Not A Valid Credit Card Number');
+      //   } else {
+      //     this.handleChangeStatus('Check Email');
+      //   }
+      // }
       this.stopTask(true);
       return response;
     } catch (e) {
@@ -207,13 +347,13 @@ export default class Supreme {
   getSupremeHomepage = async () => {
     await this.rp({
       method: 'GET',
-      uri: `https://www.supremenewyork.com/checkout.js`,
+      uri: `https://www.supremenewyork.com/checkout.json`,
       resolveWithFullResponse: true
     });
   };
 
   getProductStyleID = async (productID, color, sizeInput) => {
-    log.info(`[Task - ${this.index + 1}] - Getting Product Style ID`);
+    log.info(`[Task - ${this.index + 1}] - Getting Product Style ID - Product ID: ${productID}, Color: ${color}, Size: ${sizeInput}`);
     try {
       const response = await this.rp({
         method: 'GET',
@@ -265,9 +405,10 @@ export default class Supreme {
       const categoryOfProducts = response.products_and_categories[this.options.task.category];
       const product = this.findProductWithKeyword(categoryOfProducts, this.keywords);
       if (product !== undefined) {
-        if (this.options.task.priceCheckVal === '' || parseFloat(this.options.task.priceCheckVal) < product.price / 100) {
+        if (!this.options.task.priceCheckVal || this.options.task.priceCheckVal === '' || parseFloat(this.options.task.priceCheckVal) <= product.price / 100) {
           this.handleChangeProductName(product.name);
           const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
+          console.log([styleID, sizeID]);
           if (styleID !== '') {
             return [product.id, styleID, sizeID];
           } else {
@@ -341,7 +482,7 @@ export default class Supreme {
       this.cookieJar.setCookie(cart3Cookie.toString(), stores[this.options.task.store]);
       this.rp({
         method: 'GET',
-        uri: `https://www.supremenewyork.com/checkout.js`,
+        uri: `https://www.supremenewyork.com/checkout.json`,
         resolveWithFullResponse: true
       });
     } else {
@@ -360,8 +501,8 @@ export default class Supreme {
           resolveWithFullResponse: true,
           followAllRedirects: true
         });
-        console.log(response);
-        return this.getAuthToken(response.body);
+        return response;
+        // return this.getAuthToken(response.body);
       } catch (e) {
         console.error(e);
         log.error(`[Task - ${this.index + 1}] - ${e}`);
@@ -370,7 +511,7 @@ export default class Supreme {
   };
 
   findProductWithKeyword = (productArray, keywords) => {
-    log.info(`[Task - ${this.index + 1}] - Finding Product With Keyword`);
+    log.info(`[Task - ${this.index + 1}] - Finding Product With Keywords ${this.options.task.keywords}`);
     if (keywords.positiveKeywords.length === 0 && keywords.negativeKeywords.length === 0) {
       return undefined;
     } else {
@@ -427,32 +568,130 @@ export default class Supreme {
     }
   };
 
+  convertCookieString = (baseURL, cookieString) => {
+    if (cookieString.length > 0) {
+      const cookieArray = cookieString.split(';');
+      let formattedCookieArray = [];
+      for (const cookie of cookieArray) {
+        const nameValuePair = cookie.replace(/\s+/g, '').split('=');
+        console.log(nameValuePair[0]);
+        formattedCookieArray.push({
+          url: 'https://www.supremenewyork.com/mobile#checkout',
+          value: nameValuePair[1],
+          domain: nameValuePair[0] === '_supreme_sess' ? '.supremenewyork.com' : 'www.' + baseURL.split('//')[1].split('/')[0],
+          path: '/',
+          name: nameValuePair[0]
+        });
+      }
+      return formattedCookieArray;
+    } else {
+      return [];
+    }
+  };
+
   checkout = async (productID, styleID, sizeID) => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
-    log.info(`[Task - ${this.index + 1}] - Started Supreme Checkout`);
-    if (productID === undefined) {
-      [productID, styleID, sizeID] = await this.getProduct();
-    }
-    if (productID !== '') {
-      try {
-        await this.getSupremeHomepage();
-        await this.checkStock(productID, styleID, sizeID);
-        const authToken = await this.addToCart(productID, styleID, sizeID);
-        if (this.options.task.captchaBypass) {
-          this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
-          await this.sleep(this.checkoutDelay);
-          if (this.active) {
-            this.checkoutWithCapctcha('', authToken);
-          }
-        } else {
+    if (this.options.task.store === 'supreme-autofill') {
+      console.log(productID);
+      if (productID === undefined) {
+        [productID, styleID, sizeID] = await this.getProduct();
+      }
+      if (productID !== '') {
+        try {
+          // const atcresponse = await this.addToCart(productID, styleID, sizeID);
+          // console.log(path.resolve(__dirname, '..', '..', '..', 'webpack-pack', 'supremeAutoFill.js'));
+          this.token = uuidv4();
+          const captchaAutofillLocation = url.format({
+            pathname: process.mainModule.filename,
+            protocol: 'file:',
+            slashes: true,
+            hash: 'captchaAutofill'
+          });
+          // console.log(captchaAutofillLocation);
+          const newWindow = windowManager.createNew(
+            `window-${this.token}`,
+            `window-${this.token}`,
+            captchaAutofillLocation,
+            false,
+            {
+              width: 500,
+              height: 650,
+              show: true,
+              frame: false,
+              resizable: true,
+              focusable: true,
+              minimizable: true,
+              closable: true,
+              allowRunningInsecureContent: true,
+              webPreferences: {
+                allowRunningInsecureContent: true,
+                nodeIntegration: true,
+                webSecurity: false,
+                session: remote.session.fromPartition(`window-${this.token}`)
+                // partition: `window${index}`,
+              }
+            },
+            false
+          );
+          windowManager.sharedData.set(`window-${this.token}`, {
+            ...this.options,
+            productID,
+            styleID,
+            sizeID,
+            index: this.index,
+            token: this.token
+          });
+          newWindow.create();
+          // const formattedCookies = this.convertCookieString(
+          //   'https://supremenewyork.com/mobile#checkout',
+          //   this.cookieJar.getCookieString(stores[this.options.task.store])
+          // );
+          // for (const cookie of formattedCookies) {
+          //   newWindow.object.webContents.session.cookies.set(cookie, error => {
+          //     console.log(cookie);
+          //     if (error !== null) {
+          //       console.log(error);
+          //       log.error('Failed Setting Cookies In Captcha Window');
+          //     }
+          //   });
+          // }
+          newWindow.object.show();
+          console.log(newWindow);
+          // newWindow.object.loadURL('https://supremenewyork.com/checkout');
+          console.log(`[${moment().format('HH:mm:ss:SSS')}] - Checking Out In Headless Window`);
+          this.handleChangeStatus('Checking Out In Headless Window');
+          // ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
+          //   if (this.tokenID === args.id) {
+          //     // console.log(args);
+          //     // ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
+          //     // this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
+          //     // await this.sleep(this.checkoutDelay);
+          //     // this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken, args.cookies);
+          //   }
+          // });
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    } else {
+      log.info(`[Task - ${this.index + 1}] - Started Supreme Checkout`);
+      if (productID === undefined) {
+        [productID, styleID, sizeID] = await this.getProduct();
+      }
+      if (productID !== '') {
+        try {
+          // await this.getSupremeHomepage();
+          // await this.checkStock(productID, styleID, sizeID);
+          const authToken = await this.addToCart(productID, styleID, sizeID);
           ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
           ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
             cookies: this.cookieJar.getCookieString(stores[this.options.task.store]),
-            checkoutURL: 'https://supremenewyork.com/checkout',
+            checkoutURL: 'https://www.supremenewyork.com/checkout',
             baseURL: stores[this.options.task.store],
             id: this.tokenID,
             proxy: this.proxy,
-            profile: this.options.profile
+            profile: this.options.profile,
+            autofill: false
           });
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Waiting For Captcha`);
           this.handleChangeStatus('Waiting For Captcha');
@@ -465,21 +704,9 @@ export default class Supreme {
               this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken, args.cookies);
             }
           });
-        }
-      } catch (e) {
-        console.log(e);
-        log.error(`[Task - ${this.index + 1}] - ${e}`);
-        if (e === 'Out Of Stock') {
-          this.handleChangeStatus('Out Of Stock');
-          if (this.settings.monitorForRestock) {
-            this.handleChangeStatus('Monitoring For Restock');
-            this.monitoring = true;
-            while (this.monitoring) {
-              await this.monitorForRestock(productID, styleID, sizeID);
-            }
-          } else {
-            this.stopTask(true);
-          }
+        } catch (e) {
+          console.log(e);
+          log.error(`[Task - ${this.index + 1}] - ${e}`);
         }
       }
     }

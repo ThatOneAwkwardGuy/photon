@@ -1,15 +1,21 @@
 const ipcRenderer = require('electron').ipcRenderer;
 const remote = require('electron').remote;
+import { Plugin, passChomeTest } from '../utils/stealth';
 let captchaChecker = null;
 let authToken;
 let oldCookies;
+let pookyCookies = '';
 
-getSupremeAuthToken = () => {
+const plugins = new Plugin();
+plugins.mockPluginsAndMimeTypes();
+passChomeTest(window);
+
+const getSupremeAuthToken = () => {
   authToken = document.querySelector('input[name=authenticity_token]').value;
   return authToken;
 };
 
-pressChar = (input, string) => {
+const pressChar = (input, string) => {
   try {
     var changeEvent = new Event('input', {
       bubbles: true,
@@ -22,7 +28,7 @@ pressChar = (input, string) => {
   } catch (e) {}
 };
 
-spoofPookyActions = document => {
+const spoofPookyActions = document => {
   setTimeout(() => {
     var mouseMoveEvent = document.createEvent('MouseEvents');
     mouseMoveEvent.initMouseEvent('mousemove', undefined || !0, !0 || !1, window, 0, 216, 178, 201, 163, !1, !1, !1, !1, 0, null);
@@ -111,9 +117,9 @@ spoofPookyActions = document => {
   });
 };
 
-checkCaptcha = () => {
+const checkCaptcha = () => {
   if (window.location.href.includes('supremenewyork.com')) {
-    spoofPookyActions(document);
+    // spoofPookyActions(document);
   }
   if (
     document.location.href.includes('stock_problems') ||
@@ -155,7 +161,7 @@ checkCaptcha = () => {
           captchaResponse: captchaResponse3,
           id: tokenID,
           supremeAuthToken: authToken,
-          cookies: document.cookie,
+          cookies: `${document.cookie};${pookyCookies}`,
           oldCookies2: oldCookies
         });
       }
@@ -167,11 +173,13 @@ checkCaptcha = () => {
       captchaResponse: captchaResponse,
       id: tokenID,
       supremeAuthToken: authToken,
-      cookies: document.cookie,
+      cookies: `${document.cookie};${pookyCookies}`,
       oldCookies2: oldCookies
     });
   }
 };
+
+const autoFill = () => {};
 
 if (window.location.href.includes('supremenewyork.com')) {
   document.addEventListener('DOMContentLoaded', function() {
@@ -195,13 +203,12 @@ if (window.location.href.includes('supremenewyork.com')) {
       div.innerHTML = htmlString.trim();
       return div.firstChild;
     }
-
     var ifrm = document.getElementById('supremeCartIframe');
     ifrm.addEventListener('load', function() {
       ifrm.contentWindow.document.querySelector('a.button.checkout').click();
       ifrm.addEventListener('load', function() {
-        spoofPookyActions(ifrm.contentWindow.document);
         ifrm.contentWindow.document.documentElement.innerHTML = '';
+        captchaChecker = setInterval(checkCaptcha, 300);
       });
     });
 
@@ -230,9 +237,9 @@ if (window.location.href.includes('supremenewyork.com')) {
   });
 }
 
-if (!window.location.href.includes('google.com') && !window.location.href.includes('youtube.com')) {
-  captchaChecker = setInterval(checkCaptcha, 300);
-}
+// if (!window.location.href.includes('google.com') && !window.location.href.includes('youtube.com')) {
+//   // captchaChecker = setInterval(checkCaptcha, 300);
+// }
 
 ipcRenderer.on('send-captcha-token', (event, arg) => {
   clearInterval(captchaChecker);

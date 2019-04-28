@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Provider } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+import { Provider, connect } from 'react-redux';
 import { ConnectedRouter } from 'connected-react-router';
 import { createMemoryHistory } from 'history';
 import routes from './routes';
@@ -11,6 +12,7 @@ import './fonts/stylesheet.css';
 import './app.global.css';
 import './react-datetime.css';
 import 'react-toggle/style.css';
+import { Router, Route } from 'react-router-dom';
 
 const syncHistoryWithStore = (store, history) => {
   const { routing } = store.getState();
@@ -28,7 +30,7 @@ const rootElement = document.querySelector(document.currentScript.getAttribute('
 
 ReactDOM.render(
   <Provider store={store}>
-    <ConnectedRouter history={routerHistory}>{routes}</ConnectedRouter>
+    <Router history={routerHistory}>{routes}</Router>
   </Provider>,
   rootElement
 );

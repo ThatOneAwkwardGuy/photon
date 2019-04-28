@@ -148,4 +148,11 @@
 - Added Log window to track progress of all tasks
 
 1.0.28b
+- Another attempt at pooky :/
 
+1.0.29b
+- Another attempt at pooky :/
+
+1.0.30b
+- Added Supreme headless browser checkout (supreme-autofill) task
+- More experimental fixes for pooky using requests mode

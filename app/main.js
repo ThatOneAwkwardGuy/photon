@@ -30,6 +30,8 @@ let initialiseCaptchaWindow = () => {
   captchaWindow = new BrowserWindow({
     webPreferences: {
       contextIsolation: false
+      // plugins: true,
+      // nodeIntegration: true
     },
     modal: true,
     show: false,
@@ -223,7 +225,6 @@ app.on('ready', async () => {
 
   ipcMain.on(SEND_CAPTCHA_TOKEN, (event, arg) => {
     mainWindow.send(RECEIVE_CAPTCHA_TOKEN, arg);
-    console.log(arg.id);
   });
 
   ipcMain.on(FINISH_SENDING_CAPTCHA_TOKEN, (event, arg) => {

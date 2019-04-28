@@ -225,4 +225,53 @@ const captchaPreloadConfig = {
   }
 };
 
-module.exports = [mainConfig, appConfig, captchaPreloadConfig];
+const supremeAutoFillPreload = {
+  mode: 'production',
+  target: 'electron-renderer',
+  entry: path.normalize(path.resolve(__dirname, 'app', 'utils', 'supremeAutoFill.js')),
+  output: {
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
+    filename: 'supremeAutoFill.js'
+  },
+  node: {
+    __dirname: true
+  },
+  optimization: {
+    minimizer: [
+      new TerserPlugin({
+        terserOptions: {
+          mangle: true,
+          sourceMap: false,
+          toplevel: true,
+          output: {
+            comments: false
+          }
+        }
+      })
+    ]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
+        },
+        exclude: /node_modules/
+      }
+    ]
+  },
+  resolve: {
+    extensions: ['.js', '.json', '.jsx']
+  }
+};
+
+module.exports = [mainConfig, appConfig, captchaPreloadConfig, supremeAutoFillPreload];

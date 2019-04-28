@@ -188,7 +188,7 @@ input[type='password']:focus {
 }
 
 table {
-  color: white;
+  color: white !important;
   font-weight: 700;
 }
 

@@ -117,6 +117,7 @@ export default {
   // 'yeezysupply': 'https://yeezysupply.com'
   'supreme-eu': 'https://www.supremenewyork.com',
   'supreme-us': 'https://www.supremenewyork.com',
+  'supreme-autofill': 'https://www.supremenewyork.com',
   asphaltgold: 'https://asphaltgold.de/de',
   overkill: 'https://www.overkillshop.com/en',
   ssense: 'https://www.ssense.com'

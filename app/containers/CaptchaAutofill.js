@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import { Container } from 'reactstrap';
 import CaptchaTopbar from '../components/CaptchaTopbar';
-import CaptchaFooter from '../components/CaptchaFooter';
-import Waiting from '../components/Waiting';
 import { remote, ipcRenderer, session } from 'electron';
 import {
   SET_GLOBAL_ID_VARIABLE,
@@ -13,8 +11,9 @@ import {
 } from '../utils/constants';
 var os = require('os');
 const path = require('path');
+const windowManager = remote.require('electron-window-manager');
 
-class Captcha extends Component {
+class CaptchaAutofill extends Component {
   constructor(props) {
     super(props);
     this.active = false;
@@ -22,7 +21,6 @@ class Captcha extends Component {
     this.state = {
       waiting: true,
       autofill: false
-      // preload: this.returnPreload(false)
     };
   }
 
@@ -126,27 +124,8 @@ class Captcha extends Component {
     });
   };
 
-  resetCaptchaWindow = () => {};
-
-  returnPreload = autofill => {
-    if (process.env.NODE_ENV === 'development') {
-      if (autofill) {
-        return path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'supremeAutoFill.js'));
-      } else {
-        return path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'));
-      }
-    } else {
-      if (autofill) {
-        return '../../webpack-pack/supremeAutoFill.js';
-      } else {
-        return '../../webpack-pack/captchaPreload.js';
-      }
-    }
-  };
-
   awaitCookiesAndCaptchaURL = () => {
     ipcRenderer.on(CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, (event, args) => {
-      // this.setState({ autofill: args.autofill, preload: this.returnPreload(args.autofill) }, () => {
       if (!this.active) {
         this.active = true;
         this.setState({ waiting: false }, () => {
@@ -155,43 +134,39 @@ class Captcha extends Component {
       } else {
         this.jobsQueue.push(args);
       }
-      // });
     });
   };
 
   componentDidMount() {
-    this.awaitCookiesAndCaptchaURL();
+    // this.awaitCookiesAndCaptchaURL();
   }
 
   render() {
+    this.data = windowManager.sharedData.fetch(windowManager.getCurrent().name);
+    console.log(this.data);
     return (
       <Container fluid>
         <CaptchaTopbar />
-        <Waiting visible={this.state.waiting} />
-        {/* {this.state.preload ? ( */}
         <webview
           id="captchaWebview"
-          src="http://google.com"
-          useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+          src={`https://www.supremenewyork.com/mobile#products/${this.data.productID}/${this.data.styleID}`}
+          partition={`window-${this.data.token}`}
+          // useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
+          useragent="Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
           webpreferences="allowRunningInsecureContent, javascript=yes, plugins=yes, webaudio=no"
-          // preload={this.state.preload}
           preload={
             process.env.NODE_ENV === 'development'
-              ? path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'))
-              : '../../webpack-pack/captchaPreload.js'
+              ? path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'supremeAutoFill.js'))
+              : '../../webpack-pack/supremeAutoFill.js'
           }
           style={{
             width: '100%',
-            height: this.state.waiting ? '0px' : 'calc(100% - 90px)'
+            height: 'calc(100% - 90px)'
           }}
         />
-        {/* ) : (
-          ''
-        )} */}
-        <CaptchaFooter clearCookies={this.clearCookies} goToGoogleLogin={this.goToGoogleLogin} goToYoutube={this.goToYoutube} />
       </Container>
     );
   }
 }
 
-export default Captcha;
+export default CaptchaAutofill;

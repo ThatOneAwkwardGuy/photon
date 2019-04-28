@@ -96,6 +96,16 @@ export default class Task {
             this.handleChangeStatus('Stopped');
           }
         }
+      case 'supreme-autofill':
+        if (this.supremeInstance !== '') {
+          this.supremeInstance.stop();
+          this.supremeInstance.stopMonitoring();
+          this.supremeInstance.stopWindow();
+          this.active = false;
+          if ((checkoutComplete !== undefined) & !checkoutComplete) {
+            this.handleChangeStatus('Stopped');
+          }
+        }
       default:
         clearTimeout(this.monitoringTimeout);
         clearTimeout(this.scheduledTimeout);
@@ -126,6 +136,9 @@ export default class Task {
           this.Supreme();
           break;
         case 'supreme-us':
+          this.Supreme();
+          break;
+        case 'supreme-autofill':
           this.Supreme();
           break;
         case 'dsm-eu':

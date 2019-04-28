@@ -41,8 +41,10 @@ class HomePage extends Component {
   };
 
   checkAccount = () => {
-    if (auth.authorise.currentUser === null && process.env.NODE_ENV !== 'development') {
-      this.props.history.push('/');
+    if (process.env.NODE_ENV !== 'development') {
+      if (auth.authorise.currentUser === null) {
+        this.props.history.push('/');
+      }
     }
   };
 
@@ -58,6 +60,15 @@ class HomePage extends Component {
   }
 
   componentDidMount() {
+    if (location.hash === '#waiting') {
+      this.props.history.push('/waiting');
+    } else if (location.hash === '#captcha') {
+      this.props.history.push('/captcha');
+    } else if (location.hash === '#captchaAutofill') {
+      this.props.history.push('/captchaAutofill');
+    } else if (location.hash === '#logs') {
+      this.props.history.push('/logs');
+    }
     this.checkAccount();
     log.info('Photon Started');
   }

@@ -113,7 +113,7 @@ export default {
     'worldofhombre',
     'xhibition'
   ],
-  Supreme: ['supreme-eu', 'supreme-us'],
+  Supreme: ['supreme-eu', 'supreme-us', 'supreme-autofill'],
   Other: [
     'asphaltgold',
     'overkill'

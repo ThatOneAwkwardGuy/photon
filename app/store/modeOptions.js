@@ -4,6 +4,7 @@ export default {
   'dsm-us': ['url', 'keywords', 'homepage'],
   'supreme-eu': ['keywords'],
   'supreme-us': ['keywords'],
+  'supreme-autofill': ['keywords'],
   sotostore: ['url', 'keywords'],
   overkill: ['url', 'keywords']
 };

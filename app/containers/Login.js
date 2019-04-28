@@ -10,15 +10,6 @@ import { BounceLoader } from 'react-spinners';
 class Login extends Component {
   constructor(props) {
     super(props);
-    if (location.hash === '#waiting') {
-      this.props.history.push('/waiting');
-    } else if (location.hash === '#captcha') {
-      this.props.history.push('/captcha');
-    } else if (location.hash === '#logs') {
-      this.props.history.push('/logs');
-    } else {
-      this.checkLoggedIn();
-    }
     this.state = {
       loginEmail: '',
       loginPassword: '',
@@ -50,6 +41,20 @@ class Login extends Component {
     });
   }
 
+  componentDidMount() {
+    if (location.hash === '#waiting') {
+      this.props.history.push('/waiting');
+    } else if (location.hash === '#captcha') {
+      this.props.history.push('/captcha');
+    } else if (location.hash === '#captchaAutofill') {
+      this.props.history.push('/captchaAutofill');
+    } else if (location.hash === '#logs') {
+      this.props.history.push('/logs');
+    } else {
+      this.checkLoggedIn();
+    }
+  }
+
   checkLoggedIn = async () => {
     if (process.env.NODE_ENV !== 'development') {
       await auth.authorise.onAuthStateChanged(async user => {
@@ -70,7 +75,17 @@ class Login extends Component {
         }
       });
     } else {
-      this.props.history.push('/bot');
+      if (location.hash === '#waiting') {
+        this.props.history.push('/waiting');
+      } else if (location.hash === '#captcha') {
+        this.props.history.push('/captcha');
+      } else if (location.hash === '#captchaAutofill') {
+        this.props.history.push('/captchaAutofill');
+      } else if (location.hash === '#logs') {
+        this.props.history.push('/logs');
+      } else {
+        this.props.history.push('/bot');
+      }
     }
   };
 
@@ -80,8 +95,9 @@ class Login extends Component {
         currentlyLoggingIn: true
       });
       await auth.doSignInWithEmailAndPassword(this.state.loginEmail, this.state.loginPassword);
-      await checkLoggedIn();
+      await this.checkLoggedIn();
     } catch (e) {
+      console.log(e);
       this.setState({
         formError: true,
         currentlyLoggingIn: false

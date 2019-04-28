@@ -177,4 +177,43 @@ const captchaPreloadConfig = {
   }
 };
 
-module.exports = [mainConfig, appConfig, captchaPreloadConfig];
+const supremeAutoFillPreload = {
+  mode: 'development',
+  devtool: 'source-map',
+  target: 'electron-renderer',
+  entry: path.normalize(path.resolve(__dirname, 'app', 'utils', 'supremeAutoFill.js')),
+  output: {
+    path: path.normalize(path.join(path.resolve(__dirname, 'webpack-pack'), '/')),
+    filename: 'supremeAutoFill.js'
+  },
+  node: {
+    __dirname: true
+  },
+  devServer: {
+    hot: true
+  },
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env', '@babel/preset-react'],
+          plugins: [
+            '@babel/plugin-proposal-function-bind',
+            ['@babel/plugin-proposal-decorators', { legacy: true }],
+            '@babel/plugin-transform-runtime',
+            '@babel/plugin-proposal-class-properties',
+            '@babel/plugin-proposal-export-namespace-from'
+          ]
+        },
+        exclude: /node_modules(?!\/webpack-dev-server)/
+      }
+    ]
+  },
+  resolve: {
+    extensions: ['.js', '.json', '.jsx']
+  }
+};
+
+module.exports = [mainConfig, appConfig, captchaPreloadConfig, supremeAutoFillPreload];

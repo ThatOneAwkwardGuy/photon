@@ -85,6 +85,16 @@ class Active extends Component {
   };
 
   componentDidMount() {
+    console.log('Active Window');
+    if (location.hash === '#waiting') {
+      this.props.history.push('/waiting');
+    } else if (location.hash === '#captcha') {
+      this.props.history.push('/captcha');
+    } else if (location.hash === '#captchaAutofill') {
+      this.props.history.push('/captchaAutofill');
+    } else if (location.hash === '#logs') {
+      this.props.history.push('/logs');
+    }
     this.initialize(this.props.tasks);
   }
 
