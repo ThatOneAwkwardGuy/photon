@@ -19,7 +19,6 @@ class HomePage extends Component {
       updateBegun: false,
       fastModeModalVisible: false
     };
-    // ipcRenderer.send(CHECK_FOR_UPDATE, true);
   }
 
   switchActiveComponent = windowName => {

@@ -1,4 +1,3 @@
-// @flow
 import { ADD_PROXIES, DELETE_ALL_PROXIES } from '../actions/proxy';
 
 const initialState = { proxies: [] };

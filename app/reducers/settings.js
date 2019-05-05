@@ -1,4 +1,5 @@
-import { UPDATE_SETTINGS, ADD_CUSTOM_SITE, REMOVE_CUSTOM_SITE } from '../actions/settings';
+import { UPDATE_SETTINGS, ADD_CUSTOM_SITE, REMOVE_CUSTOM_SITE, REMOVE_GOOGLE_ACCOUNT, ADD_GOOGLE_ACCOUNT } from '../actions/settings';
+import { stat } from 'fs-extra-p';
 
 const initialState = {
   monitorTime: 1000,
@@ -8,7 +9,8 @@ const initialState = {
   restockMonitorTime: 0,
   monitorForRestock: false,
   retryOnCheckoutError: false,
-  customSites: {}
+  customSites: {},
+  googleAccounts: {}
 };
 
 export default function settingsReducer(state = initialState, action) {
@@ -23,6 +25,14 @@ export default function settingsReducer(state = initialState, action) {
         ...state,
         customSites: _.omit(state.customSites, [action.payload])
       };
+    case REMOVE_GOOGLE_ACCOUNT:
+      return {
+        ...state,
+        googleAccounts: _.omit(state.googleAccounts, action.payload.email)
+      };
+    case ADD_GOOGLE_ACCOUNT:
+      state.googleAccounts[action.payload.email] = action.payload;
+      return state;
     default:
       return state;
   }

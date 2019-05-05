@@ -118,9 +118,6 @@ const spoofPookyActions = document => {
 };
 
 const checkCaptcha = () => {
-  if (window.location.href.includes('supremenewyork.com')) {
-    // spoofPookyActions(document);
-  }
   if (
     document.location.href.includes('stock_problems') ||
     document.location.href.includes('chrome-error') ||
@@ -236,10 +233,6 @@ if (window.location.href.includes('supremenewyork.com')) {
     </html>`;
   });
 }
-
-// if (!window.location.href.includes('google.com') && !window.location.href.includes('youtube.com')) {
-//   // captchaChecker = setInterval(checkCaptcha, 300);
-// }
 
 ipcRenderer.on('send-captcha-token', (event, arg) => {
   clearInterval(captchaChecker);

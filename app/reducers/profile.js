@@ -1,4 +1,3 @@
-// @flow
 import { ADD_PROFILE, REMOVE_PROFILE } from '../actions/profile';
 
 import { omit } from 'lodash';

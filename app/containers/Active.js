@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { addTask, removeTask, updateTask, removeAllTasks } from '../actions/task';
 import { addProfile, removeProfile } from '../actions/profile';
 import { addProxies, deleteAllProxies } from '../actions/proxy';
-import { updateSettings, addCustomSite, removeCustomSite } from '../actions/settings';
+import { updateSettings, addCustomSite, removeCustomSite, addGoogleAccount, removeGoogleAccount } from '../actions/settings';
 import Home from '../components/Home';
 import AddTask from '../components/AddTask';
 import Tasks from '../components/Tasks';
@@ -139,6 +139,8 @@ class Active extends Component {
             onUpdateSettings={this.props.onUpdateSettings}
             onAddCustomSite={this.props.onAddCustomSite}
             onRemoveCustomSite={this.props.onRemoveCustomSite}
+            onAddGoogleAccount={this.props.onAddGoogleAccount}
+            onRemoveGoogleAccount={this.props.onRemoveGoogleAccount}
             settings={this.props.settings}
           />
         );
@@ -201,6 +203,12 @@ const mapActionsToProps = dispatch => ({
   },
   onRemoveCustomSite: content => {
     dispatch(removeCustomSite(content));
+  },
+  onAddGoogleAccount: content => {
+    dispatch(addGoogleAccount(content));
+  },
+  onRemoveGoogleAccount: content => {
+    dispatch(removeGoogleAccount(content));
   }
 });
 

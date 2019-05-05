@@ -20,6 +20,7 @@ import {
   BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
   RECEIVE_CAPTCHA_TOKEN
 } from '../constants';
+import { encode } from 'punycode';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run, index) {
     this.startTime = '';
@@ -55,7 +56,7 @@ export default class Supreme {
       headers: {
         'User-Agent':
           this.options.task.store === 'supreme-autofill'
-            ? 'Mozilla/5.0 (Linux; Android 8.0.0; Pixel 2 XL Build/OPD1.170816.004) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Mobile Safari/537.36'
+            ? 'Mozilla/5.0 (Linux; Android 9; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.90 Mobile Safari/537.36'
             : 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36'
         // Cookie: this.cookieJar.getCookieString('supremenewyork.com/')
       },
@@ -249,9 +250,7 @@ export default class Supreme {
     if (!this.options.task.captchaBypass) {
       payload['g-recaptcha-response'] = captchaToken;
     }
-    console.log(payload);
     try {
-      console.log(cookies);
       console.log(`[${moment().format('HH:mm:ss:SSS')}] - Finished Supreme Checkout`);
       const response = await this.rp({
         headers: {
@@ -270,7 +269,6 @@ export default class Supreme {
         followAllRedirects: true,
         json: true
       });
-      console.log(response);
       if (response.body.slug) {
         this.handleChangeStatus('Waiting...');
         await this.pollSupremeStatus(response.body.slug);
@@ -360,6 +358,7 @@ export default class Supreme {
         json: true,
         uri: `https://www.supremenewyork.com/shop/${productID}.json`
       });
+      log.info(`[Task - ${this.index + 1}] - Getting Product Details - Product ID: ${productID}, Color: ${color}, Size: ${sizeInput}`);
       const styles = response.styles;
       if (styles.length === 1) {
         for (const size of styles[0].sizes) {
@@ -408,7 +407,6 @@ export default class Supreme {
         if (!this.options.task.priceCheckVal || this.options.task.priceCheckVal === '' || parseFloat(this.options.task.priceCheckVal) <= product.price / 100) {
           this.handleChangeProductName(product.name);
           const [styleID, sizeID] = await this.getProductStyleID(product.id, this.options.task.color, this.options.task.size);
-          console.log([styleID, sizeID]);
           if (styleID !== '') {
             return [product.id, styleID, sizeID];
           } else {
@@ -574,7 +572,6 @@ export default class Supreme {
       let formattedCookieArray = [];
       for (const cookie of cookieArray) {
         const nameValuePair = cookie.replace(/\s+/g, '').split('=');
-        console.log(nameValuePair[0]);
         formattedCookieArray.push({
           url: 'https://www.supremenewyork.com/mobile#checkout',
           value: nameValuePair[1],
@@ -589,17 +586,34 @@ export default class Supreme {
     }
   };
 
+  setGoogleAccountCookies = (currentWindow, cookies) => {
+    for (const cookieSite in cookies) {
+      const cookiesCookieSite = cookies[cookieSite]['/'];
+      for (const actualCookie in cookiesCookieSite) {
+        const formattedCookie = {
+          url: `https://${cookieSite}/`,
+          value: cookiesCookieSite[actualCookie].value,
+          domain: cookiesCookieSite[actualCookie].domain,
+          path: cookiesCookieSite[actualCookie].path,
+          name: actualCookie
+        };
+        currentWindow.webContents.session.cookies.set(formattedCookie, error => {
+          if (error !== null) {
+            console.log(error);
+          }
+        });
+      }
+    }
+  };
+
   checkout = async (productID, styleID, sizeID) => {
     console.log(`[${moment().format('HH:mm:ss:SSS')}] - Started Supreme Checkout`);
     if (this.options.task.store === 'supreme-autofill') {
-      console.log(productID);
       if (productID === undefined) {
         [productID, styleID, sizeID] = await this.getProduct();
       }
       if (productID !== '') {
         try {
-          // const atcresponse = await this.addToCart(productID, styleID, sizeID);
-          // console.log(path.resolve(__dirname, '..', '..', '..', 'webpack-pack', 'supremeAutoFill.js'));
           this.token = uuidv4();
           const captchaAutofillLocation = url.format({
             pathname: process.mainModule.filename,
@@ -607,7 +621,6 @@ export default class Supreme {
             slashes: true,
             hash: 'captchaAutofill'
           });
-          // console.log(captchaAutofillLocation);
           const newWindow = windowManager.createNew(
             `window-${this.token}`,
             `window-${this.token}`,
@@ -628,7 +641,6 @@ export default class Supreme {
                 nodeIntegration: true,
                 webSecurity: false,
                 session: remote.session.fromPartition(`window-${this.token}`)
-                // partition: `window${index}`,
               }
             },
             false
@@ -642,33 +654,32 @@ export default class Supreme {
             token: this.token
           });
           newWindow.create();
-          // const formattedCookies = this.convertCookieString(
-          //   'https://supremenewyork.com/mobile#checkout',
-          //   this.cookieJar.getCookieString(stores[this.options.task.store])
-          // );
-          // for (const cookie of formattedCookies) {
-          //   newWindow.object.webContents.session.cookies.set(cookie, error => {
-          //     console.log(cookie);
-          //     if (error !== null) {
-          //       console.log(error);
-          //       log.error('Failed Setting Cookies In Captcha Window');
-          //     }
-          //   });
-          // }
+          const addressCookie = {
+            url: 'https://www.supremenewyork.com/mobile/#checkout',
+            name: 'js-address',
+            value: `${encodeURI(`${this.options.profile.billingFirstName} ${this.options.profile.billingLastName}`)}|${encodeURI(
+              this.options.profile.paymentEmail
+            )}|${this.options.profile.phoneNumber}|${encodeURI(this.options.profile.billingAddress)}||${this.options.profile.billingCity}|undefined|${encodeURI(
+              this.options.profile.billingZip
+            )}|${
+              this.options.profile.billingCountry === 'United States'
+                ? 'USA'
+                : this.options.profile.billingCountry === 'Canada'
+                ? 'CANADA'
+                : countryCodes[this.options.profile.billingCountry]
+            }|`,
+            domain: 'www.supremenewyork.com',
+            path: '/'
+          };
+          const googleAccountsArray = Object.values(this.settings.googleAccounts);
+          if (googleAccountsArray.length > 0) {
+            const randomGoogleAccount = googleAccountsArray[Math.floor(Math.random() * googleAccountsArray.length)];
+            this.setGoogleAccountCookies(newWindow.object, randomGoogleAccount.cookies);
+          }
+          newWindow.object.webContents.session.cookies.set(addressCookie, () => {});
           newWindow.object.show();
-          console.log(newWindow);
-          // newWindow.object.loadURL('https://supremenewyork.com/checkout');
           console.log(`[${moment().format('HH:mm:ss:SSS')}] - Checking Out In Headless Window`);
           this.handleChangeStatus('Checking Out In Headless Window');
-          // ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
-          //   if (this.tokenID === args.id) {
-          //     // console.log(args);
-          //     // ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
-          //     // this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
-          //     // await this.sleep(this.checkoutDelay);
-          //     // this.checkoutWithCapctcha(args.captchaResponse, args.supremeAuthToken, args.cookies);
-          //   }
-          // });
         } catch (error) {
           console.log(error);
         }
@@ -680,8 +691,6 @@ export default class Supreme {
       }
       if (productID !== '') {
         try {
-          // await this.getSupremeHomepage();
-          // await this.checkStock(productID, styleID, sizeID);
           const authToken = await this.addToCart(productID, styleID, sizeID);
           ipcRenderer.send(OPEN_CAPTCHA_WINDOW, 'open');
           ipcRenderer.send(BOT_SEND_COOKIES_AND_CAPTCHA_PAGE, {
@@ -697,7 +706,6 @@ export default class Supreme {
           this.handleChangeStatus('Waiting For Captcha');
           ipcRenderer.on(RECEIVE_CAPTCHA_TOKEN, async (event, args) => {
             if (this.tokenID === args.id) {
-              console.log(args);
               ipcRenderer.send(FINISH_SENDING_CAPTCHA_TOKEN, { url: stores[this.options.task.store], cookieNames: ['_supreme_sess', 'cart'] });
               this.handleChangeStatus(`Waiting ${this.checkoutDelay}ms`);
               await this.sleep(this.checkoutDelay);

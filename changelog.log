@@ -156,3 +156,7 @@
 1.0.30b
 - Added Supreme headless browser checkout (supreme-autofill) task
 - More experimental fixes for pooky using requests mode
+
+1.0.31b
+- Changed Supreme headless checkout to use mobile site and load saved address via cookies (faster around 2-2.5s checkout without delay)
+- Added Google accounts to settings, allowing you to pre login to google accounts for headless checkout (Not 100% sure if one clicks are working via mobile, might just be my google account)

@@ -101,7 +101,6 @@ export default class SOTOStore {
       const sizeInfo = JSON.parse($('#product-form-data')[0].children[0].data).products;
       console.log(JSON.parse($('#product-form-data')[0].children[0].data));
       let size = '';
-      // const listItems = JSON.parse(response.match(/new Product.Config\(([^)]+)\)/)[1]).attributes[150].options;
       for (const item in sizeInfo) {
         if (checkSize(sizeInfo[item].name, options.task.size)) {
           size = sizeInfo[item].id;
@@ -110,9 +109,6 @@ export default class SOTOStore {
       }
       return {
         size
-        // formLink,
-        // productID,
-        // selectValue
       };
     } catch (error) {
       console.log(error);

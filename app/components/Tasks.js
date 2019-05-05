@@ -148,10 +148,6 @@ export default class Tasks extends Component {
   };
 
   startAllTasks = () => {
-    // this.state.taskClasses.forEach(element => {
-    //   element.run();
-    // });
-    // ipcRenderer.send(RESET_CAPTCHA_TOKENS_ARRAY, 'reset');
     for (const task of this.props.taskClasses) {
       task.run();
     }

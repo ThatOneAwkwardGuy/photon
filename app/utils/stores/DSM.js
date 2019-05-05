@@ -62,7 +62,6 @@ export default class DSM {
         resolveWithFullResponse: true,
         followRedirect: false,
         followAllRedirects: false
-        // maxRedirects: 1
       });
       return response.response.headers.location;
     } catch (e) {
@@ -391,15 +390,8 @@ export default class DSM {
         'checkout[billing_address][zip]': `${this.options.profile.billingZip}`,
         'checkout[billing_address][phone]': `${this.options.profile.phoneNumber}`,
         complete: '1',
-        // 'checkout[client_details][browser_width]': Math.floor(Math.random() * 2000) + 1000,
-        // 'checkout[client_details][browser_height]': Math.floor(Math.random() * 2000) + 1000,
-        // 'checkout[client_details][javascript_enabled]': '1',
         'checkout[total_price]': `${parseInt(orderTotal) + shippingPrice * 100}`
       };
-
-      // if (authToken !== '') {
-      //   payload['authenticity_token'] = `${authToken}`;
-      // }
 
       const response = await this.rp({
         method: 'POST',

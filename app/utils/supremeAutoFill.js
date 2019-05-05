@@ -18,13 +18,32 @@ try {
 
 const pressChar = (input, string) => {
   try {
+    var keydownEvent = new Event('keydown', {
+      bubbles: true,
+      cancelable: true
+    });
+
+    var keyupEvent = new Event('keyup', {
+      bubbles: true,
+      cancelable: true
+    });
+
     var changeEvent = new Event('input', {
       bubbles: true,
       cancelable: true
     });
+
+    var textInputEvent = new Event('textInput', {
+      bubbles: true,
+      cancelable: true
+    });
+
     string.split('').forEach((elem, index, array) => {
       input.value = array.slice(index).join('');
-      input.dispatchEvent(pressEvent);
+      input.dispatchEvent(keydownEvent);
+      input.dispatchEvent(changeEvent);
+      input.dispatchEvent(textInputEvent);
+      input.dispatchEvent(keyupEvent);
     });
   } catch (e) {}
 };
@@ -139,8 +158,8 @@ const string_chop = (str, size) => {
 };
 
 const fillOutFormAndCheckout = async () => {
-  let event = document.createEvent('Event');
-  event.initEvent('change', true, true);
+  let changeEvent = document.createEvent('Event');
+  changeEvent.initEvent('change', true, true);
   try {
     const input = document.querySelector('input[name="order[billing_name]"]');
     input.focus();
@@ -218,7 +237,7 @@ const fillOutFormAndCheckout = async () => {
     const billingCountry =
       data.profile.billingCountry === 'United States' ? 'USA' : data.profile.billingCountry === 'Canada' ? 'CANADA' : countryCodes[data.profile.billingCountry];
     input.value = billingCountry;
-    input.dispatchEvent(event);
+    input.dispatchEvent(changeEvent);
     await sleep(50);
   } catch (error) {
     console.log(error);
@@ -246,7 +265,7 @@ const fillOutFormAndCheckout = async () => {
     input.focus();
     input.value = getCardType(data.profile.paymentCardnumber);
     pressChar(input, getCardType(data.profile.paymentCardnumber));
-    input.dispatchEvent(event);
+    input.dispatchEvent(changeEvent);
     await sleep(50);
   } catch (error) {
     console.log(error);
@@ -256,7 +275,7 @@ const fillOutFormAndCheckout = async () => {
     input.focus();
     input.value = string_chop(data.profile.paymentCardnumber, 4).join(' ');
     pressChar(input, string_chop(data.profile.paymentCardnumber, 4).join(' '));
-    input.dispatchEvent(event);
+    input.dispatchEvent(changeEvent);
     await sleep(50);
   } catch (error) {
     console.log(error);
@@ -277,7 +296,7 @@ const fillOutFormAndCheckout = async () => {
     input.focus();
     input.value = data.profile.paymentCardExpiryMonth;
     pressChar(input, data.profile.paymentCardExpiryMonth);
-    input.dispatchEvent(event);
+    input.dispatchEvent(changeEvent);
     await sleep(50);
   } catch (error) {
     console.log(error);
@@ -287,7 +306,7 @@ const fillOutFormAndCheckout = async () => {
     input.focus();
     input.value = data.profile.paymentCardExpiryYear;
     pressChar(input, data.profile.paymentCardExpiryYear);
-    input.dispatchEvent(event);
+    input.dispatchEvent(changeEvent);
     await sleep(50);
   } catch (error) {
     console.log(error);
@@ -317,7 +336,7 @@ const fillOutFormAndCheckout = async () => {
     input.focus();
     input.value = states[data.profile.billingProvince];
     pressChar(input, '');
-    input.dispatchEvent(event);
+    input.dispatchEvent(changeEvent);
     await sleep(50);
   } catch (error) {
     console.log(error);
@@ -363,6 +382,108 @@ const fillOutFormAndCheckout = async () => {
   // }
 };
 
+const fillOutCardAndChecout = async () => {
+  let changeEvent = document.createEvent('Event');
+  changeEvent.initEvent('change', true, true);
+  try {
+    const input = document.querySelector('input[name="store_credit_id"]');
+    input.focus();
+    input.value = '';
+    pressChar(input, '');
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+  try {
+    const input = document.querySelector('select[name="credit_card[type]"]');
+    input.focus();
+    input.value = getCardType(data.profile.paymentCardnumber);
+    pressChar(input, getCardType(data.profile.paymentCardnumber));
+    input.dispatchEvent(changeEvent);
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+  try {
+    const input = document.querySelector('input[name="credit_card[cnb]"]');
+    input.focus();
+    input.value = string_chop(data.profile.paymentCardnumber, 4).join(' ');
+    pressChar(input, string_chop(data.profile.paymentCardnumber, 4).join(' '));
+    input.dispatchEvent(changeEvent);
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const input = document.querySelector('input[name="credit_card[nlb]"]');
+    input.focus();
+    input.value = string_chop(data.profile.paymentCardnumber, 4).join(' ');
+    pressChar(input, string_chop(data.profile.paymentCardnumber, 4).join(' '));
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const input = document.querySelector('select[name="credit_card[month]"]');
+    input.focus();
+    input.value = data.profile.paymentCardExpiryMonth;
+    pressChar(input, data.profile.paymentCardExpiryMonth);
+    input.dispatchEvent(changeEvent);
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+  try {
+    const input = document.querySelector('select[name="credit_card[year]"]');
+    input.focus();
+    input.value = data.profile.paymentCardExpiryYear;
+    pressChar(input, data.profile.paymentCardExpiryYear);
+    input.dispatchEvent(changeEvent);
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+  try {
+    const input = document.querySelector('input[name="credit_card[vval]"]');
+    input.focus();
+    input.value = data.profile.paymentCVV;
+    pressChar(input, '');
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const input = document.querySelector('input[name="credit_card[rvv]"]');
+    input.focus();
+    input.value = data.profile.paymentCVV;
+    pressChar(input, '');
+    await sleep(50);
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    const input = document.querySelector('input[name="order[terms]"]');
+    input.focus();
+    input.click();
+    input.checked = true;
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    if (data.task.checkoutDelay !== '') {
+      await sleep(data.task.checkoutDelay);
+    }
+    document.querySelector('#submit_button').click();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const clickCheckoutButton = async () => {
   document.querySelector('#checkout-now').click();
   log.info(`[Task - ${data.index + 1}] - Clicked Supreme Checkout`);
@@ -403,7 +524,8 @@ window.addEventListener('load', async () => {
   var observer3 = new MutationObserver(function(mutations, me) {
     var canvas = document.querySelector('input[name="order[billing_name]"]');
     if (canvas) {
-      fillOutFormAndCheckout();
+      // fillOutFormAndCheckout();
+      fillOutCardAndChecout();
       me.disconnect();
       return;
     }

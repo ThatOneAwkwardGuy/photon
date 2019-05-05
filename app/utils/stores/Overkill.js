@@ -36,7 +36,6 @@ export default class Overkill {
     this.rp = request.defaults({
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36'
-        // Cookie: this.cookieJar.getCookieString(stores[options.task.store])
       },
       jar: this.cookieJar,
       proxy:
@@ -127,7 +126,6 @@ export default class Overkill {
       let size = '';
       const listItems = JSON.parse(response.match(/new Product.Config\(([^)]+)\)/)[1]).attributes[150].options;
       for (const item of listItems) {
-        // console.log(item);
         if (checkSize(item.label, options.task.size)) {
           size = item.id;
           break;
@@ -161,8 +159,6 @@ export default class Overkill {
         uri: atcInfo.formLink,
         resolveWithFullResponse: true
       });
-      // console.log(payload);
-      // console.log(response);
       return response;
     } catch (error) {
       return error;

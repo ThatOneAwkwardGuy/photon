@@ -10,7 +10,6 @@ export default class Topbar extends Component {
   };
 
   closeWindow = () => {
-    // remote.BrowserWindow.getFocusedWindow().close();
     remote.getCurrentWindow().close();
   };
 

@@ -58,8 +58,6 @@ export const convertProductNameIntoArray = name => {
 export const checkSitemapJSONForKeywords = (sitemapObj, keywords) => {
   for (const product of sitemapObj.products) {
     const productNameArray = product.title.toLowerCase().split(/[^a-zA-Z0-9']/);
-    // const positiveKeywordsCount = _.difference(keywords.positiveKeywords, productNameArray);
-    // const negativeKeywordsCount = _.difference(keywords.negativeKeywords, productNameArray);
     if (
       _.difference(keywords.positiveKeywords, productNameArray).length === 0 &&
       _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length

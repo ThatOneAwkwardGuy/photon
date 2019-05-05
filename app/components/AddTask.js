@@ -242,7 +242,6 @@ class AddTask extends Component {
                           name="modeInput"
                           id="modeInput"
                           value={this.state.formdata.modeInput}
-                          // placeholder="e.g +yeezy or http://example.com or variantID"
                           placeholder={
                             this.state.formdata.mode === 'url'
                               ? 'http://example.com'

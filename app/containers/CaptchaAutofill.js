@@ -22,6 +22,7 @@ class CaptchaAutofill extends Component {
       waiting: true,
       autofill: false
     };
+    this.data = windowManager.sharedData.fetch(windowManager.getCurrent().name);
   }
 
   componentDidMount() {
@@ -46,25 +47,6 @@ class CaptchaAutofill extends Component {
         webviewWindow.loadURL('https://accounts.google.com/Login');
       }
     );
-  };
-
-  goToYoutube = () => {
-    const webviewWindow = document.querySelector('webview');
-    this.setState(
-      {
-        waiting: false
-      },
-      () => {
-        webviewWindow.loadURL('https://youtube.com');
-      }
-    );
-  };
-
-  clearCookies = () => {
-    const win = remote.getCurrentWindow();
-    win.webContents.session.clearStorageData({
-      storages: ['cookies']
-    });
   };
 
   convertCookieString = (baseURL, cookieString) => {
@@ -137,13 +119,7 @@ class CaptchaAutofill extends Component {
     });
   };
 
-  componentDidMount() {
-    // this.awaitCookiesAndCaptchaURL();
-  }
-
   render() {
-    this.data = windowManager.sharedData.fetch(windowManager.getCurrent().name);
-    console.log(this.data);
     return (
       <Container fluid>
         <CaptchaTopbar />
@@ -151,8 +127,7 @@ class CaptchaAutofill extends Component {
           id="captchaWebview"
           src={`https://www.supremenewyork.com/mobile#products/${this.data.productID}/${this.data.styleID}`}
           partition={`window-${this.data.token}`}
-          // useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
-          useragent="Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
+          useragent="Mozilla/5.0 (Linux; Android 9; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.90 Mobile Safari/537.36"
           webpreferences="allowRunningInsecureContent, javascript=yes, plugins=yes, webaudio=no"
           preload={
             process.env.NODE_ENV === 'development'

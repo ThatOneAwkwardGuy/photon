@@ -22,7 +22,6 @@ class Captcha extends Component {
     this.state = {
       waiting: true,
       autofill: false
-      // preload: this.returnPreload(false)
     };
   }
 
@@ -146,7 +145,6 @@ class Captcha extends Component {
 
   awaitCookiesAndCaptchaURL = () => {
     ipcRenderer.on(CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, (event, args) => {
-      // this.setState({ autofill: args.autofill, preload: this.returnPreload(args.autofill) }, () => {
       if (!this.active) {
         this.active = true;
         this.setState({ waiting: false }, () => {
@@ -155,7 +153,6 @@ class Captcha extends Component {
       } else {
         this.jobsQueue.push(args);
       }
-      // });
     });
   };
 
@@ -168,13 +165,11 @@ class Captcha extends Component {
       <Container fluid>
         <CaptchaTopbar />
         <Waiting visible={this.state.waiting} />
-        {/* {this.state.preload ? ( */}
         <webview
           id="captchaWebview"
           src="http://google.com"
           useragent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36"
           webpreferences="allowRunningInsecureContent, javascript=yes, plugins=yes, webaudio=no"
-          // preload={this.state.preload}
           preload={
             process.env.NODE_ENV === 'development'
               ? path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'))
@@ -185,9 +180,6 @@ class Captcha extends Component {
             height: this.state.waiting ? '0px' : 'calc(100% - 90px)'
           }}
         />
-        {/* ) : (
-          ''
-        )} */}
         <CaptchaFooter clearCookies={this.clearCookies} goToGoogleLogin={this.goToGoogleLogin} goToYoutube={this.goToYoutube} />
       </Container>
     );
