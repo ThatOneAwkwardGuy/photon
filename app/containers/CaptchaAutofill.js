@@ -73,8 +73,22 @@ class CaptchaAutofill extends Component {
     this.setState({
       autofill: args.autofill
     });
+
+    win.webContents.session.cookies.get({ url: args.baseURL }, (error, cookiesArray) => {
+      console.log(args.baseURL);
+      console.log(cookiesArray);
+      cookiesArray.forEach(cookie => {
+        cookies.remove(args.baseURL, cookie.name, removeResponse => {
+          console.log(removeResponse);
+        });
+      });
+    });
+
     this.active = true;
     const webview = document.querySelector('webview');
+    if (process.env.NODE_ENV === 'devlopment') {
+      webview.openDevTools();
+    }
     const win = remote.getCurrentWindow();
     const formattedCookies = this.convertCookieString(args.checkoutURL, args.cookies);
     for (const cookie of formattedCookies) {
@@ -125,6 +139,7 @@ class CaptchaAutofill extends Component {
         <CaptchaTopbar />
         <webview
           id="captchaWebview"
+          // src={`https://www.supremenewyork.com/mobile#categories/${this.data.task.category}`}
           src={`https://www.supremenewyork.com/mobile#products/${this.data.productID}/${this.data.styleID}`}
           partition={`window-${this.data.token}`}
           useragent="Mozilla/5.0 (Linux; Android 9; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.90 Mobile Safari/537.36"

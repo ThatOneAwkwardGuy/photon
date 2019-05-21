@@ -449,7 +449,7 @@ export default class Settings extends Component {
                       </Container>
                     </Col>
                   </FormGroup>
-                  <FormGroup>
+                  <FormGroup row>
                     <Col xs="12">
                       <h6 style={{ fontWeight: 600 }}>google accounts</h6>
                       <Container>

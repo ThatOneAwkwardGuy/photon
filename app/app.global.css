@@ -622,6 +622,7 @@ canvas {
 .taskTableRow:hover td {
   background-color: rgb(19, 24, 39) !important;
   cursor: -webkit-grab;
+  color: white;
 }
 
 .taskButton {

@@ -3,7 +3,6 @@ const _ = require('lodash');
 const ipcRenderer = require('electron').ipcRenderer;
 const cheerio = require('cheerio');
 var tough = require('tough-cookie');
-const path = require('path');
 const moment = require('moment');
 const uuidv4 = require('uuid/v4');
 const log = require('electron-log');
@@ -20,7 +19,6 @@ import {
   BOT_SEND_COOKIES_AND_CAPTCHA_PAGE,
   RECEIVE_CAPTCHA_TOKEN
 } from '../constants';
-import { encode } from 'punycode';
 export default class Supreme {
   constructor(options, keywords, handleChangeStatus, settings, proxy, monitorProxy, stopTask, handleChangeProductName, run, index) {
     this.startTime = '';
@@ -487,6 +485,7 @@ export default class Supreme {
       const payload = {
         utf8: '\u2713',
         style: styleID,
+        qty: 1,
         size: sizeID,
         commit: 'add to basket'
       };
@@ -494,7 +493,15 @@ export default class Supreme {
         const response = await this.rp({
           method: 'POST',
           form: payload,
-          uri: `https://www.supremenewyork.com/shop/${productID}/add`,
+          // headers: {
+          //   accept: '*/*;q=0.5, text/javascript, application/javascript, application/ecmascript, application/x-ecmascript',
+          //   'accept-language': 'en-US,en;q=0.9',
+          //   'cache-control': 'no-cache',
+          //   'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+          //   pragma: 'no-cache'
+          // },
+          uri: `https://www.supremenewyork.com/shop/${productID}/add.json`,
+          json: true,
           gzip: true,
           resolveWithFullResponse: true,
           followAllRedirects: true

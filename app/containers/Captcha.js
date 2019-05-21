@@ -95,9 +95,19 @@ class Captcha extends Component {
     this.active = true;
     const webview = document.querySelector('webview');
     const win = remote.getCurrentWindow();
+    // win.webContents.session.cookies.get({ url: args.baseURL }, (error, cookiesArray) => {
+    //   console.log(args.baseURL);
+    //   console.log(cookiesArray);
+    //   cookiesArray.forEach(cookie => {
+    //     cookies.remove(args.baseURL, cookie.name, removeResponse => {
+    //       console.log(removeResponse);
+    //     });
+    //   });
+    // });
     const formattedCookies = this.convertCookieString(args.checkoutURL, args.cookies);
     for (const cookie of formattedCookies) {
       win.webContents.session.cookies.set(cookie, error => {
+        console.log(cookie);
         if (error !== null) {
           console.log(error);
           log.error('Failed Setting Cookies In Captcha Window');
@@ -126,22 +136,6 @@ class Captcha extends Component {
   };
 
   resetCaptchaWindow = () => {};
-
-  returnPreload = autofill => {
-    if (process.env.NODE_ENV === 'development') {
-      if (autofill) {
-        return path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'supremeAutoFill.js'));
-      } else {
-        return path.normalize(path.resolve(__dirname, '..', '..', 'webpack-pack', 'captchaPreload.js'));
-      }
-    } else {
-      if (autofill) {
-        return '../../webpack-pack/supremeAutoFill.js';
-      } else {
-        return '../../webpack-pack/captchaPreload.js';
-      }
-    }
-  };
 
   awaitCookiesAndCaptchaURL = () => {
     ipcRenderer.on(CAPTCHA_RECEIVE_COOKIES_AND_CAPTCHA_PAGE, (event, args) => {

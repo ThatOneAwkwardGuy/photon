@@ -382,7 +382,7 @@ const fillOutFormAndCheckout = async () => {
   // }
 };
 
-const fillOutCardAndChecout = async () => {
+const fillOutCardAndCheckout = async () => {
   let changeEvent = document.createEvent('Event');
   changeEvent.initEvent('change', true, true);
   try {
@@ -507,6 +507,27 @@ const addItemToCart = async () => {
   });
 };
 
+const checkForProduct = () => {
+  const currentItems = document.querySelectorAll('.selectable .name');
+  currentItems.forEach(currentItem => {
+    const productName = currentItem.innerText;
+    if (keywords.positiveKeywords.length === 0 && keywords.negativeKeywords.length === 0) {
+      return undefined;
+    } else {
+      if (productName !== undefined) {
+        const productNameArray = productName.toLowerCase().split(/[^a-zA-Z0-9']/);
+        if (
+          _.difference(keywords.positiveKeywords, productNameArray).length === 0 &&
+          _.difference(keywords.negativeKeywords, productNameArray).length === keywords.negativeKeywords.length
+        ) {
+          currentItem.click();
+          return;
+        }
+      }
+    }
+  });
+};
+
 window.addEventListener('load', async () => {
   var observer1 = new MutationObserver(function(mutations, me) {
     var canvas = document.querySelector('#size-options');
@@ -525,7 +546,7 @@ window.addEventListener('load', async () => {
     var canvas = document.querySelector('input[name="order[billing_name]"]');
     if (canvas) {
       // fillOutFormAndCheckout();
-      fillOutCardAndChecout();
+      fillOutCardAndCheckout();
       me.disconnect();
       return;
     }
